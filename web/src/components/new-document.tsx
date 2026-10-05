@@ -1,12 +1,13 @@
-import type { Business } from "@prisma/client";
+import { partyWhere, type Ctx } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { EmptyState, LinkButton, PageHeader, todayIST } from "./ui";
 import { DocumentForm } from "./document-form";
 
 /** "New invoice" and "New quotation" pages share this loader and form. */
-export async function NewDocument({ kind, business, preselect }: { kind: "INVOICE" | "QUOTE"; business: Business; preselect: string }) {
+export async function NewDocument({ kind, ctx, preselect }: { kind: "INVOICE" | "QUOTE"; ctx: Ctx; preselect: string }) {
+  const { business } = ctx;
   const [parties, items] = await Promise.all([
-    db.party.findMany({ where: { businessId: business.id, archivedAt: null, type: { in: ["CUSTOMER", "BOTH", "LEAD"] } }, orderBy: { name: "asc" } }),
+    db.party.findMany({ where: { AND: [partyWhere(ctx), { archivedAt: null, type: { in: ["CUSTOMER", "BOTH", "LEAD"] } }] }, orderBy: { name: "asc" } }),
     db.item.findMany({ where: { businessId: business.id, archivedAt: null }, orderBy: [{ name: "asc" }, { variantName: "asc" }] }),
   ]);
   if (parties.length === 0) {

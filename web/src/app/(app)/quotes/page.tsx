@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { requireBusiness } from "@/lib/auth";
+import { docWhere, requireBusiness } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { formatINR } from "@/lib/money";
 import { Card, EmptyState, LinkButton, PageHeader, fmtDate } from "@/components/ui";
@@ -8,9 +8,9 @@ import { quoteStatus } from "./status";
 export const metadata = { title: "Quotations" };
 
 export default async function Quotes() {
-  const { business } = await requireBusiness();
+  const ctx = await requireBusiness();
   const quotes = await db.quote.findMany({
-    where: { businessId: business.id },
+    where: docWhere(ctx),
     orderBy: { createdAt: "desc" },
     take: 100,
     include: { party: { select: { name: true } } },

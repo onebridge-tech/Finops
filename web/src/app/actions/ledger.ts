@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 import { after } from "next/server";
 import { z } from "zod";
 import { db } from "@/lib/db";
-import { requireBusiness } from "@/lib/auth";
+import { findParty, partyWhere, requireBusiness } from "@/lib/auth";
 import { audit } from "@/lib/audit";
 import { newShareToken } from "@/lib/session";
 import { parseRupees } from "@/lib/money";
@@ -22,7 +22,7 @@ export type FormState = { error?: string; ok?: boolean };
 
 const PartyInput = z.object({
   name: z.string().trim().min(1, "Name is required").max(120),
-  type: z.enum(["CUSTOMER", "SUPPLIER", "BOTH"]),
+  type: z.enum(["CUSTOMER", "SUPPLIER", "BOTH", "LEAD"]),
   phone: z.string().trim().refine((v) => v === "" || normalizeIndianMobile(v) !== null, "Enter a valid 10-digit mobile number"),
   email: z.string().trim().max(120),
   gstin: z.string().trim().transform(normalizeGstin).refine((v) => v === "" || isValidGstin(v), "GSTIN is not valid"),
@@ -37,18 +37,31 @@ const PartyInput = z.object({
 
 const field = (f: FormData, k: string) => String(f.get(k) ?? "");
 
+/** A team member id from a form, only if they belong to this business. */
+async function validOwner(businessId: string, userId: string): Promise<string | null> {
+  if (!userId) return null;
+  return (await db.membership.count({ where: { businessId, userId } })) ? userId : null;
+}
+
+async function validBranch(businessId: string, branchId: string): Promise<string | null> {
+  if (!branchId) return null;
+  return (await db.branch.count({ where: { businessId, id: branchId, archivedAt: null } })) ? branchId : null;
+}
+
 /** Ledger dates are calendar days: stored as noon IST so ordering ties fall back to createdAt. */
 const istNoon = (ymd: string) => new Date(`${ymd}T12:00:00+05:30`);
 const todayIstNoon = () => istNoon(new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" }));
 
 export async function createParty(_prev: FormState, form: FormData): Promise<FormState> {
-  const { user, business } = await requireBusiness("party:write");
+  const ctx = await requireBusiness("party:write");
+  const { user, business } = ctx;
   const r = PartyInput.safeParse(Object.fromEntries(Object.keys(PartyInput.shape).map((k) => [k, field(form, k)])));
   if (!r.success) return { error: r.error.issues[0].message };
   const d = r.data;
   const opening = d.opening ? parseRupees(d.opening) : 0;
   if (opening === null) return { error: "Opening balance must be an amount like 1500 or 1500.50" };
   const consent = form.get("consent") === "on";
+  const owner = await validOwner(business.id, field(form, "ownerId"));
 
   const party = await db.$transaction(async (tx) => {
     const p = await tx.party.create({
@@ -66,6 +79,9 @@ export async function createParty(_prev: FormState, form: FormData): Promise<For
         source: d.source || null,
         shareToken: newShareToken(),
         consentAt: consent ? new Date() : null,
+        // Branch-tied members always create in their branch; others pick one (default: the branch in view).
+        branchId: ctx.membership.branchId ?? (form.has("branchId") ? await validBranch(business.id, field(form, "branchId")) : ctx.branchId),
+        ownerId: ctx.assignedOnly ? user.id : owner,
       },
     });
     await audit(tx, { businessId: business.id, actorId: user.id, action: "create", entity: "Party", entityId: p.id, data: d });
@@ -75,7 +91,7 @@ export async function createParty(_prev: FormState, form: FormData): Promise<For
     if (opening > 0) {
       const e = await tx.ledgerEntry.create({
         data: {
-          businessId: business.id, partyId: p.id, direction: d.openingDirection, amountPaise: BigInt(opening),
+          businessId: business.id, partyId: p.id, branchId: ctx.branchId, direction: d.openingDirection, amountPaise: BigInt(opening),
           date: todayIstNoon(), note: "Opening balance", source: "OPENING", createdById: user.id,
         },
       });
@@ -84,6 +100,44 @@ export async function createParty(_prev: FormState, form: FormData): Promise<For
     return p;
   });
   redirect(`/parties/${party.id}`);
+}
+
+const PartyUpdate = PartyInput.omit({ opening: true, openingDirection: true });
+
+export async function updateParty(_prev: FormState, form: FormData): Promise<FormState> {
+  const ctx = await requireBusiness("party:write");
+  const { user, business } = ctx;
+  const party = await findParty(ctx, field(form, "partyId"));
+  if (!party) return { error: "Party not found" };
+  const r = PartyUpdate.safeParse(Object.fromEntries(Object.keys(PartyUpdate.shape).map((k) => [k, field(form, k)])));
+  if (!r.success) return { error: r.error.issues[0].message };
+  const d = r.data;
+  const data = {
+    name: d.name, type: d.type, phone: d.phone ? normalizeIndianMobile(d.phone) : null, email: d.email || null,
+    gstin: d.gstin || null, stateCode: d.gstin ? d.gstin.slice(0, 2) : d.stateCode || null, address: d.address || null,
+    creditDays: d.creditDays ? Number(d.creditDays) : null, language: d.language, source: d.source || null,
+    // Reps can't reassign parties; branch-tied members can't move them out of their branch.
+    ...(ctx.assignedOnly ? {} : { ownerId: await validOwner(business.id, field(form, "ownerId")) }),
+    ...(ctx.membership.branchId ? {} : { branchId: await validBranch(business.id, field(form, "branchId")) }),
+  };
+  await db.$transaction(async (tx) => {
+    await tx.party.update({ where: { id: party.id }, data });
+    await audit(tx, { businessId: business.id, actorId: user.id, action: "update", entity: "Party", entityId: party.id, data: { before: party, after: data } });
+  });
+  redirect(`/parties/${party.id}`);
+}
+
+/** Archived parties drop out of lists and reminders; their ledger stays intact. */
+export async function archiveParty(form: FormData): Promise<void> {
+  const ctx = await requireBusiness("party:write");
+  const party = await findParty(ctx, field(form, "partyId"));
+  if (!party) return;
+  const archive = field(form, "archive") === "1";
+  await db.$transaction(async (tx) => {
+    await tx.party.update({ where: { id: party.id }, data: { archivedAt: archive ? new Date() : null } });
+    await audit(tx, { businessId: ctx.business.id, actorId: ctx.user.id, action: archive ? "archive" : "restore", entity: "Party", entityId: party.id });
+  });
+  redirect(archive ? "/parties" : `/parties/${party.id}`);
 }
 
 const EntryInput = z.object({
@@ -97,7 +151,8 @@ const EntryInput = z.object({
 });
 
 export async function addEntry(_prev: FormState, form: FormData): Promise<FormState> {
-  const { user, business } = await requireBusiness("ledger:write");
+  const ctx = await requireBusiness("ledger:write");
+  const { user, business } = ctx;
   const r = EntryInput.safeParse(Object.fromEntries(Object.keys(EntryInput.shape).map((k) => [k, field(form, k)])));
   if (!r.success) return { error: r.error.issues[0].message };
   const d = r.data;
@@ -111,7 +166,7 @@ export async function addEntry(_prev: FormState, form: FormData): Promise<FormSt
     if (err) return { error: `${f.name}: ${err}` };
   }
 
-  const party = await db.party.findFirst({ where: { id: d.partyId, businessId: business.id } });
+  const party = await findParty(ctx, d.partyId);
   if (!party) return { error: "Party not found" };
 
   const date = istNoon(d.date);
@@ -123,7 +178,7 @@ export async function addEntry(_prev: FormState, form: FormData): Promise<FormSt
   const { entry, receipt } = await db.$transaction(async (tx) => {
     const e = await tx.ledgerEntry.create({
       data: {
-        businessId: business.id, partyId: party.id, direction: d.direction, amountPaise: BigInt(amount),
+        businessId: business.id, partyId: party.id, branchId: ctx.branchId ?? party.branchId, direction: d.direction, amountPaise: BigInt(amount),
         date, dueDate, note: d.note || null, createdById: user.id,
         paymentMode: d.direction === "GOT" ? d.paymentMode || null : null,
       },
@@ -160,11 +215,11 @@ export async function addEntry(_prev: FormState, form: FormData): Promise<FormSt
 type Tx = Parameters<Parameters<typeof db.$transaction>[0]>[0];
 
 /** Reserves the next receipt number and issues a receipt for a money-in entry. */
-async function issueReceipt(tx: Tx, businessId: string, e: { id: string; partyId: string; amountPaise: bigint; date: Date; paymentMode: string | null }) {
+async function issueReceipt(tx: Tx, businessId: string, e: { id: string; partyId: string; branchId: string | null; amountPaise: bigint; date: Date; paymentMode: string | null }) {
   const b = await tx.business.update({ where: { id: businessId }, data: { nextReceiptNo: { increment: 1 } } });
   return tx.receipt.create({
     data: {
-      businessId, partyId: e.partyId, entryId: e.id, number: `${b.receiptPrefix}${b.nextReceiptNo - 1}`,
+      businessId, partyId: e.partyId, branchId: e.branchId, entryId: e.id, number: `${b.receiptPrefix}${b.nextReceiptNo - 1}`,
       amountPaise: e.amountPaise, date: e.date, mode: e.paymentMode, shareToken: newShareToken(),
     },
   });
@@ -172,9 +227,10 @@ async function issueReceipt(tx: Tx, businessId: string, e: { id: string; partyId
 
 /** Entries are immutable: "deleting" posts an equal and opposite reversal entry. */
 export async function reverseEntry(form: FormData): Promise<void> {
-  const { user, business } = await requireBusiness("ledger:reverse");
+  const ctx = await requireBusiness("ledger:reverse");
+  const { user, business } = ctx;
   const id = field(form, "entryId");
-  const entry = await db.ledgerEntry.findFirst({ where: { id, businessId: business.id }, include: { reversedBy: true } });
+  const entry = await db.ledgerEntry.findFirst({ where: { id, businessId: business.id, party: partyWhere(ctx) }, include: { reversedBy: true } });
   if (!entry || entry.reversedBy || entry.reversalOfId || entry.source === "INVOICE") {
     throw new Error("This entry cannot be reversed.");
   }
@@ -183,7 +239,7 @@ export async function reverseEntry(form: FormData): Promise<void> {
       data: {
         businessId: business.id, partyId: entry.partyId, direction: entry.direction === "GAVE" ? "GOT" : "GAVE",
         amountPaise: entry.amountPaise, date: todayIstNoon(), note: `Reversal of entry dated ${entry.date.toISOString().slice(0, 10)}`,
-        source: "REVERSAL", reversalOfId: entry.id, createdById: user.id,
+        source: "REVERSAL", reversalOfId: entry.id, branchId: entry.branchId, createdById: user.id,
       },
     });
     await audit(tx, { businessId: business.id, actorId: user.id, action: "reverse", entity: "LedgerEntry", entityId: entry.id, data: { reversalId: rev.id } });
@@ -193,8 +249,9 @@ export async function reverseEntry(form: FormData): Promise<void> {
 
 /** Records a reminder the user sent from their own WhatsApp (click-to-chat, free). */
 export async function logReminder(partyId: string, body: string): Promise<void> {
-  const { user, business } = await requireBusiness("reminder:send");
-  const party = await db.party.findFirst({ where: { id: partyId, businessId: business.id } });
+  const ctx = await requireBusiness("reminder:send");
+  const { user, business } = ctx;
+  const party = await findParty(ctx, partyId);
   if (!party) return;
   await db.message.create({
     data: {

@@ -10,7 +10,7 @@ import { fmtDate } from "@/lib/format";
 
 type Line = {
   id: string; description: string; hsn: string | null; qtyMilli: number; unit: string;
-  ratePaise: bigint; taxRateBp: number; taxablePaise: bigint; totalPaise: bigint;
+  ratePaise: bigint; taxRateBp: number; discountBp: number; taxablePaise: bigint; totalPaise: bigint;
 };
 
 export type Doc = {
@@ -44,6 +44,7 @@ export async function DocumentView({ doc, business: b, party, payAmountPaise }: 
   const style = { "--doc-brand": b.brandColor } as CSSProperties;
   const title = isInvoice ? (b.gstin ? "Tax Invoice" : "Invoice") : "Quotation";
   const hasBank = b.bankAccountNo && b.bankIfsc;
+  const hasDiscount = doc.lines.some((l) => l.discountBp > 0);
 
   return (
     <article style={style} className={`relative overflow-hidden rounded-xl border border-line bg-card ${compact ? "p-4 text-xs" : "p-6 text-sm"} print:border-0 print:p-0`}>
@@ -88,7 +89,7 @@ export async function DocumentView({ doc, business: b, party, payAmountPaise }: 
           <thead className="text-left text-xs uppercase text-muted" style={modern ? { background: "color-mix(in srgb, var(--doc-brand) 10%, transparent)" } : undefined}>
             <tr className="border-b border-line">
               <th className="p-2">#</th><th className="p-2">Description</th><th className="p-2">HSN/SAC</th>
-              <th className="p-2 text-right">Qty</th><th className="p-2 text-right">Rate</th><th className="p-2 text-right">Taxable</th>
+              <th className="p-2 text-right">Qty</th><th className="p-2 text-right">Rate</th>{hasDiscount && <th className="p-2 text-right">Disc</th>}<th className="p-2 text-right">Taxable</th>
               <th className="p-2 text-right">GST</th><th className="p-2 text-right">Amount</th>
             </tr>
           </thead>
@@ -100,6 +101,7 @@ export async function DocumentView({ doc, business: b, party, payAmountPaise }: 
                 <td className={compact ? "px-2 py-1" : "p-2"}>{l.hsn ?? "—"}</td>
                 <td className={`${compact ? "px-2 py-1" : "p-2"} text-right tabular-nums`}>{l.qtyMilli / 1000} {l.unit}</td>
                 <td className={`${compact ? "px-2 py-1" : "p-2"} text-right tabular-nums`}>{n(l.ratePaise)}</td>
+                {hasDiscount && <td className={`${compact ? "px-2 py-1" : "p-2"} text-right`}>{l.discountBp ? `${l.discountBp / 100}%` : ""}</td>}
                 <td className={`${compact ? "px-2 py-1" : "p-2"} text-right tabular-nums`}>{n(l.taxablePaise)}</td>
                 <td className={`${compact ? "px-2 py-1" : "p-2"} text-right`}>{l.taxRateBp / 100}%</td>
                 <td className={`${compact ? "px-2 py-1" : "p-2"} text-right tabular-nums`}>{n(l.totalPaise)}</td>

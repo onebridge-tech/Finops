@@ -91,6 +91,14 @@ export default async function Settings() {
           {owner && <div className="border-t border-line pt-3"><RunRemindersButton /></div>}
         </Card>
         <Card className="h-fit space-y-2 text-sm lg:col-start-3">
+          <h2 className="font-semibold">Team & access</h2>
+          <ul className="space-y-1">
+            {can(role, "team:manage") && <li><Link href="/settings/team" className="font-medium text-brand underline">Team members & roles</Link></li>}
+            <li><Link href="/settings/branches" className="font-medium text-brand underline">Branches</Link></li>
+            <li><Link href="/settings/security" className="font-medium text-brand underline">App lock & signed-in devices</Link></li>
+          </ul>
+        </Card>
+        <Card className="h-fit space-y-2 text-sm lg:col-start-3">
           <h2 className="font-semibold">Your data</h2>
           <p className="text-muted">Import parties and items from Excel, export any list, download everything, or back up.</p>
           <Link href="/data" className="font-medium text-brand underline">Import & export</Link>

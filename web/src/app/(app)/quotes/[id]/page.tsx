@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { can, requireBusiness } from "@/lib/auth";
+import { can, docWhere, requireBusiness } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { appUrl, whatsappLink } from "@/lib/share";
 import { renderMessage } from "@/lib/messaging/templates";
@@ -15,8 +15,9 @@ import { quoteStatus } from "../status";
 
 export default async function QuotePage({ params }: PageProps<"/quotes/[id]">) {
   const { id } = await params;
-  const { business, role } = await requireBusiness();
-  const quote = await db.quote.findFirst({ where: { id, businessId: business.id }, include: { lines: true, party: true } });
+  const ctx = await requireBusiness();
+  const { business, role } = ctx;
+  const quote = await db.quote.findFirst({ where: { ...docWhere(ctx), id }, include: { lines: true, party: true } });
   if (!quote) notFound();
 
   const url = appUrl(`/q/${quote.shareToken}`);

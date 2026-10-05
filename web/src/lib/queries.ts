@@ -1,6 +1,8 @@
 import "server-only";
+import type { Prisma } from "@prisma/client";
 import { db } from "./db";
 import { ageing, balanceOf, openDues, overdueAmount } from "./ledger";
+import { partyWhere, type Ctx } from "./auth";
 
 /** Balance per party for a business, derived from entries (never stored). */
 export async function balancesByParty(businessId: string): Promise<Map<string, number>> {
@@ -17,44 +19,69 @@ export async function balancesByParty(businessId: string): Promise<Map<string, n
   return map;
 }
 
-export async function partiesWithBalance(businessId: string, q?: string) {
+/** Parties this member can see, with balances. */
+export async function partiesWithBalance(ctx: Ctx, opts: { q?: string; where?: Prisma.PartyWhereInput } = {}) {
+  const q = opts.q?.trim();
   const [parties, balances] = await Promise.all([
     db.party.findMany({
-      where: { businessId, archivedAt: null, ...(q ? { OR: [{ name: { contains: q } }, { phone: { contains: q } }] } : {}) },
+      where: {
+        AND: [
+          partyWhere(ctx),
+          { archivedAt: null },
+          opts.where ?? {},
+          q ? { OR: [{ name: { contains: q } }, { phone: { contains: q } }, { gstin: { contains: q.toUpperCase() } }] } : {},
+        ],
+      },
       orderBy: { name: "asc" },
     }),
-    balancesByParty(businessId),
+    balancesByParty(ctx.business.id),
   ]);
   return parties.map((p) => ({ ...p, balance: balances.get(p.id) ?? 0 }));
 }
 
+const startOfTodayIST = () => new Date(new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" }) + "T00:00:00+05:30");
+
+/** Entries this member's view covers: visible parties, and the active branch if one is picked. */
+function entryWhere(ctx: Ctx, partyIds: string[]): Prisma.LedgerEntryWhereInput {
+  return { businessId: ctx.business.id, partyId: { in: partyIds }, ...(ctx.branchId ? { branchId: ctx.branchId } : {}) };
+}
+
 // Phase 1: computes overdue in memory per receivable party. Move to SQL once
 // businesses exceed a few thousand active parties.
-export async function dashboard(businessId: string) {
-  const parties = await partiesWithBalance(businessId);
+export async function dashboard(ctx: Ctx) {
+  const parties = await partiesWithBalance(ctx);
+  const ids = parties.map((p) => p.id);
   const receivable = parties.filter((p) => p.balance > 0);
   const now = new Date();
-  const entries = await db.ledgerEntry.findMany({
-    where: { businessId, partyId: { in: receivable.map((p) => p.id) } },
-  });
-  const byParty = new Map<string, typeof entries>();
-  for (const e of entries) byParty.set(e.partyId, [...(byParty.get(e.partyId) ?? []), e]);
+  const entries = await db.ledgerEntry.findMany({ where: { businessId: ctx.business.id, partyId: { in: receivable.map((p) => p.id) } } });
+  const byParty = Map.groupBy(entries, (e) => e.partyId);
 
   const overdue = receivable
     .map((p) => ({ ...p, overdue: overdueAmount(byParty.get(p.id) ?? [], now) }))
     .filter((p) => p.overdue > 0)
     .sort((a, b) => b.overdue - a.overdue);
 
-  const startOfToday = new Date(new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" }) + "T00:00:00+05:30");
   // Today's real activity: excludes opening balances, reversals and entries that were reversed.
   const today = await db.ledgerEntry.findMany({
-    where: { businessId, createdAt: { gte: startOfToday }, source: { notIn: ["REVERSAL", "OPENING"] }, reversedBy: null },
-    select: { direction: true, amountPaise: true },
+    where: { ...entryWhere(ctx, ids), createdAt: { gte: startOfTodayIST() }, source: { notIn: ["REVERSAL", "OPENING"] }, reversedBy: null },
+    select: { direction: true, amountPaise: true, paymentMode: true, createdById: true, party: { select: { type: true } } },
   });
-  const todaySum = (d: string) => today.filter((t) => t.direction === d).reduce((s, t) => s + Number(t.amountPaise), 0);
+  const sum = (rows: typeof today) => rows.reduce((s, t) => s + Number(t.amountPaise), 0);
+  const collected = today.filter((t) => t.direction === "GOT" && t.paymentMode);
+
+  // Who did what today (IR-01 rep activity).
+  const byUser = Map.groupBy(today, (t) => t.createdById);
+  const members = await db.membership.findMany({ where: { businessId: ctx.business.id, userId: { in: [...byUser.keys()] } }, include: { user: true } });
+  const activity = [...byUser.entries()].map(([userId, rows]) => {
+    const m = members.find((x) => x.userId === userId);
+    return {
+      userId, name: m ? (m.user.name ?? `+${m.user.phone}`) : "Former member", role: m?.role ?? "",
+      entries: rows.length, gave: sum(rows.filter((r) => r.direction === "GAVE")), collected: sum(rows.filter((r) => r.direction === "GOT" && r.paymentMode)),
+    };
+  }).sort((a, b) => b.collected - a.collected);
 
   const recent = await db.ledgerEntry.findMany({
-    where: { businessId },
+    where: entryWhere(ctx, ids),
     orderBy: { createdAt: "desc" },
     take: 8,
     include: { party: { select: { name: true } } },
@@ -66,18 +93,20 @@ export async function dashboard(businessId: string) {
     overdueTotal: overdue.reduce((s, p) => s + p.overdue, 0),
     overdue: overdue.slice(0, 10),
     partyCount: parties.length,
-    todayGave: todaySum("GAVE"),
-    todayGot: todaySum("GOT"),
+    todayGave: sum(today.filter((t) => t.direction === "GAVE")),
+    todayGot: sum(collected),
+    cashToday: sum(collected.filter((t) => t.paymentMode === "CASH")),
+    upiToday: sum(collected.filter((t) => t.paymentMode === "UPI")),
+    activity,
     recent,
   };
 }
 
 /** Receivable parties with their open dues, for the collections screen (LG-04, CP-03). */
-export async function collections(businessId: string) {
-  const parties = (await partiesWithBalance(businessId)).filter((p) => p.balance > 0);
-  const entries = await db.ledgerEntry.findMany({ where: { businessId, partyId: { in: parties.map((p) => p.id) } } });
-  const byParty = new Map<string, typeof entries>();
-  for (const e of entries) byParty.set(e.partyId, [...(byParty.get(e.partyId) ?? []), e]);
+export async function collections(ctx: Ctx) {
+  const parties = (await partiesWithBalance(ctx)).filter((p) => p.balance > 0);
+  const entries = await db.ledgerEntry.findMany({ where: { businessId: ctx.business.id, partyId: { in: parties.map((p) => p.id) } } });
+  const byParty = Map.groupBy(entries, (e) => e.partyId);
   const now = new Date();
   return parties.map((p) => {
     const es = byParty.get(p.id) ?? [];
@@ -87,9 +116,9 @@ export async function collections(businessId: string) {
   });
 }
 
-export async function partyLedger(businessId: string, partyId: string) {
-  const party = await db.party.findFirst({ where: { id: partyId, businessId } });
+export async function partyLedger(ctx: Ctx, partyId: string) {
+  const party = await db.party.findFirst({ where: { ...partyWhere(ctx), id: partyId } });
   if (!party) return null;
-  const entries = await db.ledgerEntry.findMany({ where: { partyId, businessId }, orderBy: [{ date: "asc" }, { createdAt: "asc" }] });
+  const entries = await db.ledgerEntry.findMany({ where: { partyId, businessId: ctx.business.id }, orderBy: [{ date: "asc" }, { createdAt: "asc" }] });
   return { party, entries, balance: balanceOf(entries), overdue: overdueAmount(entries, new Date()) };
 }

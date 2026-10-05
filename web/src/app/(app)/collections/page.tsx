@@ -20,8 +20,9 @@ export default async function Collections({ searchParams }: PageProps<"/collecti
   const sp = await searchParams;
   const view = (VIEWS.find(([v]) => v === sp.view)?.[0] ?? "overdue") as (typeof VIEWS)[number][0];
   const bucket = AGEING_BUCKETS.includes(sp.bucket as AgeingBucket) ? (sp.bucket as AgeingBucket) : null;
-  const { business, role } = await requireBusiness();
-  const all = await collections(business.id);
+  const ctx = await requireBusiness();
+  const { business, role } = ctx;
+  const all = await collections(ctx);
   const today = new Date();
 
   const rows = all

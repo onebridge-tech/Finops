@@ -5,18 +5,18 @@ import { Balance, Card, EmptyState, Input, LinkButton, PageHeader } from "@/comp
 
 export const metadata = { title: "Parties" };
 
-const TYPE_LABEL: Record<string, string> = { CUSTOMER: "Customer", SUPPLIER: "Supplier", BOTH: "Customer & supplier" };
+const TYPE_LABEL: Record<string, string> = { CUSTOMER: "Customer", SUPPLIER: "Supplier", BOTH: "Customer & supplier", LEAD: "Lead" };
 
 export default async function Parties({ searchParams }: PageProps<"/parties">) {
-  const { business } = await requireBusiness();
+  const ctx = await requireBusiness();
   const q = String((await searchParams).q ?? "").trim();
-  const parties = await partiesWithBalance(business.id, q || undefined);
+  const parties = await partiesWithBalance(ctx, { q });
 
   return (
     <>
       <PageHeader title="Parties" sub={`${parties.length} ${q ? "matching" : "total"}`} action={<div className="flex gap-2"><LinkButton href="/data?tab=parties" variant="secondary">Import</LinkButton><LinkButton href="/parties/new">Add party</LinkButton></div>} />
       <form className="mb-4">
-        <Input name="q" defaultValue={q} placeholder="Search by name or phone" />
+        <Input name="q" defaultValue={q} placeholder="Search by name, phone or GSTIN" />
       </form>
       {parties.length === 0 ? (
         <EmptyState title={q ? "No parties match your search" : "No parties yet"}>

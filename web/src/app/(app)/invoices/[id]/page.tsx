@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { can, requireBusiness } from "@/lib/auth";
+import { can, docWhere, requireBusiness } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { appUrl, whatsappLink } from "@/lib/share";
 import { formatINR } from "@/lib/money";
@@ -14,8 +14,9 @@ import { CopyLink } from "../../parties/[id]/reminder";
 
 export default async function InvoicePage({ params }: PageProps<"/invoices/[id]">) {
   const { id } = await params;
-  const { business, role } = await requireBusiness();
-  const invoice = await db.invoice.findFirst({ where: { id, businessId: business.id }, include: { lines: true, party: true } });
+  const ctx = await requireBusiness();
+  const { business, role } = ctx;
+  const invoice = await db.invoice.findFirst({ where: { ...docWhere(ctx), id }, include: { lines: true, party: true } });
   if (!invoice) notFound();
   const quote = invoice.quoteId ? await db.quote.findUnique({ where: { id: invoice.quoteId }, select: { id: true, number: true } }) : null;
 

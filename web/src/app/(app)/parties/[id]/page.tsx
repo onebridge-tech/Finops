@@ -24,8 +24,9 @@ const STATUS_TONE: Record<string, string> = { DELIVERED: "text-got", READ: "text
 
 export default async function PartyPage({ params }: PageProps<"/parties/[id]">) {
   const { id } = await params;
-  const { business, role } = await requireBusiness();
-  const data = await partyLedger(business.id, id);
+  const ctx = await requireBusiness();
+  const { business, role } = ctx;
+  const data = await partyLedger(ctx, id);
   if (!data) notFound();
   const { party, entries, balance, overdue } = data;
 
@@ -55,6 +56,7 @@ export default async function PartyPage({ params }: PageProps<"/parties/[id]">) 
         sub={[party.phone && `+${party.phone}`, party.gstin, party.creditDays && `${party.creditDays} days credit`].filter(Boolean).join(" · ") || undefined}
         action={
           <div className="flex flex-wrap gap-2">
+            {can(role, "party:write") && <Link href={`/parties/${party.id}/edit`} className="rounded-lg border border-line bg-card px-3.5 py-2 text-sm font-medium hover:bg-bg">Edit</Link>}
             <CopyLink url={statementUrl} label="Copy statement link" />
             {balance > 0 && can(role, "reminder:send") && <ReminderButton partyId={party.id} href={wa} text={reminder} />}
             {can(role, "invoice:write") && (

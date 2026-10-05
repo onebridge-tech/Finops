@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { db } from "@/lib/db";
-import { requireBusiness } from "@/lib/auth";
+import { docWhere, findParty, requireBusiness } from "@/lib/auth";
 import { audit } from "@/lib/audit";
 import { newShareToken } from "@/lib/session";
 import { parseRupees } from "@/lib/money";
@@ -67,7 +67,8 @@ async function attachImage(form: FormData, businessId: string, userId: string): 
 }
 
 export async function createItem(_prev: FormState, form: FormData): Promise<FormState> {
-  const { user, business } = await requireBusiness("item:write");
+  const ctx = await requireBusiness("item:write");
+  const { user, business } = ctx;
   const p = await parseItem(form, business.id);
   if ("error" in p) return { error: p.error };
   const img = await attachImage(form, business.id, user.id);
@@ -81,7 +82,8 @@ export async function createItem(_prev: FormState, form: FormData): Promise<Form
 }
 
 export async function updateItem(_prev: FormState, form: FormData): Promise<FormState> {
-  const { user, business } = await requireBusiness("item:write");
+  const ctx = await requireBusiness("item:write");
+  const { user, business } = ctx;
   const item = await db.item.findFirst({ where: { id: field(form, "itemId"), businessId: business.id } });
   if (!item) return { error: "Item not found" };
   const p = await parseItem(form, business.id);
@@ -99,7 +101,8 @@ export async function updateItem(_prev: FormState, form: FormData): Promise<Form
 }
 
 export async function archiveItem(form: FormData): Promise<void> {
-  const { user, business } = await requireBusiness("item:write");
+  const ctx = await requireBusiness("item:write");
+  const { user, business } = ctx;
   const item = await db.item.findFirst({ where: { id: field(form, "itemId"), businessId: business.id } });
   if (!item) return;
   const archive = field(form, "archive") === "1";
@@ -127,6 +130,7 @@ const DocInput = z.object({
         unit: z.string().trim().max(12).default("pcs"),
         qty: z.string(),
         rate: z.string(),
+        discount: z.string().optional(), // percent, e.g. "10" or "2.5"
         taxRateBp: z.number().refine((v) => GST_RATES_BP.includes(v), "Invalid GST rate"),
       }),
     )
@@ -134,9 +138,9 @@ const DocInput = z.object({
 });
 
 type DocInputT = z.infer<typeof DocInput>;
-type ParsedLine = DocInputT["lines"][number] & { qtyMilli: number; ratePaise: number };
+type ParsedLine = DocInputT["lines"][number] & { qtyMilli: number; ratePaise: number; discountBp: number };
 
-function parseDoc(form: FormData): { error: string } | { doc: DocInputT; lines: ParsedLine[] } {
+function parseDoc(form: FormData, maxDiscountBp: number | null): { error: string } | { doc: DocInputT; lines: ParsedLine[] } {
   let raw: unknown;
   try {
     raw = JSON.parse(field(form, "payload"));
@@ -151,12 +155,16 @@ function parseDoc(form: FormData): { error: string } | { doc: DocInputT; lines: 
     const rate = parseRupees(l.rate);
     if (!Number.isFinite(qtyMilli) || qtyMilli <= 0) return { error: `Line ${i + 1}: quantity must be more than zero` };
     if (rate === null) return { error: `Line ${i + 1}: rate must be an amount` };
-    lines.push({ ...l, qtyMilli, ratePaise: rate });
+    const d = (l.discount ?? "").trim();
+    if (d && !/^\d{1,2}(\.\d{1,2})?$|^100$/.test(d)) return { error: `Line ${i + 1}: discount must be a percentage like 5 or 2.5` };
+    const discountBp = d ? Math.round(Number(d) * 100) : 0;
+    if (maxDiscountBp !== null && discountBp > maxDiscountBp) return { error: `Line ${i + 1}: your discount limit is ${maxDiscountBp / 100}%` };
+    lines.push({ ...l, qtyMilli, ratePaise: rate, discountBp });
   }
   return { doc: r.data, lines };
 }
 
-type LineRow = { itemId: string | null; description: string; hsn: string | null; qtyMilli: number; unit: string; ratePaise: number; taxRateBp: number };
+type LineRow = { itemId: string | null; description: string; hsn: string | null; qtyMilli: number; unit: string; ratePaise: number; taxRateBp: number; discountBp: number };
 
 /** Totals and per-line rows ready to store on an invoice or quotation. */
 function priceLines(lines: LineRow[], interState: boolean) {
@@ -169,7 +177,7 @@ function priceLines(lines: LineRow[], interState: boolean) {
     },
     rows: lines.map((l, i) => ({
       itemId: l.itemId, description: l.description, hsn: l.hsn, qtyMilli: l.qtyMilli, unit: l.unit,
-      ratePaise: BigInt(l.ratePaise), taxRateBp: l.taxRateBp,
+      ratePaise: BigInt(l.ratePaise), taxRateBp: l.taxRateBp, discountBp: l.discountBp,
       taxablePaise: BigInt(totals.lines[i].taxable), cgstPaise: BigInt(totals.lines[i].cgst),
       sgstPaise: BigInt(totals.lines[i].sgst), igstPaise: BigInt(totals.lines[i].igst), totalPaise: BigInt(totals.lines[i].total),
     })),
@@ -180,28 +188,28 @@ function priceLines(lines: LineRow[], interState: boolean) {
 const istNoon = (d: string) => new Date(`${d}T12:00:00+05:30`);
 const endOfDay = (d: string) => new Date(`${d}T23:59:59+05:30`);
 const toRows = (lines: ParsedLine[]): LineRow[] =>
-  lines.map((l) => ({ itemId: l.itemId || null, description: l.description, hsn: l.hsn || null, qtyMilli: l.qtyMilli, unit: l.unit, ratePaise: l.ratePaise, taxRateBp: l.taxRateBp }));
+  lines.map((l) => ({ itemId: l.itemId || null, description: l.description, hsn: l.hsn || null, qtyMilli: l.qtyMilli, unit: l.unit, ratePaise: l.ratePaise, taxRateBp: l.taxRateBp, discountBp: l.discountBp }));
 
 type Tx = Parameters<Parameters<typeof db.$transaction>[0]>[0];
 
 /** Creates an invoice and posts it to the party ledger (PRD flow F1). */
 async function issueInvoice(
   tx: Tx,
-  o: { businessId: string; userId: string; partyId: string; date: Date; dueDate: Date | null; placeOfSupply: string; notes: string | null; lines: LineRow[]; quoteId?: string },
+  o: { businessId: string; userId: string; partyId: string; branchId: string | null; date: Date; dueDate: Date | null; placeOfSupply: string; notes: string | null; lines: LineRow[]; quoteId?: string },
 ) {
   const business = await tx.business.update({ where: { id: o.businessId }, data: { nextInvoiceNo: { increment: 1 } } });
   const number = `${business.invoicePrefix}${business.nextInvoiceNo - 1}`;
   const priced = priceLines(o.lines, isInterState(business.stateCode, o.placeOfSupply));
   const inv = await tx.invoice.create({
     data: {
-      businessId: o.businessId, partyId: o.partyId, number, date: o.date, dueDate: o.dueDate, placeOfSupply: o.placeOfSupply,
+      businessId: o.businessId, partyId: o.partyId, branchId: o.branchId, number, date: o.date, dueDate: o.dueDate, placeOfSupply: o.placeOfSupply,
       ...priced.header, notes: o.notes, shareToken: newShareToken(), createdById: o.userId, quoteId: o.quoteId ?? null,
       lines: { create: priced.rows },
     },
   });
   await tx.ledgerEntry.create({
     data: {
-      businessId: o.businessId, partyId: o.partyId, direction: "GAVE", amountPaise: priced.header.totalPaise, date: o.date, dueDate: o.dueDate,
+      businessId: o.businessId, partyId: o.partyId, branchId: o.branchId, direction: "GAVE", amountPaise: priced.header.totalPaise, date: o.date, dueDate: o.dueDate,
       note: `Invoice ${number}`, source: "INVOICE", invoiceId: inv.id, createdById: o.userId,
     },
   });
@@ -210,15 +218,16 @@ async function issueInvoice(
 }
 
 export async function createInvoice(_prev: FormState, form: FormData): Promise<FormState> {
-  const { user, business } = await requireBusiness("invoice:write");
-  const p = parseDoc(form);
+  const ctx = await requireBusiness("invoice:write");
+  const { user, business } = ctx;
+  const p = parseDoc(form, ctx.membership.maxDiscountBp);
   if ("error" in p) return { error: p.error };
-  const party = await db.party.findFirst({ where: { id: p.doc.partyId, businessId: business.id } });
+  const party = await findParty(ctx, p.doc.partyId);
   if (!party) return { error: "Customer not found" };
   const date = istNoon(p.doc.date);
   const dueDate = p.doc.dueDate ? endOfDay(p.doc.dueDate) : party.creditDays ? new Date(date.getTime() + party.creditDays * 86400_000) : null;
   const invoice = await db.$transaction((tx) =>
-    issueInvoice(tx, { businessId: business.id, userId: user.id, partyId: party.id, date, dueDate, placeOfSupply: p.doc.placeOfSupply, notes: p.doc.notes || null, lines: toRows(p.lines) }),
+    issueInvoice(tx, { businessId: business.id, userId: user.id, partyId: party.id, branchId: ctx.branchId ?? party.branchId, date, dueDate, placeOfSupply: p.doc.placeOfSupply, notes: p.doc.notes || null, lines: toRows(p.lines) }),
   );
   redirect(`/invoices/${invoice.id}`);
 }
@@ -228,10 +237,11 @@ export async function createInvoice(_prev: FormState, form: FormData): Promise<F
  * before the invoice is reported in GSTR-1; after that, issue a credit note.
  */
 export async function cancelInvoice(_prev: FormState, form: FormData): Promise<FormState> {
-  const { user, business } = await requireBusiness("invoice:cancel");
+  const ctx = await requireBusiness("invoice:cancel");
+  const { user, business } = ctx;
   const reason = field(form, "reason").trim();
   if (reason.length < 3) return { error: "Give a reason for cancelling" };
-  const invoice = await db.invoice.findFirst({ where: { id: field(form, "invoiceId"), businessId: business.id } });
+  const invoice = await db.invoice.findFirst({ where: { ...docWhere(ctx), id: field(form, "invoiceId") } });
   if (!invoice || invoice.status === "CANCELLED") return { error: "Invoice not found or already cancelled" };
   const posted = await db.ledgerEntry.findFirst({ where: { invoiceId: invoice.id, source: "INVOICE" }, include: { reversedBy: true } });
   await db.$transaction(async (tx) => {
@@ -239,7 +249,7 @@ export async function cancelInvoice(_prev: FormState, form: FormData): Promise<F
     if (posted && !posted.reversedBy) {
       await tx.ledgerEntry.create({
         data: {
-          businessId: business.id, partyId: invoice.partyId, direction: "GOT", amountPaise: posted.amountPaise,
+          businessId: business.id, partyId: invoice.partyId, branchId: invoice.branchId, direction: "GOT", amountPaise: posted.amountPaise,
           date: new Date(`${new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" })}T12:00:00+05:30`),
           note: `Invoice ${invoice.number} cancelled`, source: "REVERSAL", reversalOfId: posted.id, invoiceId: invoice.id, createdById: user.id,
         },
@@ -254,10 +264,11 @@ export async function cancelInvoice(_prev: FormState, form: FormData): Promise<F
 // ── Quotations (BD-01) ───────────────────────────────────────────────────────
 
 export async function createQuote(_prev: FormState, form: FormData): Promise<FormState> {
-  const { user, business } = await requireBusiness("invoice:write");
-  const p = parseDoc(form);
+  const ctx = await requireBusiness("invoice:write");
+  const { user, business } = ctx;
+  const p = parseDoc(form, ctx.membership.maxDiscountBp);
   if ("error" in p) return { error: p.error };
-  const party = await db.party.findFirst({ where: { id: p.doc.partyId, businessId: business.id } });
+  const party = await findParty(ctx, p.doc.partyId);
   if (!party) return { error: "Customer not found" };
   const quote = await db.$transaction(async (tx) => {
     const b = await tx.business.update({ where: { id: business.id }, data: { nextQuoteNo: { increment: 1 } } });
@@ -265,7 +276,7 @@ export async function createQuote(_prev: FormState, form: FormData): Promise<For
     const priced = priceLines(toRows(p.lines), isInterState(business.stateCode, p.doc.placeOfSupply));
     const q = await tx.quote.create({
       data: {
-        businessId: business.id, partyId: party.id, number, date: istNoon(p.doc.date),
+        businessId: business.id, partyId: party.id, branchId: ctx.branchId ?? party.branchId, number, date: istNoon(p.doc.date),
         validUntil: p.doc.dueDate ? endOfDay(p.doc.dueDate) : null, placeOfSupply: p.doc.placeOfSupply,
         ...priced.header, notes: p.doc.notes || null, shareToken: newShareToken(), createdById: user.id,
         lines: { create: priced.rows },
@@ -279,17 +290,18 @@ export async function createQuote(_prev: FormState, form: FormData): Promise<For
 
 /** One tap: the quotation becomes an invoice dated today with the same lines. */
 export async function convertQuote(form: FormData): Promise<void> {
-  const { user, business } = await requireBusiness("invoice:write");
-  const quote = await db.quote.findFirst({ where: { id: field(form, "quoteId"), businessId: business.id }, include: { lines: true, party: true } });
+  const ctx = await requireBusiness("invoice:write");
+  const { user, business } = ctx;
+  const quote = await db.quote.findFirst({ where: { ...docWhere(ctx), id: field(form, "quoteId") }, include: { lines: true, party: true } });
   if (!quote || quote.status === "CONVERTED" || quote.status === "DECLINED") throw new Error("This quotation can't be converted.");
   const today = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" });
   const date = istNoon(today);
   const dueDate = quote.party.creditDays ? new Date(date.getTime() + quote.party.creditDays * 86400_000) : null;
   const invoice = await db.$transaction(async (tx) => {
     const inv = await issueInvoice(tx, {
-      businessId: business.id, userId: user.id, partyId: quote.partyId, date, dueDate, placeOfSupply: quote.placeOfSupply,
+      businessId: business.id, userId: user.id, partyId: quote.partyId, branchId: quote.branchId, date, dueDate, placeOfSupply: quote.placeOfSupply,
       notes: quote.notes, quoteId: quote.id,
-      lines: quote.lines.map((l) => ({ itemId: l.itemId, description: l.description, hsn: l.hsn, qtyMilli: l.qtyMilli, unit: l.unit, ratePaise: Number(l.ratePaise), taxRateBp: l.taxRateBp })),
+      lines: quote.lines.map((l) => ({ itemId: l.itemId, description: l.description, hsn: l.hsn, qtyMilli: l.qtyMilli, unit: l.unit, ratePaise: Number(l.ratePaise), taxRateBp: l.taxRateBp, discountBp: l.discountBp })),
     });
     await tx.quote.update({ where: { id: quote.id }, data: { status: "CONVERTED", convertedInvoiceId: inv.id } });
     return inv;
@@ -298,10 +310,11 @@ export async function convertQuote(form: FormData): Promise<void> {
 }
 
 export async function setQuoteStatus(form: FormData): Promise<void> {
-  const { user, business } = await requireBusiness("invoice:write");
+  const ctx = await requireBusiness("invoice:write");
+  const { user, business } = ctx;
   const status = field(form, "status");
   if (!["OPEN", "ACCEPTED", "DECLINED"].includes(status)) return;
-  const quote = await db.quote.findFirst({ where: { id: field(form, "quoteId"), businessId: business.id } });
+  const quote = await db.quote.findFirst({ where: { ...docWhere(ctx), id: field(form, "quoteId") } });
   if (!quote || quote.status === "CONVERTED") return;
   await db.$transaction(async (tx) => {
     await tx.quote.update({ where: { id: quote.id }, data: { status, respondedAt: status === "OPEN" ? null : new Date() } });
@@ -329,14 +342,15 @@ export async function respondToQuote(_prev: FormState, form: FormData): Promise<
 // ── Sharing (BD-05) ──────────────────────────────────────────────────────────
 
 export async function sendDocument(_prev: FormState, form: FormData): Promise<FormState> {
-  const { user, business } = await requireBusiness("reminder:send");
+  const ctx = await requireBusiness("reminder:send");
+  const { user, business } = ctx;
   const channel = field(form, "channel") as Channel;
   if (!CHANNELS.includes(channel)) return { error: "Choose how to send" };
   const id = field(form, "id");
   const isQuote = field(form, "kind") === "QUOTE";
   const doc = isQuote
-    ? await db.quote.findFirst({ where: { id, businessId: business.id }, include: { party: true } })
-    : await db.invoice.findFirst({ where: { id, businessId: business.id }, include: { party: true } });
+    ? await db.quote.findFirst({ where: { ...docWhere(ctx), id }, include: { party: true } })
+    : await db.invoice.findFirst({ where: { ...docWhere(ctx), id }, include: { party: true } });
   if (!doc) return { error: "Document not found" };
   if (doc.status === "CANCELLED") return { error: "This invoice is cancelled" };
   const balancePaise = balanceOf(await db.ledgerEntry.findMany({ where: { partyId: doc.partyId } }));

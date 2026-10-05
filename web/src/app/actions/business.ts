@@ -6,7 +6,7 @@ import { z } from "zod";
 import { db } from "@/lib/db";
 import { requireBusiness, requireUser } from "@/lib/auth";
 import { audit } from "@/lib/audit";
-import { writeSession } from "@/lib/session";
+import { updateSession } from "@/lib/session";
 import { isValidGstin, normalizeGstin, STATES } from "@/lib/gstin";
 import { isValidUpiId } from "@/lib/share";
 import { WELCOME_CREDITS } from "@/lib/credits";
@@ -59,7 +59,7 @@ export async function createBusiness(_prev: FormState, form: FormData): Promise<
     await audit(tx, { businessId: b.id, actorId: user.id, action: "create", entity: "Business", entityId: b.id, data: p.data });
     return b;
   });
-  await writeSession({ uid: session.uid, bid: business.id });
+  await updateSession(session.sid, { businessId: business.id, branchId: null });
   redirect("/dashboard");
 }
 

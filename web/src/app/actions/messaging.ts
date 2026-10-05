@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { db } from "@/lib/db";
-import { requireBusiness } from "@/lib/auth";
+import { findParty, partyWhere, requireBusiness } from "@/lib/auth";
 import { audit } from "@/lib/audit";
 import { balanceOf } from "@/lib/ledger";
 import { appUrl } from "@/lib/share";
@@ -21,11 +21,12 @@ const channelOf = (v: string): Channel | null => (CHANNELS.includes(v as Channel
 
 /** One-tap reminder or statement share through the WhatsApp API, SMS or email (CP-01). */
 export async function sendPartyMessage(_prev: MessageState, form: FormData): Promise<MessageState> {
-  const { user, business } = await requireBusiness("reminder:send");
+  const ctx = await requireBusiness("reminder:send");
+  const { user, business } = ctx;
   const channel = channelOf(field(form, "channel"));
   const kind = field(form, "kind") === "STATEMENT" ? "STATEMENT" : "REMINDER";
   if (!channel) return { error: "Choose how to send" };
-  const party = await db.party.findFirst({ where: { id: field(form, "partyId"), businessId: business.id } });
+  const party = await findParty(ctx, field(form, "partyId"));
   if (!party) return { error: "Party not found" };
   const balance = balanceOf(await db.ledgerEntry.findMany({ where: { partyId: party.id } }));
   if (kind === "REMINDER" && balance <= 0) return { error: "Nothing is due from this party" };
@@ -40,14 +41,15 @@ export async function sendPartyMessage(_prev: MessageState, form: FormData): Pro
 
 /** Reminders to many parties at once (CP-03). */
 export async function sendBulkReminders(_prev: MessageState, form: FormData): Promise<MessageState> {
-  const { user, business } = await requireBusiness("reminder:send");
+  const ctx = await requireBusiness("reminder:send");
+  const { user, business } = ctx;
   const channel = channelOf(field(form, "channel"));
   if (!channel) return { error: "Choose how to send" };
   const ids = form.getAll("partyId").map(String);
   if (ids.length === 0) return { error: "Select at least one party" };
   if (ids.length > 500) return { error: "Send to at most 500 parties at a time" };
 
-  const parties = await db.party.findMany({ where: { id: { in: ids }, businessId: business.id } });
+  const parties = await db.party.findMany({ where: { ...partyWhere(ctx), id: { in: ids } } });
   let sent = 0, skipped = 0, failed = 0;
   for (const party of parties) {
     const balance = balanceOf(await db.ledgerEntry.findMany({ where: { partyId: party.id } }));
@@ -64,8 +66,9 @@ export async function sendBulkReminders(_prev: MessageState, form: FormData): Pr
 
 /** The business records that a party agreed to messages, or relays an opt-out/opt-in request. */
 export async function updateConsent(form: FormData): Promise<void> {
-  const { user, business } = await requireBusiness("party:write");
-  const party = await db.party.findFirst({ where: { id: field(form, "partyId"), businessId: business.id } });
+  const ctx = await requireBusiness("party:write");
+  const { user } = ctx;
+  const party = await findParty(ctx, field(form, "partyId"));
   if (!party) return;
   const action = field(form, "action");
   const channel = field(form, "channel") === "ALL" ? "ALL" : channelOf(field(form, "channel"));
@@ -77,8 +80,9 @@ export async function updateConsent(form: FormData): Promise<void> {
 
 /** A disputed account gets no automatic reminders until resolved. */
 export async function setDisputed(form: FormData): Promise<void> {
-  const { user, business } = await requireBusiness("party:write");
-  const party = await db.party.findFirst({ where: { id: field(form, "partyId"), businessId: business.id } });
+  const ctx = await requireBusiness("party:write");
+  const { user, business } = ctx;
+  const party = await findParty(ctx, field(form, "partyId"));
   if (!party) return;
   const disputed = field(form, "disputed") === "1";
   await db.$transaction(async (tx) => {
@@ -105,8 +109,9 @@ function parseRule(form: FormData) {
 }
 
 export async function updatePartyReminders(_prev: MessageState, form: FormData): Promise<MessageState> {
-  const { user, business } = await requireBusiness("party:write");
-  const party = await db.party.findFirst({ where: { id: field(form, "partyId"), businessId: business.id } });
+  const ctx = await requireBusiness("party:write");
+  const { user, business } = ctx;
+  const party = await findParty(ctx, field(form, "partyId"));
   if (!party) return { error: "Party not found" };
   const mode = field(form, "mode");
   if (!["DEFAULT", "CUSTOM", "OFF"].includes(mode)) return { error: "Choose a reminder setting" };
@@ -124,7 +129,8 @@ export async function updatePartyReminders(_prev: MessageState, form: FormData):
 }
 
 export async function updateMessagingSettings(_prev: MessageState, form: FormData): Promise<MessageState> {
-  const { user, business } = await requireBusiness("settings:write");
+  const ctx = await requireBusiness("settings:write");
+  const { user, business } = ctx;
   const r = parseRule(form);
   if (!r.success) return { error: r.error.issues[0].message };
   const data = {
@@ -142,7 +148,8 @@ export async function updateMessagingSettings(_prev: MessageState, form: FormDat
 }
 
 export async function runRemindersNow(): Promise<MessageState> {
-  const { business } = await requireBusiness("settings:write");
+  const ctx = await requireBusiness("settings:write");
+  const { business } = ctx;
   const s = await runAutoReminders({ businessId: business.id, ignoreHours: true });
   revalidatePath("/settings");
   return { ok: true, info: `Checked ${s.checked} parties · sent ${s.sent} · skipped ${s.skipped} · failed ${s.failed}` };
@@ -153,7 +160,8 @@ export async function runRemindersNow(): Promise<MessageState> {
  * app runs in test mode and adds the pack straight away, marked as a test top-up.
  */
 export async function buyCredits(_prev: MessageState, form: FormData): Promise<MessageState> {
-  const { user, business } = await requireBusiness("settings:write");
+  const ctx = await requireBusiness("settings:write");
+  const { user, business } = ctx;
   const pack = CREDIT_PACKS.find((p) => p.id === field(form, "pack"));
   if (!pack) return { error: "Choose a credit pack" };
   if (process.env.PAYMENT_PROVIDER) return { error: "Online payment for credits is not wired up yet." };

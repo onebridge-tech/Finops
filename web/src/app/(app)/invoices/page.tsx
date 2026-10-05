@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { requireBusiness } from "@/lib/auth";
+import { docWhere, requireBusiness } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { formatINR } from "@/lib/money";
 import { Card, EmptyState, LinkButton, PageHeader, fmtDate } from "@/components/ui";
@@ -7,9 +7,9 @@ import { Card, EmptyState, LinkButton, PageHeader, fmtDate } from "@/components/
 export const metadata = { title: "Invoices" };
 
 export default async function Invoices() {
-  const { business } = await requireBusiness();
+  const ctx = await requireBusiness();
   const invoices = await db.invoice.findMany({
-    where: { businessId: business.id },
+    where: docWhere(ctx),
     orderBy: { createdAt: "desc" },
     take: 100,
     include: { party: { select: { name: true } } },

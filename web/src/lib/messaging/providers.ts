@@ -8,10 +8,10 @@ import type { MessageKind } from "./templates";
 // message is stored and marked delivered so every flow can be exercised end to end.
 //
 //   WHATSAPP_PROVIDER=meta    WhatsApp Cloud API   (WHATSAPP_TOKEN, WHATSAPP_PHONE_NUMBER_ID, WHATSAPP_TEMPLATE_PREFIX)
-//   SMS_PROVIDER=msg91        MSG91 Flow API (DLT) (MSG91_AUTH_KEY, MSG91_TEMPLATE_<KIND>)
+//   SMS_PROVIDER=msg91        MSG91 Flow API (DLT) (MSG91_AUTH_KEY, MSG91_TEMPLATE_<KIND>, MSG91_TEMPLATE_OTP for login codes)
 //   EMAIL_PROVIDER=resend     Resend               (RESEND_API_KEY, EMAIL_FROM)
 
-export type Outbound = { channel: Channel; to: string; body: string; subject: string; kind: MessageKind; lang: string; params: string[] };
+export type Outbound = { channel: Channel; to: string; body: string; subject: string; kind: MessageKind | "OTP"; lang: string; params: string[] };
 export type SendResult =
   | { ok: true; provider: string; id: string; status: "SENT" | "DELIVERED" }
   | { ok: false; provider: string; error: string };

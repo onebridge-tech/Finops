@@ -5,6 +5,7 @@ export type LineInput = {
   qtyMilli: number; // quantity × 1000
   ratePaise: Paise;
   taxRateBp: number; // 1800 = 18%
+  discountBp?: number; // line discount, e.g. 1000 = 10% off the gross amount
 };
 
 export type LineTotals = { taxable: Paise; cgst: Paise; sgst: Paise; igst: Paise; total: Paise };
@@ -19,7 +20,8 @@ export const GST_RATES_BP = [0, 25, 300, 500, 1200, 1800, 2800];
  * supplies use IGST. The grand total is rounded to the nearest rupee.
  */
 export function computeLine(line: LineInput, interState: boolean): LineTotals {
-  const taxable = roundHalfUp((line.qtyMilli * line.ratePaise) / 1000);
+  // Discount is applied before tax (GST is charged on the discounted value).
+  const taxable = roundHalfUp((line.qtyMilli * line.ratePaise * (10000 - (line.discountBp ?? 0))) / 10_000_000);
   if (interState) {
     const igst = roundHalfUp((taxable * line.taxRateBp) / 10000);
     return { taxable, cgst: 0, sgst: 0, igst, total: taxable + igst };

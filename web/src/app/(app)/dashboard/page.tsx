@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { requireBusiness } from "@/lib/auth";
+import { can, requireBusiness } from "@/lib/auth";
 import { dashboard } from "@/lib/queries";
 import { formatINR } from "@/lib/money";
 import { Card, EmptyState, LinkButton, PageHeader, fmtDate } from "@/components/ui";
@@ -7,8 +7,9 @@ import { Card, EmptyState, LinkButton, PageHeader, fmtDate } from "@/components/
 export const metadata = { title: "Home" };
 
 export default async function Dashboard() {
-  const { business } = await requireBusiness();
-  const d = await dashboard(business.id);
+  const ctx = await requireBusiness();
+  const { business, role } = ctx;
+  const d = await dashboard(ctx);
 
   return (
     <>
@@ -17,8 +18,8 @@ export default async function Dashboard() {
         sub={new Date().toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "long", timeZone: "Asia/Kolkata" })}
         action={
           <div className="flex gap-2">
-            <LinkButton href="/parties/new" variant="secondary">Add party</LinkButton>
-            <LinkButton href="/invoices/new">New invoice</LinkButton>
+            {can(role, "party:write") && <LinkButton href="/parties/new" variant="secondary">Add party</LinkButton>}
+            {can(role, "invoice:write") && <LinkButton href="/invoices/new">New invoice</LinkButton>}
           </div>
         }
       />

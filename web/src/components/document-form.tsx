@@ -11,10 +11,10 @@ import { STATES } from "@/lib/gstin";
 
 type PartyOpt = { id: string; name: string; stateCode: string; creditDays: number | null };
 type ItemOpt = { id: string; name: string; hsn: string; unit: string; ratePaise: number; taxRateBp: number };
-type Line = { key: number; itemId: string; description: string; hsn: string; unit: string; qty: string; rate: string; taxRateBp: number };
+type Line = { key: number; itemId: string; description: string; hsn: string; unit: string; qty: string; rate: string; discount: string; taxRateBp: number };
 
 let nextKey = 1;
-const blank = (): Line => ({ key: nextKey++, itemId: "", description: "", hsn: "", unit: "pcs", qty: "1", rate: "", taxRateBp: 1800 });
+const blank = (): Line => ({ key: nextKey++, itemId: "", description: "", hsn: "", unit: "pcs", qty: "1", rate: "", discount: "", taxRateBp: 1800 });
 
 /** Line-item editor shared by GST invoices and quotations. */
 export function DocumentForm({ kind, parties, items, businessState, today, preselect }: { kind: "INVOICE" | "QUOTE"; parties: PartyOpt[]; items: ItemOpt[]; businessState: string; today: string; preselect: string }) {
@@ -37,13 +37,14 @@ export function DocumentForm({ kind, parties, items, businessState, today, prese
       qtyMilli: Math.round((Number(l.qty) || 0) * 1000),
       ratePaise: parseRupees(l.rate) ?? 0,
       taxRateBp: l.taxRateBp,
+      discountBp: Math.round((Number(l.discount) || 0) * 100),
     }));
     return computeInvoice(valid, interState);
   }, [lines, interState]);
 
   const payload = JSON.stringify({
     partyId, date, dueDate, placeOfSupply: pos, notes,
-    lines: lines.map(({ itemId, description, hsn, unit, qty, rate, taxRateBp }) => ({ itemId: itemId || undefined, description, hsn, unit, qty, rate, taxRateBp })),
+    lines: lines.map(({ itemId, description, hsn, unit, qty, rate, discount, taxRateBp }) => ({ itemId: itemId || undefined, description, hsn, unit, qty, rate, discount, taxRateBp })),
   });
 
   return (
@@ -88,9 +89,10 @@ export function DocumentForm({ kind, parties, items, businessState, today, prese
                 )}
                 <input className={inputClass} placeholder="Description" value={l.description} onChange={(e) => update(l.key, { description: e.target.value })} required />
               </div>
-              <div className="sm:col-span-2"><label className="text-xs text-muted">HSN/SAC</label><input className={inputClass} value={l.hsn} onChange={(e) => update(l.key, { hsn: e.target.value })} /></div>
+              <div className="sm:col-span-1"><label className="text-xs text-muted">HSN/SAC</label><input className={inputClass} value={l.hsn} onChange={(e) => update(l.key, { hsn: e.target.value })} /></div>
               <div className="sm:col-span-1"><label className="text-xs text-muted">Qty</label><input className={inputClass} inputMode="decimal" value={l.qty} onChange={(e) => update(l.key, { qty: e.target.value })} /></div>
               <div className="sm:col-span-2"><label className="text-xs text-muted">Rate (₹)</label><input className={inputClass} inputMode="decimal" value={l.rate} onChange={(e) => update(l.key, { rate: e.target.value })} required /></div>
+              <div className="sm:col-span-1"><label className="text-xs text-muted">Disc %</label><input className={inputClass} inputMode="decimal" value={l.discount} onChange={(e) => update(l.key, { discount: e.target.value })} /></div>
               <div className="sm:col-span-1">
                 <label className="text-xs text-muted">GST</label>
                 <select className={inputClass} value={l.taxRateBp} onChange={(e) => update(l.key, { taxRateBp: Number(e.target.value) })}>

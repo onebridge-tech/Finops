@@ -12,11 +12,48 @@ datasource db {
 }
 
 model User {
-  id          String       @id @default(cuid())
-  phone       String       @unique
-  name        String?
-  createdAt   DateTime     @default(now())
-  memberships Membership[]
+  id           String       @id @default(cuid())
+  phone        String       @unique
+  name         String?
+  // App lock (SE-03): scrypt hash of a 4–6 digit PIN; lock after this many idle minutes.
+  pinHash      String?
+  lockAfterMin Int          @default(5)
+  createdAt    DateTime     @default(now())
+  memberships  Membership[]
+  sessions     Session[]
+}
+
+// One signed-in device (SE-03). The cookie holds only the signed session id, so
+// a session can be listed, locked and revoked from the server.
+model Session {
+  id           String    @id @default(cuid())
+  userId       String
+  businessId   String? // active business
+  branchId     String? // active branch for users not tied to one; null = all branches
+  userAgent    String?
+  ip           String?
+  createdAt    DateTime  @default(now())
+  lastActiveAt DateTime  @default(now())
+  expiresAt    DateTime
+  lockedAt     DateTime?
+  pinFailures  Int       @default(0)
+  revokedAt    DateTime?
+  user         User      @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+}
+
+model Branch {
+  id         String    @id @default(cuid())
+  businessId String
+  name       String
+  address    String?
+  phone      String?
+  createdAt  DateTime  @default(now())
+  archivedAt DateTime?
+  business   Business  @relation(fields: [businessId], references: [id])
+
+  @@index([businessId])
 }
 
 model OtpCode {
@@ -78,16 +115,22 @@ model Business {
   receipts               Receipt[]
   files                  StoredFile[]
   quotes                 Quote[]
+  branches               Branch[]
 }
 
 model Membership {
-  id         String   @id @default(cuid())
-  userId     String
-  businessId String
-  role       String // OWNER | ADMIN | ACCOUNTANT | BILLING | REP | VIEWER
-  createdAt  DateTime @default(now())
-  user       User     @relation(fields: [userId], references: [id])
-  business   Business @relation(fields: [businessId], references: [id])
+  id            String   @id @default(cuid())
+  userId        String
+  businessId    String
+  role          String // OWNER | ADMIN | ACCOUNTANT | BILLING | REP | VIEWER
+  // Data scoping (SE-01)
+  branchId      String? // tied to one branch; null = all branches
+  partyScope    String   @default("ALL") // ALL | ASSIGNED (only parties assigned to this user)
+  maxDiscountBp Int? // largest line discount this member may give; null = no limit
+  invitedById   String?
+  createdAt     DateTime @default(now())
+  user          User     @relation(fields: [userId], references: [id])
+  business      Business @relation(fields: [businessId], references: [id])
 
   @@unique([userId, businessId])
 }
@@ -105,6 +148,8 @@ model Party {
   creditDays             Int?
   language               String         @default("en")
   source                 String?
+  branchId               String? // home branch; null = shared by all branches
+  ownerId                String? // team member this party is assigned to (rep)
   shareToken             String         @unique
   // Messaging consent (SE-06). consentAt = the business attests the party agreed to receive messages.
   consentAt              DateTime?
@@ -145,6 +190,7 @@ model LedgerEntry {
   note         String?
   source       String       @default("MANUAL") // MANUAL | OPENING | INVOICE | REVERSAL
   invoiceId    String?
+  branchId     String?
   paymentMode  String? // GOT entries: CASH | UPI | BANK | CHEQUE | CARD | OTHER
   reversalOfId String?      @unique
   createdById  String
@@ -217,6 +263,7 @@ model Quote {
   totalPaise         BigInt
   status             String      @default("OPEN") // OPEN | ACCEPTED | DECLINED | CONVERTED
   notes              String?
+  branchId           String?
   shareToken         String      @unique
   viewCount          Int         @default(0)
   firstViewedAt      DateTime?
@@ -242,6 +289,7 @@ model QuoteLine {
   qtyMilli     Int
   unit         String
   ratePaise    BigInt
+  discountBp   Int     @default(0) // line discount in basis points of the gross amount
   taxRateBp    Int
   taxablePaise BigInt
   cgstPaise    BigInt
@@ -268,6 +316,7 @@ model Invoice {
   totalPaise    BigInt
   status        String        @default("ISSUED") // ISSUED | CANCELLED
   notes         String?
+  branchId      String?
   shareToken    String        @unique
   viewCount     Int           @default(0)
   firstViewedAt DateTime?
@@ -293,6 +342,7 @@ model InvoiceLine {
   qtyMilli     Int // quantity × 1000
   unit         String
   ratePaise    BigInt
+  discountBp   Int     @default(0) // line discount in basis points of the gross amount
   taxRateBp    Int
   taxablePaise BigInt
   cgstPaise    BigInt
@@ -372,6 +422,7 @@ model Receipt {
   amountPaise BigInt
   date        DateTime
   mode        String?
+  branchId    String?
   shareToken  String      @unique
   createdAt   DateTime    @default(now())
   business    Business    @relation(fields: [businessId], references: [id])

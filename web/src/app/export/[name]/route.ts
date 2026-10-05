@@ -7,7 +7,7 @@ import { writeTable, type TableFormat } from "@/lib/spreadsheet";
 // Downloads for signed-in users: /export/parties?format=xlsx|csv|json, or /export/all for a full ZIP.
 export async function GET(request: Request, ctx: RouteContext<"/export/[name]">) {
   const { name } = await ctx.params;
-  const { user, business } = await requireBusiness(name === "all" ? "settings:write" : undefined);
+  const { user, business } = await requireBusiness(name === "all" ? "settings:write" : "reports:view");
   const stamp = new Date().toISOString().slice(0, 10);
   const base = business.name.replace(/[^\w\- ]+/g, "").trim() || "export";
 

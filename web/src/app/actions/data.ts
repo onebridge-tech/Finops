@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
-import { requireBusiness } from "@/lib/auth";
+import { partyWhere, requireBusiness } from "@/lib/auth";
 import { audit } from "@/lib/audit";
 import { newShareToken } from "@/lib/session";
 import { MAX_IMPORT_ROWS, readTable } from "@/lib/spreadsheet";
@@ -38,7 +38,8 @@ export async function previewImport(_prev: PreviewState, form: FormData): Promis
  */
 export async function commitImport(_prev: CommitState, form: FormData): Promise<CommitState> {
   const kind: ImportKind = form.get("kind") === "items" ? "items" : "parties";
-  const { user, business } = await requireBusiness(kind === "items" ? "item:write" : "party:write");
+  const ctx = await requireBusiness(kind === "items" ? "item:write" : "party:write");
+  const { user, business } = ctx;
   let rows: string[][];
   let mapping: Record<string, number>;
   try {
@@ -70,12 +71,13 @@ export async function commitImport(_prev: CommitState, form: FormData): Promise<
           data: {
             businessId: business.id, name: p.name, type: p.type, phone: p.phone, email: p.email, gstin: p.gstin,
             stateCode: p.stateCode, address: p.address, creditDays: p.creditDays, source: "Import", shareToken: newShareToken(),
+            branchId: ctx.branchId, ownerId: ctx.assignedOnly ? user.id : null,
           },
         });
         if (p.openingPaise > 0) {
           await tx.ledgerEntry.create({
             data: {
-              businessId: business.id, partyId: party.id, direction: p.openingDirection, amountPaise: BigInt(p.openingPaise),
+              businessId: business.id, partyId: party.id, branchId: ctx.branchId, direction: p.openingDirection, amountPaise: BigInt(p.openingPaise),
               date: today, note: "Opening balance", source: "OPENING", createdById: user.id,
             },
           });
@@ -115,7 +117,8 @@ export async function commitImport(_prev: CommitState, form: FormData): Promise<
  * only an owner can trigger one; the file stays on the server.
  */
 export async function backupNow(): Promise<{ error?: string; info?: string }> {
-  const { user, business, role } = await requireBusiness("settings:write");
+  const ctx = await requireBusiness("settings:write");
+  const { user, business, role } = ctx;
   if (role !== "OWNER") return { error: "Only the owner can run a backup" };
   const r = await runBackup();
   await db.$transaction((tx) => audit(tx, { businessId: business.id, actorId: user.id, action: "backup", entity: "Business", entityId: business.id }));
@@ -125,8 +128,9 @@ export async function backupNow(): Promise<{ error?: string; info?: string }> {
 
 /** Adds a bill photo, PDF or voice note to an existing entry (LG-03). Entries stay immutable. */
 export async function addAttachment(_prev: { error?: string; ok?: boolean }, form: FormData): Promise<{ error?: string; ok?: boolean }> {
-  const { user, business } = await requireBusiness("ledger:write");
-  const entry = await db.ledgerEntry.findFirst({ where: { id: String(form.get("entryId")), businessId: business.id } });
+  const ctx = await requireBusiness("ledger:write");
+  const { user, business } = ctx;
+  const entry = await db.ledgerEntry.findFirst({ where: { id: String(form.get("entryId")), businessId: business.id, party: partyWhere(ctx) } });
   if (!entry) return { error: "Entry not found" };
   const files = form.getAll("files").filter((f): f is File => f instanceof File && f.size > 0);
   if (files.length === 0) return { error: "Choose a file" };

@@ -121,3 +121,14 @@ describe("amount in words", () => {
     expect(numberInWords(2000000000)).toBe("Two Hundred Crore");
   });
 });
+
+describe("line discounts", () => {
+  it("applies the discount before GST", () => {
+    // 2 × ₹1,000 less 10% = ₹1,800 taxable, 18% GST = ₹324
+    const l = computeLine({ description: "x", qtyMilli: 2000, ratePaise: 100000, taxRateBp: 1800, discountBp: 1000 }, true);
+    expect(l.taxable).toBe(180000);
+    expect(l.igst).toBe(32400);
+    // ₹333.33 less 2.5% = ₹325.00 (324.996… rounds up)
+    expect(computeLine({ description: "x", qtyMilli: 1000, ratePaise: 33333, taxRateBp: 0, discountBp: 250 }, false).taxable).toBe(32500);
+  });
+});
