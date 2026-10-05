@@ -9,6 +9,7 @@ import { STATES } from "@/lib/gstin";
 import { fmtDate } from "@/components/ui";
 import { Attachments } from "@/components/attachments";
 import { PrintButton } from "@/components/print-button";
+import { InviteCta } from "@/components/invite-cta";
 
 // Public, read-only party statement (no login). Access is by unguessable token.
 export const metadata = { title: "Statement", robots: { index: false } };
@@ -109,6 +110,7 @@ export default async function Statement({ params, searchParams }: PageProps<"/s/
 
       <p className="mt-6 text-center text-xs text-muted">Shared securely by {b.name}. Questions about an entry? Contact {b.phone ?? "the business"}.</p>
       <p className="no-print mt-2 text-center text-xs text-muted"><a href={`/o/${token}`} className="underline">Message preferences</a></p>
+      <InviteCta businessId={b.id} businessName={b.name} />
     </main>
   );
 }

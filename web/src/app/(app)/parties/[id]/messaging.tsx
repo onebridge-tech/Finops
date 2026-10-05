@@ -23,6 +23,7 @@ export function SendMessageForm({ partyId, blocked, canRemind }: { partyId: stri
           <Select name="kind" defaultValue={canRemind ? "REMINDER" : "STATEMENT"}>
             {canRemind && <option value="REMINDER">Payment reminder</option>}
             <option value="STATEMENT">Account statement</option>
+            <option value="INVITE">Invite to use the app (free)</option>
           </Select>
         </Field>
         <Field label="By" hint={channel === "EMAIL" ? "Free" : "1 credit"}>

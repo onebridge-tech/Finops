@@ -261,3 +261,15 @@ export async function logReminder(partyId: string, body: string): Promise<void> 
   });
   revalidatePath(`/parties/${partyId}`);
 }
+
+/** A lead who has started buying becomes a customer (FS-06). */
+export async function convertLead(form: FormData): Promise<void> {
+  const ctx = await requireBusiness("party:write");
+  const party = await findParty(ctx, field(form, "partyId"));
+  if (!party || party.type !== "LEAD") return;
+  await db.$transaction(async (tx) => {
+    await tx.party.update({ where: { id: party.id }, data: { type: "CUSTOMER" } });
+    await audit(tx, { businessId: ctx.business.id, actorId: ctx.user.id, action: "convert_lead", entity: "Party", entityId: party.id });
+  });
+  revalidatePath(`/parties/${party.id}`);
+}

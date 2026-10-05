@@ -5,6 +5,7 @@ import { DocumentView } from "@/components/document-view";
 import { PrintButton } from "@/components/print-button";
 import { fmtDate } from "@/lib/format";
 import { QuoteResponse } from "./response";
+import { InviteCta } from "@/components/invite-cta";
 
 // Public quotation with Accept / Decline (BD-01). No login; access is by unguessable token.
 export const metadata = { title: "Quotation", robots: { index: false } };
@@ -28,6 +29,7 @@ export default async function PublicQuote({ params }: PageProps<"/q/[token]">) {
       </section>
       <DocumentView doc={{ ...quote, kind: "QUOTE", dueDate: quote.validUntil }} business={quote.business} party={quote.party} />
       <div className="no-print mt-4 flex justify-center"><PrintButton /></div>
+      <InviteCta businessId={quote.businessId} businessName={quote.business.name} />
     </main>
   );
 }

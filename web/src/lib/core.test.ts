@@ -132,3 +132,27 @@ describe("line discounts", () => {
     expect(computeLine({ description: "x", qtyMilli: 1000, ratePaise: 33333, taxRateBp: 0, discountBp: 250 }, false).taxable).toBe(32500);
   });
 });
+
+describe("accountant view", () => {
+  it("names vouchers, Dr/Cr balances and ledger groups", async () => {
+    const { drCr, ledgerGroup, voucherType } = await import("./accounting");
+    expect(voucherType({ direction: "GAVE", source: "INVOICE", paymentMode: null }, "CUSTOMER")).toBe("Sales");
+    expect(voucherType({ direction: "GOT", source: "MANUAL", paymentMode: "UPI" }, "CUSTOMER")).toBe("Receipt (bank)");
+    expect(voucherType({ direction: "GOT", source: "MANUAL", paymentMode: null }, "SUPPLIER")).toBe("Purchase");
+    expect(voucherType({ direction: "GAVE", source: "MANUAL", paymentMode: null }, "SUPPLIER")).toBe("Payment");
+    expect(voucherType({ direction: "GOT", source: "MANUAL", paymentMode: null }, "CUSTOMER")).toBe("Receipt");
+    expect(drCr(120050)).toBe("₹1,200.50 Dr");
+    expect(drCr(-500)).toBe("₹5.00 Cr");
+    expect(ledgerGroup("BOTH", -1)).toBe("Sundry Creditors");
+    expect(ledgerGroup("CUSTOMER", -1)).toBe("Sundry Debtors");
+  });
+});
+
+describe("translations", () => {
+  it("falls back to English and fills variables", async () => {
+    const { translator } = await import("./i18n");
+    expect(translator("hi")("nav.home")).toBe("होम");
+    expect(translator("ta")("parties.total", { n: 4 })).toBe("மொத்தம் 4");
+    expect(translator("xx")("dash.ofDue", { amount: "₹5" })).toBe("of ₹5 due");
+  });
+});

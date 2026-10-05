@@ -18,6 +18,8 @@ model User {
   // App lock (SE-03): scrypt hash of a 4–6 digit PIN; lock after this many idle minutes.
   pinHash      String?
   lockAfterMin Int          @default(5)
+  uiLanguage   String       @default("en") // LO-01 app language
+  uiMode       String       @default("SIMPLE") // LO-02 SIMPLE | ACCOUNTANT
   createdAt    DateTime     @default(now())
   memberships  Membership[]
   sessions     Session[]
@@ -122,19 +124,19 @@ model Business {
 }
 
 model Membership {
-  id            String   @id @default(cuid())
-  userId        String
-  businessId    String
-  role          String // OWNER | ADMIN | ACCOUNTANT | BILLING | REP | VIEWER
+  id             String   @id @default(cuid())
+  userId         String
+  businessId     String
+  role           String // OWNER | ADMIN | ACCOUNTANT | BILLING | REP | VIEWER
   // Data scoping (SE-01)
-  branchId      String? // tied to one branch; null = all branches
-  partyScope    String   @default("ALL") // ALL | ASSIGNED (only parties assigned to this user)
+  branchId       String? // tied to one branch; null = all branches
+  partyScope     String   @default("ALL") // ALL | ASSIGNED (only parties assigned to this user)
   dashboardTiles String? // JSON list of dashboard tile ids in order (IR-01); null = default
-  maxDiscountBp Int? // largest line discount this member may give; null = no limit
-  invitedById   String?
-  createdAt     DateTime @default(now())
-  user          User     @relation(fields: [userId], references: [id])
-  business      Business @relation(fields: [businessId], references: [id])
+  maxDiscountBp  Int? // largest line discount this member may give; null = no limit
+  invitedById    String?
+  createdAt      DateTime @default(now())
+  user           User     @relation(fields: [userId], references: [id])
+  business       Business @relation(fields: [businessId], references: [id])
 
   @@unique([userId, businessId])
 }

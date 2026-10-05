@@ -12,7 +12,7 @@ export default async function Invoices() {
     where: docWhere(ctx),
     orderBy: { createdAt: "desc" },
     take: 100,
-    include: { party: { select: { name: true } } },
+    include: { party: { select: { name: true, gstin: true } } },
   });
   return (
     <>
@@ -27,6 +27,8 @@ export default async function Invoices() {
       />
       {invoices.length === 0 ? (
         <EmptyState title="No invoices yet">Create a GST invoice and share it on WhatsApp with a pay link.</EmptyState>
+      ) : ctx.user.uiMode === "ACCOUNTANT" ? (
+        <GstRegister invoices={invoices} />
       ) : (
         <Card className="divide-y divide-line p-0 text-sm">
           {invoices.map((i) => (
@@ -44,5 +46,46 @@ export default async function Invoices() {
         </Card>
       )}
     </>
+  );
+}
+
+type Row = { id: string; number: string; date: Date; status: string; placeOfSupply: string; taxablePaise: bigint; cgstPaise: bigint; sgstPaise: bigint; igstPaise: bigint; totalPaise: bigint; party: { name: string; gstin?: string | null } };
+
+/** Accountant view (LO-02): sales register with the GST split; cancelled invoices are excluded from totals. */
+function GstRegister({ invoices }: { invoices: Row[] }) {
+  const live = invoices.filter((i) => i.status !== "CANCELLED");
+  const sum = (k: "taxablePaise" | "cgstPaise" | "sgstPaise" | "igstPaise" | "totalPaise") => live.reduce((s, i) => s + i[k], 0n);
+  const td = "px-3 py-2 text-right tabular-nums";
+  return (
+    <Card className="overflow-x-auto p-0">
+      <table className="w-full min-w-[820px] text-sm">
+        <thead className="border-b border-line text-left text-xs uppercase text-muted">
+          <tr>
+            <th className="px-3 py-2">Date</th><th className="px-3 py-2">Voucher no.</th><th className="px-3 py-2">Party</th><th className="px-3 py-2">GSTIN</th><th className="px-3 py-2">POS</th>
+            <th className={td}>Taxable</th><th className={td}>CGST</th><th className={td}>SGST</th><th className={td}>IGST</th><th className={td}>Total</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-line">
+          {invoices.map((i) => (
+            <tr key={i.id} className={i.status === "CANCELLED" ? "text-muted line-through" : ""}>
+              <td className="whitespace-nowrap px-3 py-2">{fmtDate(i.date)}</td>
+              <td className="px-3 py-2"><Link href={`/invoices/${i.id}`} className="underline">{i.number}</Link></td>
+              <td className="px-3 py-2">{i.party.name}</td>
+              <td className="px-3 py-2 font-mono text-xs">{i.party.gstin ?? "—"}</td>
+              <td className="px-3 py-2">{i.placeOfSupply}</td>
+              <td className={td}>{formatINR(i.taxablePaise)}</td><td className={td}>{formatINR(i.cgstPaise)}</td>
+              <td className={td}>{formatINR(i.sgstPaise)}</td><td className={td}>{formatINR(i.igstPaise)}</td><td className={td}>{formatINR(i.totalPaise)}</td>
+            </tr>
+          ))}
+        </tbody>
+        <tfoot className="border-t border-line font-semibold">
+          <tr>
+            <td className="px-3 py-2" colSpan={5}>Total ({live.length} invoices)</td>
+            <td className={td}>{formatINR(sum("taxablePaise"))}</td><td className={td}>{formatINR(sum("cgstPaise"))}</td>
+            <td className={td}>{formatINR(sum("sgstPaise"))}</td><td className={td}>{formatINR(sum("igstPaise"))}</td><td className={td}>{formatINR(sum("totalPaise"))}</td>
+          </tr>
+        </tfoot>
+      </table>
+    </Card>
   );
 }

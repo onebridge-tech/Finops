@@ -19,10 +19,12 @@ export async function search(ctx: Ctx, q: string, only?: SearchType, take = 10) 
   const party = partyWhere(ctx);
   const docs = docWhere(ctx);
   const upper = text.toUpperCase();
+  // Only match phone numbers when the query looks like one (4+ digits, nothing else).
+  const phoneDigits = /^[\d\s+-]+$/.test(text) && text.replace(/\D/g, "").length >= 4 ? text.replace(/\D/g, "") : null;
 
   const [parties, entries, invoices, quotes, items, receipts] = await Promise.all([
     want("parties") ? db.party.findMany({
-      where: { AND: [party, { OR: [{ name: { contains: text } }, { phone: { contains: text.replace(/\D/g, "") || text } }, { gstin: { contains: upper } }, { email: { contains: text } }] }] },
+      where: { AND: [party, { OR: [{ name: { contains: text } }, ...(phoneDigits ? [{ phone: { contains: phoneDigits } }] : []),{ gstin: { contains: upper } }, { email: { contains: text } }] }] },
       take, orderBy: { name: "asc" },
     }) : [],
     want("entries") ? db.ledgerEntry.findMany({

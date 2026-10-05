@@ -2,9 +2,9 @@ import { requireBusiness } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { revokeSession } from "@/app/actions/auth";
 import { Card, PageHeader, fmtDate } from "@/components/ui";
-import { NameForm, PinForm } from "./forms";
+import { NameForm, PinForm, PreferencesForm } from "./forms";
 
-export const metadata = { title: "Security" };
+export const metadata = { title: "Profile & security" };
 
 /** Rough device label from a user-agent string. */
 function device(ua: string | null): string {
@@ -24,11 +24,12 @@ export default async function Security() {
 
   return (
     <>
-      <PageHeader title="Security" sub="Your sign-in, app lock and devices." />
+      <PageHeader title="Profile & security" sub="Your name, language, view, app lock and devices." />
       <div className="grid gap-6 lg:grid-cols-2">
         <Card className="space-y-3">
           <h2 className="font-semibold">Your name</h2>
           <NameForm name={user.name ?? ""} />
+          <div className="border-t border-line pt-3"><PreferencesForm lang={user.uiLanguage} mode={user.uiMode} /></div>
         </Card>
         <Card className="space-y-3">
           <h2 className="font-semibold">App lock</h2>

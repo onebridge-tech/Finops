@@ -29,7 +29,7 @@ const en: Lang = {
   INVOICE: (v) => `Invoice ${v.number} from ${v.business} for ${amt(v.amountPaise)}. View and pay: ${v.link}`,
   QUOTE: (v) => `Quotation ${v.number} from ${v.business} for ${amt(v.amountPaise)}. View and accept: ${v.link}`,
   STATEMENT: (v) => `${v.business} has shared your account statement. Balance: ${en.balance(v.balancePaise)}. View: ${v.link}`,
-  INVITE: (v) => `${v.business} keeps your account on our ledger app. See your balance and every entry for free: ${v.link}`,
+  INVITE: (v) => `${v.business} keeps your account on our ledger app. Keep your own customer ledger and send reminders too — free: ${v.link}`,
 };
 
 const hi: Lang = {
@@ -43,7 +43,7 @@ const hi: Lang = {
   INVOICE: (v) => `${v.business} का बिल ${v.number}, राशि ${amt(v.amountPaise)}। देखें और भुगतान करें: ${v.link}`,
   QUOTE: (v) => `${v.business} का कोटेशन ${v.number}, राशि ${amt(v.amountPaise)}। देखें और स्वीकार करें: ${v.link}`,
   STATEMENT: (v) => `${v.business} ने आपका खाता विवरण भेजा है। शेष: ${hi.balance(v.balancePaise)}। देखें: ${v.link}`,
-  INVITE: (v) => `${v.business} आपका खाता हमारे लेजर ऐप पर रखता है। अपना बैलेंस और हर एंट्री मुफ्त में देखें: ${v.link}`,
+  INVITE: (v) => `${v.business} आपका खाता हमारे लेजर ऐप पर रखता है। आप भी अपने ग्राहकों का हिसाब मुफ्त रखें और याद दिलाएँ: ${v.link}`,
 };
 
 const te: Lang = {
@@ -57,10 +57,39 @@ const te: Lang = {
   INVOICE: (v) => `${v.business} నుండి బిల్లు ${v.number}, మొత్తం ${amt(v.amountPaise)}. చూసి చెల్లించండి: ${v.link}`,
   QUOTE: (v) => `${v.business} నుండి కొటేషన్ ${v.number}, మొత్తం ${amt(v.amountPaise)}. చూసి ఆమోదించండి: ${v.link}`,
   STATEMENT: (v) => `${v.business} మీ ఖాతా వివరాలు పంపింది. బాకీ: ${te.balance(v.balancePaise)}. చూడండి: ${v.link}`,
-  INVITE: (v) => `${v.business} మీ ఖాతాను మా లెడ్జర్ యాప్‌లో ఉంచుతుంది. మీ బాకీ, ప్రతి ఎంట్రీ ఉచితంగా చూడండి: ${v.link}`,
+  INVITE: (v) => `${v.business} మీ ఖాతాను మా లెడ్జర్ యాప్‌లో ఉంచుతుంది. మీరు కూడా మీ కస్టమర్ల లెక్క ఉచితంగా ఉంచుకోండి: ${v.link}`,
 };
 
-export const LANGUAGES: Record<string, Lang> = { en, hi, te };
+const ta: Lang = {
+  name: "தமிழ்",
+  balance: (p) => (p > 0 ? `${amt(p)} பாக்கி` : p < 0 ? `${amt(-p)} உங்களுக்கு வர வேண்டும்` : "கணக்கு சரி"),
+  optOut: "செய்திகளை நிறுத்த",
+  REMINDER: (v) => `வணக்கம் ${v.party}, ${v.business} அன்புடன் நினைவூட்டுகிறது: ${amt(v.balancePaise)} செலுத்த வேண்டியுள்ளது. விவரம் பார்த்து செலுத்த: ${v.link}`,
+  ENTRY_GAVE: (v) => `${v.business} ${v.date} அன்று உங்கள் கணக்கில் ${amt(v.amountPaise)} கடன் பதிவு செய்தது. பாக்கி: ${ta.balance(v.balancePaise)}. விவரம்: ${v.link}`,
+  ENTRY_GOT: (v) => `${v.business} ${v.date} அன்று உங்களிடமிருந்து ${amt(v.amountPaise)} பெற்றதாக பதிவு செய்தது. பாக்கி: ${ta.balance(v.balancePaise)}. விவரம்: ${v.link}`,
+  RECEIPT: (v) => `நன்றி ${v.party}! ${v.business} ${v.date} அன்று ${amt(v.amountPaise)} பெற்றது (ரசீது ${v.number}). ரசீது: ${v.link}`,
+  INVOICE: (v) => `${v.business} பில் ${v.number}, தொகை ${amt(v.amountPaise)}. பார்த்து செலுத்த: ${v.link}`,
+  QUOTE: (v) => `${v.business} மதிப்பீடு ${v.number}, தொகை ${amt(v.amountPaise)}. பார்த்து ஏற்க: ${v.link}`,
+  STATEMENT: (v) => `${v.business} உங்கள் கணக்கு அறிக்கையை அனுப்பியுள்ளது. பாக்கி: ${ta.balance(v.balancePaise)}. பார்க்க: ${v.link}`,
+  INVITE: (v) => `${v.business} உங்கள் கணக்கை எங்கள் லெட்ஜர் ஆப்பில் வைத்துள்ளது. உங்கள் சொந்த கணக்கையும் இலவசமாக வைத்துக்கொள்ளுங்கள்: ${v.link}`,
+};
+
+const kn: Lang = {
+  name: "ಕನ್ನಡ",
+  balance: (p) => (p > 0 ? `${amt(p)} ಬಾಕಿ` : p < 0 ? `${amt(-p)} ನಿಮಗೆ ಬರಬೇಕು` : "ಲೆಕ್ಕ ಸರಿ"),
+  optOut: "ಸಂದೇಶ ನಿಲ್ಲಿಸಲು",
+  REMINDER: (v) => `ನಮಸ್ಕಾರ ${v.party}, ${v.business} ಇಂದ ನೆನಪು: ${amt(v.balancePaise)} ಬಾಕಿ ಇದೆ. ವಿವರ ನೋಡಿ ಪಾವತಿಸಿ: ${v.link}`,
+  ENTRY_GAVE: (v) => `${v.business} ${v.date} ರಂದು ನಿಮ್ಮ ಖಾತೆಗೆ ${amt(v.amountPaise)} ಸಾಲ ದಾಖಲಿಸಿದೆ. ಬಾಕಿ: ${kn.balance(v.balancePaise)}. ವಿವರ: ${v.link}`,
+  ENTRY_GOT: (v) => `${v.business} ${v.date} ರಂದು ನಿಮ್ಮಿಂದ ${amt(v.amountPaise)} ಬಂದಿದೆ ಎಂದು ದಾಖಲಿಸಿದೆ. ಬಾಕಿ: ${kn.balance(v.balancePaise)}. ವಿವರ: ${v.link}`,
+  RECEIPT: (v) => `ಧನ್ಯವಾದ ${v.party}! ${v.business}ಗೆ ${v.date} ರಂದು ${amt(v.amountPaise)} ಬಂದಿದೆ (ರಸೀದಿ ${v.number}). ರಸೀದಿ: ${v.link}`,
+  INVOICE: (v) => `${v.business} ಬಿಲ್ ${v.number}, ಮೊತ್ತ ${amt(v.amountPaise)}. ನೋಡಿ ಪಾವತಿಸಿ: ${v.link}`,
+  QUOTE: (v) => `${v.business} ಕೊಟೇಶನ್ ${v.number}, ಮೊತ್ತ ${amt(v.amountPaise)}. ನೋಡಿ ಒಪ್ಪಿಕೊಳ್ಳಿ: ${v.link}`,
+  STATEMENT: (v) => `${v.business} ನಿಮ್ಮ ಖಾತೆ ವಿವರ ಕಳುಹಿಸಿದೆ. ಬಾಕಿ: ${kn.balance(v.balancePaise)}. ನೋಡಿ: ${v.link}`,
+  INVITE: (v) => `${v.business} ನಿಮ್ಮ ಖಾತೆಯನ್ನು ನಮ್ಮ ಲೆಡ್ಜರ್ ಆ್ಯಪ್‌ನಲ್ಲಿ ಇಟ್ಟಿದೆ. ನಿಮ್ಮ ಸ್ವಂತ ಲೆಕ್ಕವನ್ನೂ ಉಚಿತವಾಗಿ ಇಡಿ: ${v.link}`,
+};
+
+// Message templates must be registered with WhatsApp / DLT in every language listed here.
+export const LANGUAGES: Record<string, Lang> = { en, hi, te, ta, kn };
 
 export const LANGUAGE_NAMES: Record<string, string> = Object.fromEntries(Object.entries(LANGUAGES).map(([k, l]) => [k, l.name]));
 

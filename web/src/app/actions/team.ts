@@ -6,6 +6,8 @@ import { db } from "@/lib/db";
 import { requireBusiness, requireUser, ROLES, type Role } from "@/lib/auth";
 import { audit } from "@/lib/audit";
 import { normalizeIndianMobile } from "@/lib/share";
+import { UI_LANGUAGES } from "@/lib/i18n";
+import { TILES } from "@/lib/tiles";
 
 export type TeamState = { error?: string; ok?: boolean; info?: string };
 
@@ -152,5 +154,27 @@ export async function updateMyName(_prev: TeamState, form: FormData): Promise<Te
   if (name.length < 2) return { error: "Enter your name" };
   await db.user.update({ where: { id: user.id }, data: { name } });
   revalidatePath("/", "layout");
+  return { ok: true, info: "Saved" };
+}
+
+/** App language (LO-01) and simple vs accountant view (LO-02), per user. */
+export async function updatePreferences(_prev: TeamState, form: FormData): Promise<TeamState> {
+  const { user } = await requireUser();
+  const lang = field(form, "uiLanguage");
+  const mode = field(form, "uiMode");
+  if (!(lang in UI_LANGUAGES)) return { error: "Choose a language" };
+  if (!["SIMPLE", "ACCOUNTANT"].includes(mode)) return { error: "Choose a view" };
+  await db.user.update({ where: { id: user.id }, data: { uiLanguage: lang, uiMode: mode } });
+  revalidatePath("/", "layout");
+  return { ok: true, info: "Saved" };
+}
+
+/** Saves which dashboard tiles this member sees, in order (IR-01). */
+export async function saveDashboardTiles(_prev: TeamState, form: FormData): Promise<TeamState> {
+  const ctx = await requireBusiness();
+  const ids = form.getAll("tile").map(String).filter((id) => id in TILES);
+  const value = form.get("reset") === "1" ? null : JSON.stringify([...new Set(ids)]);
+  await db.membership.update({ where: { id: ctx.membership.id }, data: { dashboardTiles: value } });
+  revalidatePath("/dashboard");
   return { ok: true, info: "Saved" };
 }

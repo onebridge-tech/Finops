@@ -3,7 +3,8 @@
 import { useActionState } from "react";
 import { ActionForm } from "@/components/action-form";
 import { setPin } from "@/app/actions/auth";
-import { updateMyName } from "@/app/actions/team";
+import { updateMyName, updatePreferences } from "@/app/actions/team";
+import { UI_LANGUAGES } from "@/lib/i18n";
 import { ErrorText, Field, Input, Select } from "@/components/ui";
 import { SubmitButton } from "@/components/submit-button";
 
@@ -49,5 +50,29 @@ export function PinForm({ hasPin, lockAfterMin }: { hasPin: boolean; lockAfterMi
         </ActionForm>
       )}
     </div>
+  );
+}
+
+export function PreferencesForm({ lang, mode }: { lang: string; mode: string }) {
+  const [state, action, pending] = useActionState(updatePreferences, {});
+  return (
+    <ActionForm dispatch={action} pending={pending} className="grid gap-3 sm:grid-cols-2">
+      <Field label="App language">
+        <Select name="uiLanguage" defaultValue={lang}>
+          {Object.entries(UI_LANGUAGES).map(([c, n]) => <option key={c} value={c}>{n}</option>)}
+        </Select>
+      </Field>
+      <Field label="View" hint="Accountant view shows Dr/Cr, voucher types, ledger groups and GST detail.">
+        <Select name="uiMode" defaultValue={mode}>
+          <option value="SIMPLE">Simple — You gave / You got</option>
+          <option value="ACCOUNTANT">Accountant — Debit / Credit</option>
+        </Select>
+      </Field>
+      <div className="space-y-2 sm:col-span-2">
+        <ErrorText>{state.error}</ErrorText>
+        {state.info && <p className="text-sm text-got">{state.info}</p>}
+        <SubmitButton variant="secondary">Save preferences</SubmitButton>
+      </div>
+    </ActionForm>
   );
 }

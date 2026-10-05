@@ -12,6 +12,7 @@ import { CREDIT_PACKS } from "@/lib/credits";
 import { recordConsent, recordOptIn, recordOptOut } from "@/lib/consent";
 import { sendToParty } from "@/lib/messaging/send";
 import { runAutoReminders } from "@/lib/reminders";
+import { inviteUrl } from "@/lib/referral";
 import { formatINR } from "@/lib/money";
 
 export type MessageState = { error?: string; ok?: boolean; info?: string };
@@ -24,7 +25,8 @@ export async function sendPartyMessage(_prev: MessageState, form: FormData): Pro
   const ctx = await requireBusiness("reminder:send");
   const { user, business } = ctx;
   const channel = channelOf(field(form, "channel"));
-  const kind = field(form, "kind") === "STATEMENT" ? "STATEMENT" : "REMINDER";
+  const k = field(form, "kind");
+  const kind = k === "STATEMENT" || k === "INVITE" ? k : "REMINDER";
   if (!channel) return { error: "Choose how to send" };
   const party = await findParty(ctx, field(form, "partyId"));
   if (!party) return { error: "Party not found" };
@@ -33,7 +35,7 @@ export async function sendPartyMessage(_prev: MessageState, form: FormData): Pro
 
   const r = await sendToParty({
     business, party, kind, channel, userId: user.id,
-    vars: { balancePaise: balance, link: appUrl(`/s/${party.shareToken}`) },
+    vars: { balancePaise: balance, link: kind === "INVITE" ? await inviteUrl(business.id) : appUrl(`/s/${party.shareToken}`) },
   });
   revalidatePath(`/parties/${party.id}`);
   return r.ok ? { ok: true, info: "Sent" } : { error: r.error };

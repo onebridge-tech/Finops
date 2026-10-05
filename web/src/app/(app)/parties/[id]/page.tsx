@@ -12,12 +12,17 @@ import { describeRule, effectiveRule } from "@/lib/reminder-rule";
 import { PAYMENT_MODE_LABEL, type PaymentMode } from "@/lib/format";
 import { reverseEntry } from "@/app/actions/ledger";
 import { setDisputed, updateConsent } from "@/app/actions/messaging";
-import { Balance, Card, PageHeader, fmtDate, todayIST } from "@/components/ui";
+import { Balance, Card, PageHeader, buttonClass, fmtDate, todayIST } from "@/components/ui";
 import { EntryForm } from "./entry-form";
 import { ReminderButton, CopyLink } from "./reminder";
 import { PartyReminderForm, SendMessageForm } from "./messaging";
 import { AttachToEntry } from "./attach";
 import { Attachments } from "@/components/attachments";
+import { AddFollowUpForm, CompleteFollowUp } from "@/components/follow-up-forms";
+import { teamOptions } from "@/lib/team";
+import { translator } from "@/lib/i18n";
+import { drCr, ledgerGroup, voucherType } from "@/lib/accounting";
+import { convertLead } from "@/app/actions/ledger";
 
 const CHANNEL_NAME: Record<string, string> = { WHATSAPP: "WhatsApp", SMS: "SMS", EMAIL: "Email", WHATSAPP_LINK: "WhatsApp (own phone)" };
 const STATUS_TONE: Record<string, string> = { DELIVERED: "text-got", READ: "text-got", SENT: "text-muted", QUEUED: "text-muted", FAILED: "text-gave", SKIPPED: "text-gave" };
@@ -37,6 +42,11 @@ export default async function PartyPage({ params }: PageProps<"/parties/[id]">) 
     db.storedFile.findMany({ where: { businessId: business.id, entryId: { in: entries.map((e) => e.id) } }, orderBy: { createdAt: "asc" } }),
   ]);
   const filesByEntry = Map.groupBy(files, (f) => f.entryId!);
+  const [followUps, team] = await Promise.all([
+    db.followUp.findMany({ where: { partyId: id, businessId: business.id }, orderBy: [{ doneAt: { sort: "desc", nulls: "first" } }, { dueAt: "asc" }], take: 15 }),
+    ctx.assignedOnly ? null : teamOptions(business.id),
+  ]);
+  const teamName = new Map((team ?? []).map((t) => [t.id, t.name]));
   const receiptByEntry = new Map(receipts.map((r) => [r.entryId, r]));
 
   const rows = withRunningBalance(entries).reverse();
@@ -48,21 +58,27 @@ export default async function PartyPage({ params }: PageProps<"/parties/[id]">) 
   const canMessage = Object.values(blocked).some((b) => !b);
   const optedOut = [party.whatsappOptOutAt && "WhatsApp", party.smsOptOutAt && "SMS", party.emailOptOutAt && "email"].filter(Boolean);
   const rule = effectiveRule(business, party);
+  const t = translator(ctx.user.uiLanguage);
+  const accountant = ctx.user.uiMode === "ACCOUNTANT";
+  const btn = "rounded-lg border border-line bg-card px-3.5 py-2 text-sm font-medium hover:bg-bg";
 
   return (
     <>
       <PageHeader
         title={party.name}
-        sub={[party.phone && `+${party.phone}`, party.gstin, party.creditDays && `${party.creditDays} days credit`].filter(Boolean).join(" · ") || undefined}
+        sub={[accountant ? ledgerGroup(party.type, balance) : party.type === "LEAD" ? t("type.LEAD") : null, party.phone && `+${party.phone}`, party.gstin, party.creditDays && `${party.creditDays} days credit`].filter(Boolean).join(" · ") || undefined}
         action={
           <div className="flex flex-wrap gap-2">
-            {can(role, "party:write") && <Link href={`/parties/${party.id}/edit`} className="rounded-lg border border-line bg-card px-3.5 py-2 text-sm font-medium hover:bg-bg">Edit</Link>}
-            <CopyLink url={statementUrl} label="Copy statement link" />
-            {balance > 0 && can(role, "reminder:send") && <ReminderButton partyId={party.id} href={wa} text={reminder} />}
+            {party.type === "LEAD" && can(role, "party:write") && (
+              <form action={convertLead}><input type="hidden" name="partyId" value={party.id} /><button className={buttonClass("primary")}>{t("party.makeCustomer")}</button></form>
+            )}
+            {can(role, "party:write") && <Link href={`/parties/${party.id}/edit`} className={btn}>{t("party.edit")}</Link>}
+            <CopyLink url={statementUrl} label={t("party.copyStatement")} />
+            {balance > 0 && can(role, "reminder:send") && <ReminderButton partyId={party.id} href={wa} text={reminder} label={t("party.remind")} />}
             {can(role, "invoice:write") && (
               <>
-                <Link href={`/quotes/new?party=${party.id}`} className="rounded-lg border border-line bg-card px-3.5 py-2 text-sm font-medium hover:bg-bg">New quotation</Link>
-                <Link href={`/invoices/new?party=${party.id}`} className="rounded-lg border border-line bg-card px-3.5 py-2 text-sm font-medium hover:bg-bg">New invoice</Link>
+                <Link href={`/quotes/new?party=${party.id}`} className={btn}>{t("party.newQuote")}</Link>
+                {party.type !== "LEAD" && <Link href={`/invoices/new?party=${party.id}`} className={btn}>{t("party.newInvoice")}</Link>}
               </>
             )}
           </div>
@@ -77,16 +93,16 @@ export default async function PartyPage({ params }: PageProps<"/parties/[id]">) 
 
       <div className="grid gap-3 sm:grid-cols-2">
         <Card>
-          <p className="text-sm text-muted">Balance</p>
-          <Balance paise={balance} className="mt-1 block text-2xl" />
+          <p className="text-sm text-muted">{t("party.balance")}</p>
+          <Balance paise={balance} className="mt-1 block text-2xl" t={t} accountant={accountant} />
         </Card>
         <Card>
-          <p className="text-sm text-muted">Overdue</p>
+          <p className="text-sm text-muted">{t("party.overdue")}</p>
           <p className={`mt-1 text-2xl font-semibold tabular-nums ${overdue > 0 ? "text-gave" : "text-muted"}`}>{formatINR(overdue)}</p>
         </Card>
       </div>
 
-      {can(role, "ledger:write") && (
+      {can(role, "ledger:write") && party.type !== "LEAD" && (
         <Card className="mt-4">
           <EntryForm
             partyId={party.id}
@@ -99,19 +115,20 @@ export default async function PartyPage({ params }: PageProps<"/parties/[id]">) 
         </Card>
       )}
 
-      <h2 className="mb-2 mt-6 font-semibold">Entries</h2>
+      <h2 className="mb-2 mt-6 font-semibold">{accountant ? "Ledger" : t("party.entries")}</h2>
       {rows.length === 0 ? (
-        <Card className="text-sm text-muted">No entries yet.</Card>
+        <Card className="text-sm text-muted">{t("party.noEntries")}</Card>
       ) : (
         <Card className="overflow-x-auto p-0">
           <table className="w-full min-w-[560px] text-sm">
             <thead className="border-b border-line text-left text-xs uppercase text-muted">
               <tr>
-                <th className="px-4 py-2 font-medium">Date</th>
-                <th className="px-4 py-2 font-medium">Details</th>
-                <th className="px-4 py-2 text-right font-medium">You gave</th>
-                <th className="px-4 py-2 text-right font-medium">You got</th>
-                <th className="px-4 py-2 text-right font-medium">Balance</th>
+                <th className="px-4 py-2 font-medium">{t("col.date")}</th>
+                {accountant && <th className="px-4 py-2 font-medium">Voucher</th>}
+                <th className="px-4 py-2 font-medium">{accountant ? "Particulars" : t("col.details")}</th>
+                <th className="px-4 py-2 text-right font-medium">{accountant ? "Debit" : t("col.gave")}</th>
+                <th className="px-4 py-2 text-right font-medium">{accountant ? "Credit" : t("col.got")}</th>
+                <th className="px-4 py-2 text-right font-medium">{t("col.balance")}</th>
                 <th className="px-2 py-2"></th>
               </tr>
             </thead>
@@ -122,6 +139,7 @@ export default async function PartyPage({ params }: PageProps<"/parties/[id]">) 
                 return (
                   <tr key={e.id} className={cancelled ? "text-muted line-through" : ""}>
                     <td className="whitespace-nowrap px-4 py-2">{fmtDate(e.date)}</td>
+                    {accountant && <td className="whitespace-nowrap px-4 py-2 text-xs">{voucherType(e, party.type)}{receipt ? ` · ${receipt.number}` : ""}</td>}
                     <td className="px-4 py-2">
                       {e.note ?? "—"}
                       {e.dueDate && e.direction === "GAVE" && !cancelled && <span className="block text-xs text-muted no-underline">Due {fmtDate(e.dueDate)}</span>}
@@ -135,13 +153,13 @@ export default async function PartyPage({ params }: PageProps<"/parties/[id]">) 
                     </td>
                     <td className="px-4 py-2 text-right tabular-nums text-gave">{e.direction === "GAVE" ? formatINR(e.amountPaise) : ""}</td>
                     <td className="px-4 py-2 text-right tabular-nums text-got">{e.direction === "GOT" ? formatINR(e.amountPaise) : ""}</td>
-                    <td className="px-4 py-2 text-right tabular-nums">{formatINR(e.running)}</td>
+                    <td className="whitespace-nowrap px-4 py-2 text-right tabular-nums">{accountant ? drCr(e.running) : formatINR(e.running)}</td>
                     <td className="space-y-1 px-2 py-2 text-right">
                       {can(role, "ledger:write") && <AttachToEntry entryId={e.id} />}
                       {!cancelled && (e.source === "MANUAL" || e.source === "OPENING") && can(role, "ledger:reverse") && (
                         <form action={reverseEntry}>
                           <input type="hidden" name="entryId" value={e.id} />
-                          <button className="text-xs text-muted hover:text-gave" title="Post a reversal entry">Reverse</button>
+                          <button className="text-xs text-muted hover:text-gave" title="Post a reversal entry">{t("entry.reverse")}</button>
                         </form>
                       )}
                     </td>
@@ -154,8 +172,34 @@ export default async function PartyPage({ params }: PageProps<"/parties/[id]">) 
       )}
 
       <div className="mt-6 grid gap-6 lg:grid-cols-2">
+        <section className="space-y-3 lg:col-span-2">
+          <h2 className="font-semibold">{t("party.followUps")}</h2>
+          <Card className="space-y-3 text-sm">
+            {can(role, "party:write") && <AddFollowUpForm partyId={party.id} today={todayIST()} team={team} />}
+            {followUps.length > 0 && (
+              <ul className="divide-y divide-line border-t border-line">
+                {followUps.map((f) => {
+                  const late = !f.doneAt && f.dueAt < new Date();
+                  return (
+                    <li key={f.id} className="py-2">
+                      <p className="flex flex-wrap justify-between gap-2">
+                        <span className={f.doneAt ? "text-muted line-through" : ""}>{f.note}</span>
+                        <span className={`text-xs ${late ? "font-medium text-gave" : "text-muted"}`}>
+                          {f.doneAt ? `done ${fmtDate(f.doneAt)}` : `${late ? "overdue · " : ""}${fmtDate(f.dueAt)}`}
+                          {teamName.get(f.assignedToId) && ` · ${teamName.get(f.assignedToId)}`}
+                        </span>
+                      </p>
+                      {f.outcome && <p className="text-xs text-muted">Outcome: {f.outcome}</p>}
+                      {!f.doneAt && can(role, "party:write") && <CompleteFollowUp id={f.id} />}
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </Card>
+        </section>
         <section className="space-y-3">
-          <h2 className="font-semibold">Messages</h2>
+          <h2 className="font-semibold">{t("party.messages")}</h2>
           <Card className="space-y-3 text-sm">
             <ConsentStatus partyId={party.id} consentAt={party.consentAt} optedOut={optedOut as string[]} editable={can(role, "party:write")} />
             {can(role, "reminder:send") && (
@@ -188,7 +232,7 @@ export default async function PartyPage({ params }: PageProps<"/parties/[id]">) 
         </section>
         <section className="space-y-6">
           <div>
-            <h2 className="mb-2 font-semibold">Invoices</h2>
+            <h2 className="mb-2 font-semibold">{t("party.invoices")}</h2>
             <Card className="divide-y divide-line p-0 text-sm">
               {invoices.length === 0 && <p className="px-4 py-3 text-muted">No invoices.</p>}
               {invoices.map((i) => (
@@ -200,7 +244,7 @@ export default async function PartyPage({ params }: PageProps<"/parties/[id]">) 
             </Card>
           </div>
           <div>
-            <h2 className="mb-2 font-semibold">Message history</h2>
+            <h2 className="mb-2 font-semibold">{t("party.history")}</h2>
             <Card className="divide-y divide-line p-0 text-sm">
               {messages.length === 0 && <p className="px-4 py-3 text-muted">None yet.</p>}
               {messages.map((m) => (
@@ -223,18 +267,18 @@ export default async function PartyPage({ params }: PageProps<"/parties/[id]">) 
 function ConsentStatus({ partyId, consentAt, optedOut, editable }: { partyId: string; consentAt: Date | null; optedOut: string[]; editable: boolean }) {
   if (!consentAt) {
     return (
-      <p className="text-muted">
+      <div className="text-muted">
         No messaging consent recorded, so the app won’t message this party.{" "}
         {editable && <ConsentButton partyId={partyId} action="grant">They agreed — record consent</ConsentButton>}
-      </p>
+      </div>
     );
   }
   return (
-    <p className="text-muted">
+    <div className="text-muted">
       Consent recorded {fmtDate(consentAt)}.
       {optedOut.length > 0 && <> Opted out of {optedOut.join(", ")}. {editable && <ConsentButton partyId={partyId} action="optin">They asked to resume</ConsentButton>}</>}
       {optedOut.length === 0 && editable && <> <ConsentButton partyId={partyId} action="optout">They asked to stop all messages</ConsentButton></>}
-    </p>
+    </div>
   );
 }
 

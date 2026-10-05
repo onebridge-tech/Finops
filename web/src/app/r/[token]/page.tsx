@@ -5,6 +5,7 @@ import { formatINR } from "@/lib/money";
 import { STATES } from "@/lib/gstin";
 import { fmtDate, PAYMENT_MODE_LABEL, type PaymentMode } from "@/lib/format";
 import { PrintButton } from "@/components/print-button";
+import { InviteCta } from "@/components/invite-cta";
 
 // Public payment receipt (CP-11). No login; access is by unguessable token.
 export const metadata = { title: "Receipt", robots: { index: false } };
@@ -48,6 +49,7 @@ export default async function ReceiptPage({ params }: PageProps<"/r/[token]">) {
         <PrintButton />
         <a href={`/s/${party.shareToken}`} className="self-center text-muted underline">View full statement</a>
       </div>
+      <InviteCta businessId={b.id} businessName={b.name} />
     </main>
   );
 }

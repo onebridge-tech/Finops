@@ -16,3 +16,9 @@ export async function partyFormOptions(ctx: Ctx) {
     branches: branches?.map((b) => ({ id: b.id, name: b.name })) ?? null,
   };
 }
+
+/** Everyone on the team, for "assign to" pickers. */
+export async function teamOptions(businessId: string) {
+  const members = await db.membership.findMany({ where: { businessId }, include: { user: true }, orderBy: { createdAt: "asc" } });
+  return members.map((m) => ({ id: m.userId, name: m.user.name ?? `+${m.user.phone}` }));
+}

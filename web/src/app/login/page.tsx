@@ -1,17 +1,28 @@
 "use client";
 
 import { ActionForm } from "@/components/action-form";
-import { useActionState } from "react";
+import { Suspense, useActionState } from "react";
+import { useSearchParams } from "next/navigation";
 import { login, type OtpState } from "@/app/actions/auth";
 import { Card, ErrorText, Field, Input } from "@/components/ui";
 import { SubmitButton } from "@/components/submit-button";
 
 export default function LoginPage() {
+  return (
+    <Suspense>
+      <Login />
+    </Suspense>
+  );
+}
+
+function Login() {
   const [state, action, pending] = useActionState<OtpState, FormData>(login, { step: "phone" });
+  const invited = useSearchParams().get("invited") === "1";
 
   return (
     <main className="mx-auto flex min-h-screen max-w-sm flex-col justify-center px-4">
       <h1 className="mb-1 text-2xl font-bold">Sign in</h1>
+      {invited && <p className="mb-3 rounded-lg bg-brand/10 px-3 py-2 text-sm">Welcome! Create your free ledger in about two minutes.</p>}
       <p className="mb-6 text-sm text-muted">We’ll send a 6-digit code to your mobile.</p>
       <Card>
         <ActionForm dispatch={action} pending={pending} className="space-y-4">

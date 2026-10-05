@@ -6,6 +6,7 @@ import { addEntry } from "@/app/actions/ledger";
 import { ErrorText, Field, Input, Select, buttonClass } from "@/components/ui";
 import { PAYMENT_MODES, PAYMENT_MODE_LABEL } from "@/lib/format";
 import { AttachmentInput } from "@/components/attachment-input";
+import { useMode, useT } from "@/components/i18n-provider";
 
 type Props = {
   partyId: string;
@@ -21,6 +22,8 @@ export function EntryForm({ partyId, today, isSupplier, canNotify, notifyDefault
   const [direction, setDirection] = useState<"GAVE" | "GOT">("GAVE");
   const [mode, setMode] = useState(isSupplier ? "" : "CASH");
   const form = useRef<HTMLFormElement>(null);
+  const t = useT();
+  const accountant = useMode() === "ACCOUNTANT";
 
   useEffect(() => {
     if (state.ok) form.current?.reset();
@@ -40,38 +43,38 @@ export function EntryForm({ partyId, today, isSupplier, canNotify, notifyDefault
             onClick={() => setDirection(d)}
             className={`rounded-lg border px-3 py-2 text-sm font-medium ${direction === d ? (d === "GAVE" ? "border-gave bg-gave/10 text-gave" : "border-got bg-got/10 text-got") : "border-line text-muted"}`}
           >
-            {d === "GAVE" ? "You gave (credit / goods)" : "You got (payment)"}
+            {accountant ? (d === "GAVE" ? "Debit (Dr) — party owes more" : "Credit (Cr) — payment / goods in") : t(d === "GAVE" ? "entry.gave" : "entry.got")}
           </button>
         ))}
       </div>
       <div className="grid gap-3 sm:grid-cols-4">
-        <Field label="Amount (₹)"><Input name="amount" inputMode="decimal" required placeholder="0.00" /></Field>
-        <Field label="Date"><Input name="date" type="date" defaultValue={today} required /></Field>
+        <Field label={t("entry.amount")}><Input name="amount" inputMode="decimal" required placeholder="0.00" /></Field>
+        <Field label={t("entry.date")}><Input name="date" type="date" defaultValue={today} required /></Field>
         {direction === "GAVE" ? (
-          <Field label="Due date"><Input name="dueDate" type="date" /></Field>
+          <Field label={t("entry.due")}><Input name="dueDate" type="date" /></Field>
         ) : (
-          <Field label="Paid by">
+          <Field label={t("entry.paidBy")}>
             <Select name="paymentMode" value={mode} onChange={(e) => setMode(e.target.value)}>
               {PAYMENT_MODES.map((m) => <option key={m} value={m}>{PAYMENT_MODE_LABEL[m]}</option>)}
-              <option value="">Not a payment (goods received)</option>
+              <option value="">{t("entry.notPayment")}</option>
             </Select>
           </Field>
         )}
-        <Field label="Note"><Input name="note" placeholder="Bill no., items…" /></Field>
+        <Field label={t("entry.note")}><Input name="note" /></Field>
       </div>
       <AttachmentInput />
       {canNotify ? (
         receiptGoesOut ? (
-          <p className="text-xs text-muted">A receipt will be sent to the party automatically.</p>
+          <p className="text-xs text-muted">{t("entry.receipt")}</p>
         ) : (
           <label className="flex items-center gap-2 text-sm">
             <input type="checkbox" name="notify" defaultChecked={notifyDefault} className="size-4 accent-[var(--brand)]" />
-            Send this entry to the party
+            {t("entry.notify")}
           </label>
         )
       ) : null}
       <ErrorText>{state.error}</ErrorText>
-      <button disabled={pending} className={buttonClass("primary")}>{pending ? "Saving…" : "Save entry"}</button>
+      <button disabled={pending} className={buttonClass("primary")}>{pending ? t("entry.saving") : t("entry.save")}</button>
     </ActionForm>
   );
 }

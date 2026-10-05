@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { ComponentProps, ReactNode } from "react";
 import { formatINR } from "@/lib/money";
+import { translator, type T } from "@/lib/i18n";
 
 export function Card({ className = "", ...p }: ComponentProps<"div">) {
   return <div className={`rounded-xl border border-line bg-card p-4 ${className}`} {...p} />;
@@ -35,7 +36,7 @@ export function LinkButton({ variant = "primary", className = "", ...p }: Compon
 export const inputClass =
   "w-full rounded-lg border border-line bg-card px-3 py-2 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/20";
 
-export function Field({ label, hint, children }: { label: string; hint?: string; children: ReactNode }) {
+export function Field({ label, hint, children }: { label: string; hint?: ReactNode; children: ReactNode }) {
   return (
     <label className="block space-y-1">
       <span className="text-sm font-medium">{label}</span>
@@ -58,14 +59,18 @@ export function ErrorText({ children }: { children?: ReactNode }) {
   return <p role="alert" className="rounded-lg bg-gave/10 px-3 py-2 text-sm text-gave">{children}</p>;
 }
 
-/** Positive = they owe you (shown as "To collect"); negative = you owe them. */
-export function Balance({ paise, className = "" }: { paise: number; className?: string }) {
-  if (paise === 0) return <span className={`text-muted ${className}`}>Settled</span>;
+/**
+ * Positive = they owe you ("to collect"); negative = you owe them. In the
+ * accountant view the same balance reads as Dr / Cr.
+ */
+export function Balance({ paise, className = "", t, accountant = false }: { paise: number; className?: string; t?: T; accountant?: boolean }) {
+  const tr = t ?? translator("en");
+  if (paise === 0) return <span className={`text-muted ${className}`}>{tr("bal.settled")}</span>;
   const collect = paise > 0;
   return (
     <span className={`${collect ? "text-gave" : "text-got"} font-semibold tabular-nums ${className}`}>
       {formatINR(Math.abs(paise))}
-      <span className="ml-1 text-xs font-normal text-muted">{collect ? "to collect" : "to pay"}</span>
+      <span className="ml-1 text-xs font-normal text-muted">{accountant ? (collect ? "Dr" : "Cr") : tr(collect ? "bal.toCollect" : "bal.toPay")}</span>
     </span>
   );
 }

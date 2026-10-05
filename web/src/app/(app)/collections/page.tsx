@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { can, requireBusiness } from "@/lib/auth";
+import { translator } from "@/lib/i18n";
 import { collections } from "@/lib/queries";
 import { AGEING_BUCKETS, daysBetween, istDay, type AgeingBucket } from "@/lib/ledger";
 import { blockedReason } from "@/lib/messaging/send";
@@ -10,10 +11,10 @@ import { BulkReminderForm } from "./bulk-form";
 export const metadata = { title: "Collections" };
 
 const VIEWS = [
-  ["overdue", "Overdue"],
-  ["today", "Due today"],
-  ["upcoming", "Next 7 days"],
-  ["all", "All dues"],
+  ["overdue", "collect.overdue"],
+  ["today", "collect.today"],
+  ["upcoming", "collect.week"],
+  ["all", "collect.all"],
 ] as const;
 
 export default async function Collections({ searchParams }: PageProps<"/collections">) {
@@ -22,6 +23,7 @@ export default async function Collections({ searchParams }: PageProps<"/collecti
   const bucket = AGEING_BUCKETS.includes(sp.bucket as AgeingBucket) ? (sp.bucket as AgeingBucket) : null;
   const ctx = await requireBusiness();
   const { business, role } = ctx;
+  const t = translator(ctx.user.uiLanguage);
   const all = await collections(ctx);
   const today = new Date();
 
@@ -51,13 +53,13 @@ export default async function Collections({ searchParams }: PageProps<"/collecti
 
   return (
     <>
-      <PageHeader title="Collections" sub="Who to follow up with, and reminders in bulk" />
+      <PageHeader title={t("collect.title")} sub={t("collect.sub")} />
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         {totals.map(([k, v]) => (
           <Link key={k} href={href({ view: "overdue", bucket: bucket === k ? null : k })}>
             <Card className={`hover:bg-bg ${bucket === k && view === "overdue" ? "border-brand" : ""}`}>
-              <p className="text-sm text-muted">{k} days overdue</p>
+              <p className="text-sm text-muted">{t("collect.daysOverdue", { range: k })}</p>
               <p className="mt-1 text-xl font-semibold tabular-nums text-gave">{formatINR(v)}</p>
             </Card>
           </Link>
@@ -68,7 +70,7 @@ export default async function Collections({ searchParams }: PageProps<"/collecti
         {VIEWS.map(([v, label]) => (
           <Link key={v} href={href({ view: v, bucket: v === "overdue" ? bucket : null })}
             className={`rounded-lg px-3 py-1.5 ${view === v ? "bg-brand text-brand-ink" : "text-muted hover:bg-card"}`}>
-            {label}
+            {t(label)}
           </Link>
         ))}
       </nav>

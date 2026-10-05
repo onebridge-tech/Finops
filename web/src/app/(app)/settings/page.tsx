@@ -9,6 +9,9 @@ import { Card, LinkButton, PageHeader } from "@/components/ui";
 import { MessagingSettingsForm, RunRemindersButton } from "./messaging-form";
 import { BrandingForm } from "./branding-form";
 import { fileUrl } from "@/lib/files";
+import { inviteUrl } from "@/lib/referral";
+import { db } from "@/lib/db";
+import { CopyLink } from "../parties/[id]/reminder";
 
 export const metadata = { title: "Settings" };
 
@@ -19,6 +22,10 @@ export default async function Settings() {
     : null;
   const testChannels = (["WHATSAPP", "SMS", "EMAIL"] as const).filter(isTestMode);
   const owner = can(role, "settings:write");
+  const [invite, referred] = await Promise.all([
+    inviteUrl(business.id),
+    db.business.count({ where: { referredById: business.id } }),
+  ]);
 
   return (
     <>
@@ -95,13 +102,20 @@ export default async function Settings() {
           <ul className="space-y-1">
             {can(role, "team:manage") && <li><Link href="/settings/team" className="font-medium text-brand underline">Team members & roles</Link></li>}
             <li><Link href="/settings/branches" className="font-medium text-brand underline">Branches</Link></li>
-            <li><Link href="/settings/security" className="font-medium text-brand underline">App lock & signed-in devices</Link></li>
+            <li><Link href="/settings/security" className="font-medium text-brand underline">Profile, language, app lock & devices</Link></li>
+            {can(role, "reports:view") && <li><Link href="/settings/audit" className="font-medium text-brand underline">Audit trail</Link></li>}
           </ul>
         </Card>
         <Card className="h-fit space-y-2 text-sm lg:col-start-3">
           <h2 className="font-semibold">Your data</h2>
           <p className="text-muted">Import parties and items from Excel, export any list, download everything, or back up.</p>
           <Link href="/data" className="font-medium text-brand underline">Import & export</Link>
+        </Card>
+        <Card className="h-fit space-y-2 text-sm lg:col-start-3">
+          <h2 className="font-semibold">Invite other businesses</h2>
+          <p className="text-muted">Your link is on every statement, invoice and receipt you share. Businesses that join through it: <span className="font-semibold text-ink">{referred}</span></p>
+          <p className="break-all rounded bg-bg px-2 py-1 font-mono text-xs">{invite}</p>
+          <CopyLink url={invite} label="Copy invite link" />
         </Card>
       </div>
     </>

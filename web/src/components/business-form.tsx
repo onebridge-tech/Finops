@@ -6,6 +6,7 @@ import type { FormState } from "@/app/actions/business";
 import { ErrorText, Field, Input, Select } from "./ui";
 import { SubmitButton } from "./submit-button";
 import { STATES } from "@/lib/gstin";
+import { GstinLookupButton } from "./gstin-lookup";
 
 type Values = { name?: string; gstin?: string | null; stateCode?: string; address?: string | null; phone?: string | null; email?: string | null; upiId?: string | null; invoicePrefix?: string };
 
@@ -19,12 +20,15 @@ export function BusinessForm({ action, values = {}, submitLabel }: { action: (s:
         </Field>
       </div>
       <Field label="GSTIN (optional)" hint="15 characters. The state is taken from the first two digits.">
-        <Input name="gstin" defaultValue={values.gstin ?? ""} placeholder="36AAACB1234C1Z5" className="uppercase" maxLength={15}
+        <span className="flex flex-wrap gap-2">
+          <Input name="gstin" defaultValue={values.gstin ?? ""} placeholder="36AAACB1234C1Z5" className="flex-1 uppercase" maxLength={15}
           onChange={(e) => {
             const code = e.currentTarget.value.slice(0, 2);
             const sel = e.currentTarget.form?.elements.namedItem("stateCode") as HTMLSelectElement | null;
             if (sel && code in STATES) sel.value = code;
           }} />
+          <GstinLookupButton />
+        </span>
       </Field>
       <Field label="State">
         <Select name="stateCode" defaultValue={values.stateCode ?? "36"} required>

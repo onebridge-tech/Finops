@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { trackView } from "@/lib/views";
 import { DocumentView } from "@/components/document-view";
 import { PrintButton } from "@/components/print-button";
+import { InviteCta } from "@/components/invite-cta";
 
 // Public invoice view with "Pay now" (no login). Access is by unguessable token.
 export const metadata = { title: "Invoice", robots: { index: false } };
@@ -19,6 +20,7 @@ export default async function PublicInvoice({ params }: PageProps<"/i/[token]">)
         <PrintButton />
         <a href={`/s/${invoice.party.shareToken}`} className="text-muted underline">View your full statement</a>
       </div>
+      <InviteCta businessId={invoice.businessId} businessName={invoice.business.name} />
     </main>
   );
 }

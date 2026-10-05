@@ -3,6 +3,7 @@
 import { ActionForm } from "@/components/action-form";
 import { useActionState } from "react";
 import { createParty, updateParty } from "@/app/actions/ledger";
+import { GstinLookupButton } from "@/components/gstin-lookup";
 import { ErrorText, Field, Input, Select } from "@/components/ui";
 import { SubmitButton } from "@/components/submit-button";
 import { STATES } from "@/lib/gstin";
@@ -26,6 +27,7 @@ type Props = {
 export function PartyForm({ defaultState, party, owners, branches, defaultBranch = "" }: Props) {
   const [state, action, pending] = useActionState(party ? updateParty : createParty, {});
   const v = party;
+
   return (
     <ActionForm dispatch={action} pending={pending} className="grid gap-4 sm:grid-cols-2">
       {v && <input type="hidden" name="partyId" value={v.id} />}
@@ -41,7 +43,12 @@ export function PartyForm({ defaultState, party, owners, branches, defaultBranch
         </Select>
       </Field>
       <Field label="Mobile (for WhatsApp reminders)"><Input name="phone" inputMode="tel" defaultValue={v?.phone ? `+${v.phone}` : ""} placeholder="98480 12345" /></Field>
-      <Field label="GSTIN (optional)"><Input name="gstin" maxLength={15} className="uppercase" defaultValue={v?.gstin} /></Field>
+      <Field label="GSTIN (optional)">
+        <span className="flex flex-wrap gap-2">
+          <Input name="gstin" maxLength={15} className="flex-1 uppercase" defaultValue={v?.gstin} />
+          <GstinLookupButton />
+        </span>
+      </Field>
       <Field label="State" hint="Used for place of supply on invoices.">
         <Select name="stateCode" defaultValue={v?.stateCode || defaultState}>
           {Object.entries(STATES).map(([c, n]) => <option key={c} value={c}>{c} · {n}</option>)}

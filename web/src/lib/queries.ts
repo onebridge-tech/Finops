@@ -2,7 +2,7 @@ import "server-only";
 import type { Prisma } from "@prisma/client";
 import { db } from "./db";
 import { ageing, balanceOf, openDues, overdueAmount } from "./ledger";
-import { partyWhere, type Ctx } from "./auth";
+import { docWhere, partyWhere, type Ctx } from "./auth";
 
 /** Balance per party for a business, derived from entries (never stored). */
 export async function balancesByParty(businessId: string): Promise<Map<string, number>> {
@@ -20,14 +20,14 @@ export async function balancesByParty(businessId: string): Promise<Map<string, n
 }
 
 /** Parties this member can see, with balances. */
-export async function partiesWithBalance(ctx: Ctx, opts: { q?: string; where?: Prisma.PartyWhereInput } = {}) {
+export async function partiesWithBalance(ctx: Ctx, opts: { q?: string; where?: Prisma.PartyWhereInput; includeArchived?: boolean } = {}) {
   const q = opts.q?.trim();
   const [parties, balances] = await Promise.all([
     db.party.findMany({
       where: {
         AND: [
           partyWhere(ctx),
-          { archivedAt: null },
+          opts.includeArchived ? {} : { archivedAt: null },
           opts.where ?? {},
           q ? { OR: [{ name: { contains: q } }, { phone: { contains: q } }, { gstin: { contains: q.toUpperCase() } }] } : {},
         ],
@@ -80,6 +80,18 @@ export async function dashboard(ctx: Ctx) {
     };
   }).sort((a, b) => b.collected - a.collected);
 
+  const endOfToday = new Date(new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" }) + "T23:59:59+05:30");
+  const monthStart = new Date(new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" }).slice(0, 8) + "01T00:00:00+05:30");
+  const [followUpsDue, openQuotes, gst] = await Promise.all([
+    db.followUp.count({ where: { businessId: ctx.business.id, assignedToId: ctx.user.id, doneAt: null, dueAt: { lte: endOfToday }, party: partyWhere(ctx) } }),
+    db.quote.aggregate({ where: { ...docWhere(ctx), status: { in: ["OPEN", "ACCEPTED"] } }, _count: true, _sum: { totalPaise: true } }),
+    // Output GST on this month's invoices, for the accountant view.
+    db.invoice.aggregate({
+      where: { ...docWhere(ctx), status: "ISSUED", date: { gte: monthStart } },
+      _count: true, _sum: { taxablePaise: true, cgstPaise: true, sgstPaise: true, igstPaise: true },
+    }),
+  ]);
+
   const recent = await db.ledgerEntry.findMany({
     where: entryWhere(ctx, ids),
     orderBy: { createdAt: "desc" },
@@ -99,6 +111,13 @@ export async function dashboard(ctx: Ctx) {
     upiToday: sum(collected.filter((t) => t.paymentMode === "UPI")),
     activity,
     recent,
+    followUpsDue,
+    openQuotes: { count: openQuotes._count, totalPaise: Number(openQuotes._sum.totalPaise ?? 0n) },
+    gstMonth: {
+      invoices: gst._count,
+      taxable: Number(gst._sum.taxablePaise ?? 0n),
+      cgst: Number(gst._sum.cgstPaise ?? 0n), sgst: Number(gst._sum.sgstPaise ?? 0n), igst: Number(gst._sum.igstPaise ?? 0n),
+    },
   };
 }
 
