@@ -28,6 +28,10 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
           </div>
           <nav className="hidden md:block"><NavLinks /></nav>
           <div className="flex items-center gap-2 text-sm text-muted">
+            <form action="/search" role="search" className="hidden lg:block">
+              <input name="q" placeholder="Search…" aria-label="Search" className="w-40 rounded-lg border border-line bg-bg px-2.5 py-1 text-sm outline-none focus:w-56 focus:border-brand" />
+            </form>
+            <Link href="/search" aria-label="Search" className="rounded-lg px-1.5 py-1 hover:bg-bg lg:hidden">🔍</Link>
             <Link href="/settings/security" className="hidden hover:text-ink sm:inline">{user.name ?? `+${user.phone}`} · {role.toLowerCase()}</Link>
             {user.pinHash && <LockButton />}
             <form action={logout}><button className="hover:text-ink">Sign out</button></form>

@@ -77,6 +77,8 @@ model Business {
   phone                  String?
   email                  String?
   upiId                  String?
+  referralCode           String?        @unique // EC-03 invite link code
+  referredById           String? // business whose invite brought this one
   invoicePrefix          String         @default("INV-")
   nextInvoiceNo          Int            @default(1)
   receiptPrefix          String         @default("RCPT-")
@@ -113,6 +115,7 @@ model Business {
   creditTxns             CreditTxn[]
   consentEvents          ConsentEvent[]
   receipts               Receipt[]
+  followUps              FollowUp[]
   files                  StoredFile[]
   quotes                 Quote[]
   branches               Branch[]
@@ -126,6 +129,7 @@ model Membership {
   // Data scoping (SE-01)
   branchId      String? // tied to one branch; null = all branches
   partyScope    String   @default("ALL") // ALL | ASSIGNED (only parties assigned to this user)
+  dashboardTiles String? // JSON list of dashboard tile ids in order (IR-01); null = default
   maxDiscountBp Int? // largest line discount this member may give; null = no limit
   invitedById   String?
   createdAt     DateTime @default(now())
@@ -173,6 +177,7 @@ model Party {
   consentEvents          ConsentEvent[]
   receipts               Receipt[]
   quotes                 Quote[]
+  followUps              FollowUp[]
 
   @@index([businessId, name])
 }
@@ -433,16 +438,42 @@ model Receipt {
 }
 
 // Write-once audit trail of every change to financial records (PRD SE-02).
+// Tamper-evident audit trail (SE-02): each event stores the hash of the previous
+// one for the business, so any later edit or deletion breaks the chain.
 model AuditEvent {
   id         String   @id @default(cuid())
   businessId String
+  seq        Int? // position in the business's chain; null only for events written before chaining
   actorId    String
   action     String
   entity     String
   entityId   String
   data       String?
+  prevHash   String?
+  hash       String?
   createdAt  DateTime @default(now())
   business   Business @relation(fields: [businessId], references: [id])
 
+  @@unique([businessId, seq])
   @@index([businessId, entity, entityId])
+}
+
+// Follow-up task on a party or lead (FS-06).
+model FollowUp {
+  id           String    @id @default(cuid())
+  businessId   String
+  partyId      String
+  assignedToId String
+  dueAt        DateTime
+  note         String
+  outcome      String?
+  doneAt       DateTime?
+  doneById     String?
+  createdById  String
+  createdAt    DateTime  @default(now())
+  business     Business  @relation(fields: [businessId], references: [id])
+  party        Party     @relation(fields: [partyId], references: [id])
+
+  @@index([businessId, assignedToId, doneAt, dueAt])
+  @@index([partyId])
 }
