@@ -1,0 +1,202 @@
+// Phase 1 data model. SQLite for local development; switch provider to
+// "postgresql" for staging/production (PRD 10.2). Money is always stored as
+// integer paise (BigInt) — never floating point.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id          String       @id @default(cuid())
+  phone       String       @unique
+  name        String?
+  createdAt   DateTime     @default(now())
+  memberships Membership[]
+}
+
+model OtpCode {
+  id         String    @id @default(cuid())
+  phone      String
+  codeHash   String
+  expiresAt  DateTime
+  attempts   Int       @default(0)
+  consumedAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@index([phone, createdAt])
+}
+
+model Business {
+  id            String       @id @default(cuid())
+  name          String
+  gstin         String?
+  stateCode     String // 2-digit GST state code
+  address       String?
+  phone         String?
+  email         String?
+  upiId         String?
+  invoicePrefix String       @default("INV-")
+  nextInvoiceNo Int          @default(1)
+  createdAt     DateTime     @default(now())
+  memberships   Membership[]
+  parties       Party[]
+  items         Item[]
+  invoices      Invoice[]
+  entries       LedgerEntry[]
+  messages      Message[]
+  auditEvents   AuditEvent[]
+}
+
+model Membership {
+  id         String   @id @default(cuid())
+  userId     String
+  businessId String
+  role       String // OWNER | ADMIN | ACCOUNTANT | BILLING | REP | VIEWER
+  createdAt  DateTime @default(now())
+  user       User     @relation(fields: [userId], references: [id])
+  business   Business @relation(fields: [businessId], references: [id])
+
+  @@unique([userId, businessId])
+}
+
+model Party {
+  id         String        @id @default(cuid())
+  businessId String
+  name       String
+  type       String        @default("CUSTOMER") // CUSTOMER | SUPPLIER | BOTH
+  phone      String?
+  email      String?
+  gstin      String?
+  stateCode  String?
+  address    String?
+  creditDays Int?
+  language   String        @default("en")
+  source     String?
+  shareToken String        @unique
+  createdAt  DateTime      @default(now())
+  archivedAt DateTime?
+  business   Business      @relation(fields: [businessId], references: [id])
+  entries    LedgerEntry[]
+  invoices   Invoice[]
+  messages   Message[]
+
+  @@index([businessId, name])
+}
+
+// Append-only. Corrections are made with a REVERSAL entry, never by update/delete.
+// Sign convention: GAVE increases what the party owes us, GOT decreases it.
+model LedgerEntry {
+  id           String        @id @default(cuid())
+  businessId   String
+  partyId      String
+  direction    String // GAVE | GOT
+  amountPaise  BigInt
+  date         DateTime
+  dueDate      DateTime?
+  note         String?
+  source       String        @default("MANUAL") // MANUAL | OPENING | INVOICE | REVERSAL
+  invoiceId    String?
+  reversalOfId String?       @unique
+  createdById  String
+  createdAt    DateTime      @default(now())
+  business     Business      @relation(fields: [businessId], references: [id])
+  party        Party         @relation(fields: [partyId], references: [id])
+  reversalOf   LedgerEntry?  @relation("Reversal", fields: [reversalOfId], references: [id])
+  reversedBy   LedgerEntry?  @relation("Reversal")
+
+  @@index([businessId, partyId, date])
+}
+
+model Item {
+  id         String    @id @default(cuid())
+  businessId String
+  name       String
+  sku        String?
+  unit       String    @default("pcs")
+  pricePaise BigInt
+  hsn        String?
+  taxRateBp  Int       @default(1800) // basis points: 1800 = 18%
+  createdAt  DateTime  @default(now())
+  archivedAt DateTime?
+  business   Business  @relation(fields: [businessId], references: [id])
+
+  @@index([businessId, name])
+}
+
+model Invoice {
+  id            String        @id @default(cuid())
+  businessId    String
+  partyId       String
+  number        String
+  date          DateTime
+  dueDate       DateTime?
+  placeOfSupply String
+  interState    Boolean
+  taxablePaise  BigInt
+  cgstPaise     BigInt
+  sgstPaise     BigInt
+  igstPaise     BigInt
+  roundOffPaise BigInt
+  totalPaise    BigInt
+  status        String        @default("ISSUED") // ISSUED | CANCELLED
+  notes         String?
+  shareToken    String        @unique
+  createdById   String
+  createdAt     DateTime      @default(now())
+  business      Business      @relation(fields: [businessId], references: [id])
+  party         Party         @relation(fields: [partyId], references: [id])
+  lines         InvoiceLine[]
+
+  @@unique([businessId, number])
+}
+
+model InvoiceLine {
+  id           String  @id @default(cuid())
+  invoiceId    String
+  itemId       String?
+  description  String
+  hsn          String?
+  qtyMilli     Int // quantity × 1000
+  unit         String
+  ratePaise    BigInt
+  taxRateBp    Int
+  taxablePaise BigInt
+  cgstPaise    BigInt
+  sgstPaise    BigInt
+  igstPaise    BigInt
+  totalPaise   BigInt
+  invoice      Invoice @relation(fields: [invoiceId], references: [id])
+}
+
+model Message {
+  id          String   @id @default(cuid())
+  businessId  String
+  partyId     String
+  channel     String // WHATSAPP_LINK | SMS | EMAIL
+  template    String
+  body        String
+  createdById String
+  createdAt   DateTime @default(now())
+  business    Business @relation(fields: [businessId], references: [id])
+  party       Party    @relation(fields: [partyId], references: [id])
+}
+
+// Write-once audit trail of every change to financial records (PRD SE-02).
+model AuditEvent {
+  id         String   @id @default(cuid())
+  businessId String
+  actorId    String
+  action     String
+  entity     String
+  entityId   String
+  data       String?
+  createdAt  DateTime @default(now())
+  business   Business @relation(fields: [businessId], references: [id])
+
+  @@index([businessId, entity, entityId])
+}
