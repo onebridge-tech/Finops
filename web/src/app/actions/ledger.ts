@@ -16,6 +16,7 @@ import { fmtDate, PAYMENT_MODES } from "@/lib/format";
 import { LANGUAGE_NAMES } from "@/lib/messaging/templates";
 import { sendToParty } from "@/lib/messaging/send";
 import type { Channel } from "@/lib/reminder-rule";
+import { checkUpload, saveUpload } from "@/lib/files";
 
 export type FormState = { error?: string; ok?: boolean };
 
@@ -103,6 +104,12 @@ export async function addEntry(_prev: FormState, form: FormData): Promise<FormSt
   const amount = parseRupees(d.amount);
   if (!amount) return { error: "Enter an amount greater than zero" };
   const notify = form.get("notify") === "on";
+  const files = form.getAll("files").filter((f): f is File => f instanceof File && f.size > 0);
+  if (files.length > 5) return { error: "At most 5 attachments per entry" };
+  for (const f of files) {
+    const err = await checkUpload(f, "ATTACHMENT");
+    if (err) return { error: `${f.name}: ${err}` };
+  }
 
   const party = await db.party.findFirst({ where: { id: d.partyId, businessId: business.id } });
   if (!party) return { error: "Party not found" };
@@ -127,6 +134,7 @@ export async function addEntry(_prev: FormState, form: FormData): Promise<FormSt
     const rc = e.direction === "GOT" && e.paymentMode ? await issueReceipt(tx, business.id, e) : null;
     return { entry: e, receipt: rc };
   });
+  for (const f of files) await saveUpload(f, { businessId: business.id, userId: user.id, kind: "ATTACHMENT", entryId: entry.id });
 
   // Messages go out after the response so a slow provider never blocks the form.
   const channel = business.reminderChannel as Channel;

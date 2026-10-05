@@ -14,7 +14,7 @@ export default async function Parties({ searchParams }: PageProps<"/parties">) {
 
   return (
     <>
-      <PageHeader title="Parties" sub={`${parties.length} ${q ? "matching" : "total"}`} action={<LinkButton href="/parties/new">Add party</LinkButton>} />
+      <PageHeader title="Parties" sub={`${parties.length} ${q ? "matching" : "total"}`} action={<div className="flex gap-2"><LinkButton href="/data?tab=parties" variant="secondary">Import</LinkButton><LinkButton href="/parties/new">Add party</LinkButton></div>} />
       <form className="mb-4">
         <Input name="q" defaultValue={q} placeholder="Search by name or phone" />
       </form>

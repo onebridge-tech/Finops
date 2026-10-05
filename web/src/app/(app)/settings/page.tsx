@@ -90,6 +90,11 @@ export default async function Settings() {
           <Link href="/settings/credits" className="text-sm font-medium text-brand underline">Buy credits & see usage</Link>
           {owner && <div className="border-t border-line pt-3"><RunRemindersButton /></div>}
         </Card>
+        <Card className="h-fit space-y-2 text-sm lg:col-start-3">
+          <h2 className="font-semibold">Your data</h2>
+          <p className="text-muted">Import parties and items from Excel, export any list, download everything, or back up.</p>
+          <Link href="/data" className="font-medium text-brand underline">Import & export</Link>
+        </Card>
       </div>
     </>
   );

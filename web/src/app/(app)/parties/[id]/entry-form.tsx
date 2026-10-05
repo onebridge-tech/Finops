@@ -5,6 +5,7 @@ import { useActionState, useEffect, useRef, useState } from "react";
 import { addEntry } from "@/app/actions/ledger";
 import { ErrorText, Field, Input, Select, buttonClass } from "@/components/ui";
 import { PAYMENT_MODES, PAYMENT_MODE_LABEL } from "@/lib/format";
+import { AttachmentInput } from "@/components/attachment-input";
 
 type Props = {
   partyId: string;
@@ -58,6 +59,7 @@ export function EntryForm({ partyId, today, isSupplier, canNotify, notifyDefault
         )}
         <Field label="Note"><Input name="note" placeholder="Bill no., items…" /></Field>
       </div>
+      <AttachmentInput />
       {canNotify ? (
         receiptGoesOut ? (
           <p className="text-xs text-muted">A receipt will be sent to the party automatically.</p>

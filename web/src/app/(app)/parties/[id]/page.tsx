@@ -16,6 +16,8 @@ import { Balance, Card, PageHeader, fmtDate, todayIST } from "@/components/ui";
 import { EntryForm } from "./entry-form";
 import { ReminderButton, CopyLink } from "./reminder";
 import { PartyReminderForm, SendMessageForm } from "./messaging";
+import { AttachToEntry } from "./attach";
+import { Attachments } from "@/components/attachments";
 
 const CHANNEL_NAME: Record<string, string> = { WHATSAPP: "WhatsApp", SMS: "SMS", EMAIL: "Email", WHATSAPP_LINK: "WhatsApp (own phone)" };
 const STATUS_TONE: Record<string, string> = { DELIVERED: "text-got", READ: "text-got", SENT: "text-muted", QUEUED: "text-muted", FAILED: "text-gave", SKIPPED: "text-gave" };
@@ -27,11 +29,13 @@ export default async function PartyPage({ params }: PageProps<"/parties/[id]">) 
   if (!data) notFound();
   const { party, entries, balance, overdue } = data;
 
-  const [invoices, messages, receipts] = await Promise.all([
+  const [invoices, messages, receipts, files] = await Promise.all([
     db.invoice.findMany({ where: { partyId: id, businessId: business.id }, orderBy: { date: "desc" }, take: 10 }),
     db.message.findMany({ where: { partyId: id, businessId: business.id }, orderBy: { createdAt: "desc" }, take: 10 }),
     db.receipt.findMany({ where: { partyId: id, businessId: business.id }, select: { entryId: true, number: true, shareToken: true } }),
+    db.storedFile.findMany({ where: { businessId: business.id, entryId: { in: entries.map((e) => e.id) } }, orderBy: { createdAt: "asc" } }),
   ]);
+  const filesByEntry = Map.groupBy(files, (f) => f.entryId!);
   const receiptByEntry = new Map(receipts.map((r) => [r.entryId, r]));
 
   const rows = withRunningBalance(entries).reverse();
@@ -119,6 +123,7 @@ export default async function PartyPage({ params }: PageProps<"/parties/[id]">) 
                     <td className="px-4 py-2">
                       {e.note ?? "—"}
                       {e.dueDate && e.direction === "GAVE" && !cancelled && <span className="block text-xs text-muted no-underline">Due {fmtDate(e.dueDate)}</span>}
+                      <Attachments files={filesByEntry.get(e.id) ?? []} />
                       {e.paymentMode && (
                         <span className="block text-xs text-muted">
                           {PAYMENT_MODE_LABEL[e.paymentMode as PaymentMode] ?? e.paymentMode}
@@ -129,7 +134,8 @@ export default async function PartyPage({ params }: PageProps<"/parties/[id]">) 
                     <td className="px-4 py-2 text-right tabular-nums text-gave">{e.direction === "GAVE" ? formatINR(e.amountPaise) : ""}</td>
                     <td className="px-4 py-2 text-right tabular-nums text-got">{e.direction === "GOT" ? formatINR(e.amountPaise) : ""}</td>
                     <td className="px-4 py-2 text-right tabular-nums">{formatINR(e.running)}</td>
-                    <td className="px-2 py-2 text-right">
+                    <td className="space-y-1 px-2 py-2 text-right">
+                      {can(role, "ledger:write") && <AttachToEntry entryId={e.id} />}
                       {!cancelled && (e.source === "MANUAL" || e.source === "OPENING") && can(role, "ledger:reverse") && (
                         <form action={reverseEntry}>
                           <input type="hidden" name="entryId" value={e.id} />

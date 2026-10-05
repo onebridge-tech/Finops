@@ -1,0 +1,17 @@
+"use client";
+
+import { useActionState } from "react";
+import { ActionForm } from "@/components/action-form";
+import { backupNow } from "@/app/actions/data";
+import { SubmitButton } from "@/components/submit-button";
+
+export function BackupButton() {
+  const [state, action, pending] = useActionState(backupNow, {});
+  return (
+    <ActionForm dispatch={() => action()} pending={pending} className="space-y-2">
+      <SubmitButton variant="secondary">Back up now</SubmitButton>
+      {state.info && <p className="text-xs text-got">{state.info}</p>}
+      {state.error && <p className="text-xs text-gave">{state.error}</p>}
+    </ActionForm>
+  );
+}
