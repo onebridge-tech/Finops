@@ -1,6 +1,6 @@
 import "server-only";
 import { db } from "./db";
-import { balanceOf, overdueAmount } from "./ledger";
+import { ageing, balanceOf, openDues, overdueAmount } from "./ledger";
 
 /** Balance per party for a business, derived from entries (never stored). */
 export async function balancesByParty(businessId: string): Promise<Map<string, number>> {
@@ -70,6 +70,21 @@ export async function dashboard(businessId: string) {
     todayGot: todaySum("GOT"),
     recent,
   };
+}
+
+/** Receivable parties with their open dues, for the collections screen (LG-04, CP-03). */
+export async function collections(businessId: string) {
+  const parties = (await partiesWithBalance(businessId)).filter((p) => p.balance > 0);
+  const entries = await db.ledgerEntry.findMany({ where: { businessId, partyId: { in: parties.map((p) => p.id) } } });
+  const byParty = new Map<string, typeof entries>();
+  for (const e of entries) byParty.set(e.partyId, [...(byParty.get(e.partyId) ?? []), e]);
+  const now = new Date();
+  return parties.map((p) => {
+    const es = byParty.get(p.id) ?? [];
+    const dues = openDues(es);
+    const age = ageing(es, now);
+    return { ...p, dues, ageing: age, overdue: Object.values(age).reduce((a, b) => a + b, 0) };
+  });
 }
 
 export async function partyLedger(businessId: string, partyId: string) {

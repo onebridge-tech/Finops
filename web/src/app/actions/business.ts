@@ -9,6 +9,7 @@ import { audit } from "@/lib/audit";
 import { writeSession } from "@/lib/session";
 import { isValidGstin, normalizeGstin, STATES } from "@/lib/gstin";
 import { isValidUpiId } from "@/lib/share";
+import { WELCOME_CREDITS } from "@/lib/credits";
 
 export type FormState = { error?: string; ok?: boolean };
 
@@ -50,7 +51,10 @@ export async function createBusiness(_prev: FormState, form: FormData): Promise<
   if ("error" in p) return { error: p.error };
 
   const business = await db.$transaction(async (tx) => {
-    const b = await tx.business.create({ data: { ...p.data, memberships: { create: { userId: user.id, role: "OWNER" } } } });
+    const b = await tx.business.create({
+      data: { ...p.data, creditBalance: WELCOME_CREDITS, memberships: { create: { userId: user.id, role: "OWNER" } } },
+    });
+    await tx.creditTxn.create({ data: { businessId: b.id, delta: WELCOME_CREDITS, balanceAfter: WELCOME_CREDITS, reason: "WELCOME", userId: user.id } });
     await audit(tx, { businessId: b.id, actorId: user.id, action: "create", entity: "Business", entityId: b.id, data: p.data });
     return b;
   });

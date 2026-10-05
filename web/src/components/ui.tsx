@@ -79,11 +79,4 @@ export function EmptyState({ title, children }: { title: string; children?: Reac
   );
 }
 
-export function fmtDate(d: Date | null | undefined) {
-  return d ? d.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric", timeZone: "Asia/Kolkata" }) : "—";
-}
-
-/** yyyy-mm-dd in IST, for <input type="date"> defaults. */
-export function todayIST() {
-  return new Date(Date.now() + 5.5 * 3600_000).toISOString().slice(0, 10);
-}
+export { fmtDate, todayIST } from "@/lib/format";

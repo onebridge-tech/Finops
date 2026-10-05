@@ -1,6 +1,6 @@
 "use client";
 
-import { buttonClass } from "@/components/ui";
+import { buttonClass } from "./ui";
 
 export function PrintButton() {
   return (

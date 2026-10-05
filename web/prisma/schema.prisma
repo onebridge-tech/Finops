@@ -42,6 +42,17 @@ model Business {
   upiId         String?
   invoicePrefix String       @default("INV-")
   nextInvoiceNo Int          @default(1)
+  receiptPrefix String       @default("RCPT-")
+  nextReceiptNo Int          @default(1)
+  creditBalance Int          @default(0) // messaging credits (CP-12)
+  autoReceipt   Boolean      @default(true) // CP-11: send a receipt for every payment
+  entryConfirm  Boolean      @default(false) // LG-02: default for "notify party" on new entries
+  // Default auto-reminder rule (CP-02). Parties can override it.
+  reminderEnabled        Boolean @default(false)
+  reminderDaysBefore     Int?    @default(3)
+  reminderOnDue          Boolean @default(true)
+  reminderEveryDaysAfter Int?    @default(7)
+  reminderChannel        String  @default("WHATSAPP") // WHATSAPP | SMS | EMAIL
   createdAt     DateTime     @default(now())
   memberships   Membership[]
   parties       Party[]
@@ -50,6 +61,9 @@ model Business {
   entries       LedgerEntry[]
   messages      Message[]
   auditEvents   AuditEvent[]
+  creditTxns    CreditTxn[]
+  consentEvents ConsentEvent[]
+  receipts      Receipt[]
 }
 
 model Membership {
@@ -78,12 +92,27 @@ model Party {
   language   String        @default("en")
   source     String?
   shareToken String        @unique
+  // Messaging consent (SE-06). consentAt = the business attests the party agreed to receive messages.
+  consentAt        DateTime?
+  whatsappOptOutAt DateTime?
+  smsOptOutAt      DateTime?
+  emailOptOutAt    DateTime?
+  disputedAt       DateTime? // pauses auto-reminders
+  // Auto-reminder override (CP-02). DEFAULT follows the business rule.
+  reminderMode           String   @default("DEFAULT") // DEFAULT | CUSTOM | OFF
+  reminderDaysBefore     Int?
+  reminderOnDue          Boolean?
+  reminderEveryDaysAfter Int?
+  reminderChannel        String?
+  lastAutoReminderAt     DateTime?
   createdAt  DateTime      @default(now())
   archivedAt DateTime?
   business   Business      @relation(fields: [businessId], references: [id])
   entries    LedgerEntry[]
   invoices   Invoice[]
   messages   Message[]
+  consentEvents ConsentEvent[]
+  receipts   Receipt[]
 
   @@index([businessId, name])
 }
@@ -101,6 +130,7 @@ model LedgerEntry {
   note         String?
   source       String        @default("MANUAL") // MANUAL | OPENING | INVOICE | REVERSAL
   invoiceId    String?
+  paymentMode  String? // GOT entries: CASH | UPI | BANK | CHEQUE | CARD | OTHER
   reversalOfId String?       @unique
   createdById  String
   createdAt    DateTime      @default(now())
@@ -108,6 +138,7 @@ model LedgerEntry {
   party        Party         @relation(fields: [partyId], references: [id])
   reversalOf   LedgerEntry?  @relation("Reversal", fields: [reversalOfId], references: [id])
   reversedBy   LedgerEntry?  @relation("Reversal")
+  receipt      Receipt?
 
   @@index([businessId, partyId, date])
 }
@@ -173,17 +204,83 @@ model InvoiceLine {
   invoice      Invoice @relation(fields: [invoiceId], references: [id])
 }
 
+// Every outbound message, whichever provider sent it (WhatsApp link, test mode, WhatsApp API, SMS, email).
 model Message {
-  id          String   @id @default(cuid())
+  id                String    @id @default(cuid())
+  businessId        String
+  partyId           String?
+  kind              String    @default("REMINDER") // REMINDER | ENTRY_CONFIRMATION | RECEIPT | INVOICE | QUOTE | STATEMENT | INVITE
+  channel           String // WHATSAPP | SMS | EMAIL | WHATSAPP_LINK
+  to                String    @default("")
+  template          String
+  body              String
+  status            String    @default("SENT") // QUEUED | SENT | DELIVERED | READ | FAILED | SKIPPED
+  provider          String    @default("link") // link | test | meta | msg91 | resend
+  providerMessageId String?
+  error             String?
+  credits           Int       @default(0)
+  trigger           String    @default("MANUAL") // MANUAL | AUTO | BULK
+  createdById       String?
+  createdAt         DateTime  @default(now())
+  sentAt            DateTime?
+  deliveredAt       DateTime?
+  readAt            DateTime?
+  business          Business  @relation(fields: [businessId], references: [id])
+  party             Party?    @relation(fields: [partyId], references: [id])
+
+  @@index([businessId, createdAt])
+  @@index([providerMessageId])
+}
+
+// Messaging credits ledger (CP-12). balanceAfter makes the history self-checking.
+model CreditTxn {
+  id           String   @id @default(cuid())
+  businessId   String
+  delta        Int
+  balanceAfter Int
+  reason       String // WELCOME | TOPUP | MESSAGE | REFUND
+  messageId    String?
+  userId       String?
+  note         String?
+  createdAt    DateTime @default(now())
+  business     Business @relation(fields: [businessId], references: [id])
+
+  @@index([businessId, createdAt])
+}
+
+// Messaging consent record (SE-06, DPDP Act). Append-only.
+model ConsentEvent {
+  id         String   @id @default(cuid())
+  businessId String
+  partyId    String
+  channel    String // ALL | WHATSAPP | SMS | EMAIL
+  action     String // GRANTED | OPTED_OUT | OPTED_IN
+  source     String // BUSINESS_ATTESTED | PUBLIC_LINK | PROVIDER
+  actorId    String?
+  createdAt  DateTime @default(now())
+  business   Business @relation(fields: [businessId], references: [id])
+  party      Party    @relation(fields: [partyId], references: [id])
+
+  @@index([partyId, createdAt])
+}
+
+// Payment receipt issued for a money-in entry (CP-11).
+model Receipt {
+  id          String      @id @default(cuid())
   businessId  String
   partyId     String
-  channel     String // WHATSAPP_LINK | SMS | EMAIL
-  template    String
-  body        String
-  createdById String
-  createdAt   DateTime @default(now())
-  business    Business @relation(fields: [businessId], references: [id])
-  party       Party    @relation(fields: [partyId], references: [id])
+  entryId     String      @unique
+  number      String
+  amountPaise BigInt
+  date        DateTime
+  mode        String?
+  shareToken  String      @unique
+  createdAt   DateTime    @default(now())
+  business    Business    @relation(fields: [businessId], references: [id])
+  party       Party       @relation(fields: [partyId], references: [id])
+  entry       LedgerEntry @relation(fields: [entryId], references: [id])
+
+  @@unique([businessId, number])
 }
 
 // Write-once audit trail of every change to financial records (PRD SE-02).

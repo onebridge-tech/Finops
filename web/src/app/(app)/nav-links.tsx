@@ -7,6 +7,7 @@ const LINKS = [
   ["/dashboard", "Home"],
   ["/parties", "Parties"],
   ["/invoices", "Invoices"],
+  ["/collections", "Collect"],
   ["/items", "Items"],
   ["/settings", "Settings"],
 ] as const;
@@ -14,7 +15,7 @@ const LINKS = [
 export function NavLinks({ mobile = false }: { mobile?: boolean }) {
   const path = usePathname();
   return (
-    <ul className={mobile ? "grid grid-cols-5 text-center text-xs" : "flex gap-1 text-sm"}>
+    <ul className={mobile ? "grid grid-cols-6 text-center text-xs" : "flex gap-1 text-sm"}>
       {LINKS.map(([href, label]) => {
         const active = path === href || path.startsWith(href + "/");
         return (

@@ -6,7 +6,7 @@ import { createParty } from "@/app/actions/ledger";
 import { ErrorText, Field, Input, Select } from "@/components/ui";
 import { SubmitButton } from "@/components/submit-button";
 import { STATES } from "@/lib/gstin";
-import { REMINDER_LANGUAGES } from "@/lib/share";
+import { LANGUAGE_NAMES } from "@/lib/messaging/templates";
 
 export function PartyForm({ defaultState }: { defaultState: string }) {
   const [state, action, pending] = useActionState(createParty, {});
@@ -35,7 +35,7 @@ export function PartyForm({ defaultState }: { defaultState: string }) {
       </Field>
       <Field label="Reminder language">
         <Select name="language" defaultValue="en">
-          {Object.entries(REMINDER_LANGUAGES).map(([c, n]) => <option key={c} value={c}>{n}</option>)}
+          {Object.entries(LANGUAGE_NAMES).map(([c, n]) => <option key={c} value={c}>{n}</option>)}
         </Select>
       </Field>
       <Field label="Source" hint="Walk-in, referral, trade show, website…"><Input name="source" /></Field>
@@ -47,6 +47,13 @@ export function PartyForm({ defaultState }: { defaultState: string }) {
           <option value="GOT">I owe them</option>
         </Select>
       </Field>
+      <label className="flex items-start gap-2 text-sm sm:col-span-2">
+        <input type="checkbox" name="consent" className="mt-0.5 size-4 accent-[var(--brand)]" />
+        <span>
+          This party agreed to receive account messages (reminders, receipts, invoices) on WhatsApp, SMS or email.
+          <span className="block text-xs text-muted">Required before the app can message them. They can stop messages at any time from a link in each message.</span>
+        </span>
+      </label>
       <div className="space-y-3 sm:col-span-2">
         <ErrorText>{state.error}</ErrorText>
         <SubmitButton>Save party</SubmitButton>

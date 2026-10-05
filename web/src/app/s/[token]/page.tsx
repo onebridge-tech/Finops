@@ -75,6 +75,7 @@ export default async function Statement({ params }: PageProps<"/s/[token]">) {
         ))}
       </div>
       <p className="mt-6 text-center text-xs text-muted">Shared securely by {b.name}. Questions about an entry? Contact {b.phone ?? "the business"}.</p>
+      <p className="mt-2 text-center text-xs text-muted"><a href={`/o/${token}`} className="underline">Message preferences</a></p>
     </main>
   );
 }

@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
+import { after } from "next/server";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { requireBusiness } from "@/lib/auth";
@@ -9,7 +10,12 @@ import { audit } from "@/lib/audit";
 import { newShareToken } from "@/lib/session";
 import { parseRupees } from "@/lib/money";
 import { isValidGstin, normalizeGstin, STATES } from "@/lib/gstin";
-import { normalizeIndianMobile, REMINDER_LANGUAGES } from "@/lib/share";
+import { appUrl, normalizeIndianMobile } from "@/lib/share";
+import { balanceOf } from "@/lib/ledger";
+import { fmtDate, PAYMENT_MODES } from "@/lib/format";
+import { LANGUAGE_NAMES } from "@/lib/messaging/templates";
+import { sendToParty } from "@/lib/messaging/send";
+import type { Channel } from "@/lib/reminder-rule";
 
 export type FormState = { error?: string; ok?: boolean };
 
@@ -22,7 +28,7 @@ const PartyInput = z.object({
   stateCode: z.string().refine((v) => v === "" || v in STATES, "Unknown state"),
   address: z.string().trim().max(300),
   creditDays: z.string().refine((v) => v === "" || /^\d{1,3}$/.test(v), "Credit days must be a number"),
-  language: z.string().refine((v) => v in REMINDER_LANGUAGES, "Unknown language"),
+  language: z.string().refine((v) => v in LANGUAGE_NAMES, "Unknown language"),
   source: z.string().trim().max(60),
   opening: z.string().trim(),
   openingDirection: z.enum(["GAVE", "GOT"]),
@@ -41,6 +47,7 @@ export async function createParty(_prev: FormState, form: FormData): Promise<For
   const d = r.data;
   const opening = d.opening ? parseRupees(d.opening) : 0;
   if (opening === null) return { error: "Opening balance must be an amount like 1500 or 1500.50" };
+  const consent = form.get("consent") === "on";
 
   const party = await db.$transaction(async (tx) => {
     const p = await tx.party.create({
@@ -57,9 +64,13 @@ export async function createParty(_prev: FormState, form: FormData): Promise<For
         language: d.language,
         source: d.source || null,
         shareToken: newShareToken(),
+        consentAt: consent ? new Date() : null,
       },
     });
     await audit(tx, { businessId: business.id, actorId: user.id, action: "create", entity: "Party", entityId: p.id, data: d });
+    if (consent) {
+      await tx.consentEvent.create({ data: { businessId: business.id, partyId: p.id, channel: "ALL", action: "GRANTED", source: "BUSINESS_ATTESTED", actorId: user.id } });
+    }
     if (opening > 0) {
       const e = await tx.ledgerEntry.create({
         data: {
@@ -81,6 +92,7 @@ const EntryInput = z.object({
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Pick a date"),
   dueDate: z.string().refine((v) => v === "" || /^\d{4}-\d{2}-\d{2}$/.test(v), "Bad due date"),
   note: z.string().trim().max(300),
+  paymentMode: z.enum(["", ...PAYMENT_MODES]),
 });
 
 export async function addEntry(_prev: FormState, form: FormData): Promise<FormState> {
@@ -90,6 +102,7 @@ export async function addEntry(_prev: FormState, form: FormData): Promise<FormSt
   const d = r.data;
   const amount = parseRupees(d.amount);
   if (!amount) return { error: "Enter an amount greater than zero" };
+  const notify = form.get("notify") === "on";
 
   const party = await db.party.findFirst({ where: { id: d.partyId, businessId: business.id } });
   if (!party) return { error: "Party not found" };
@@ -100,17 +113,53 @@ export async function addEntry(_prev: FormState, form: FormData): Promise<FormSt
     dueDate = new Date(date.getTime() + party.creditDays * 86400_000);
   }
 
-  await db.$transaction(async (tx) => {
+  const { entry, receipt } = await db.$transaction(async (tx) => {
     const e = await tx.ledgerEntry.create({
       data: {
         businessId: business.id, partyId: party.id, direction: d.direction, amountPaise: BigInt(amount),
         date, dueDate, note: d.note || null, createdById: user.id,
+        paymentMode: d.direction === "GOT" ? d.paymentMode || null : null,
       },
     });
     await audit(tx, { businessId: business.id, actorId: user.id, action: "create", entity: "LedgerEntry", entityId: e.id, data: e });
+    // Every payment received gets a numbered receipt (CP-11). A "got" entry without a
+    // payment mode is goods received from a supplier, not money.
+    const rc = e.direction === "GOT" && e.paymentMode ? await issueReceipt(tx, business.id, e) : null;
+    return { entry: e, receipt: rc };
+  });
+
+  // Messages go out after the response so a slow provider never blocks the form.
+  const channel = business.reminderChannel as Channel;
+  after(async () => {
+    const balancePaise = balanceOf(await db.ledgerEntry.findMany({ where: { partyId: party.id } }));
+    const date = fmtDate(entry.date);
+    if (receipt && business.autoReceipt) {
+      await sendToParty({
+        business, party, kind: "RECEIPT", channel, userId: user.id, trigger: "AUTO",
+        vars: { amountPaise: amount, number: receipt.number, date, balancePaise, link: appUrl(`/r/${receipt.shareToken}`) },
+      });
+    } else if (notify) {
+      await sendToParty({
+        business, party, kind: entry.direction === "GAVE" ? "ENTRY_GAVE" : "ENTRY_GOT", channel, userId: user.id, trigger: "AUTO",
+        vars: { amountPaise: amount, date, balancePaise, link: appUrl(`/s/${party.shareToken}`) },
+      });
+    }
   });
   revalidatePath(`/parties/${party.id}`);
   return { ok: true };
+}
+
+type Tx = Parameters<Parameters<typeof db.$transaction>[0]>[0];
+
+/** Reserves the next receipt number and issues a receipt for a money-in entry. */
+async function issueReceipt(tx: Tx, businessId: string, e: { id: string; partyId: string; amountPaise: bigint; date: Date; paymentMode: string | null }) {
+  const b = await tx.business.update({ where: { id: businessId }, data: { nextReceiptNo: { increment: 1 } } });
+  return tx.receipt.create({
+    data: {
+      businessId, partyId: e.partyId, entryId: e.id, number: `${b.receiptPrefix}${b.nextReceiptNo - 1}`,
+      amountPaise: e.amountPaise, date: e.date, mode: e.paymentMode, shareToken: newShareToken(),
+    },
+  });
 }
 
 /** Entries are immutable: "deleting" posts an equal and opposite reversal entry. */
@@ -134,13 +183,16 @@ export async function reverseEntry(form: FormData): Promise<void> {
   revalidatePath(`/parties/${entry.partyId}`);
 }
 
-/** Records that a reminder was sent (WhatsApp click-to-chat for Phase 1 MVP). */
+/** Records a reminder the user sent from their own WhatsApp (click-to-chat, free). */
 export async function logReminder(partyId: string, body: string): Promise<void> {
   const { user, business } = await requireBusiness("reminder:send");
   const party = await db.party.findFirst({ where: { id: partyId, businessId: business.id } });
   if (!party) return;
   await db.message.create({
-    data: { businessId: business.id, partyId, channel: "WHATSAPP_LINK", template: `reminder_${party.language}`, body, createdById: user.id },
+    data: {
+      businessId: business.id, partyId, kind: "REMINDER", channel: "WHATSAPP_LINK", to: party.phone ?? "",
+      template: `reminder_${party.language}`, body, status: "SENT", provider: "link", sentAt: new Date(), createdById: user.id,
+    },
   });
   revalidatePath(`/parties/${partyId}`);
 }

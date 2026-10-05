@@ -7,7 +7,7 @@ import { formatINR } from "@/lib/money";
 import { InvoiceDocument } from "@/components/invoice-document";
 import { PageHeader, buttonClass } from "@/components/ui";
 import { CopyLink } from "../../parties/[id]/reminder";
-import { PrintButton } from "./print-button";
+import { PrintButton } from "@/components/print-button";
 
 export default async function InvoicePage({ params }: PageProps<"/invoices/[id]">) {
   const { id } = await params;
