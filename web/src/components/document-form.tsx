@@ -1,10 +1,10 @@
 "use client";
 
-import { ActionForm } from "@/components/action-form";
+import { ActionForm } from "./action-form";
 import { useActionState, useMemo, useState } from "react";
-import { createInvoice } from "@/app/actions/billing";
-import { Card, ErrorText, Field, Input, Select, inputClass } from "@/components/ui";
-import { SubmitButton } from "@/components/submit-button";
+import { createInvoice, createQuote } from "@/app/actions/billing";
+import { Card, ErrorText, Field, Input, Select, inputClass } from "./ui";
+import { SubmitButton } from "./submit-button";
 import { computeInvoice, GST_RATES_BP, isInterState } from "@/lib/gst";
 import { formatINR, parseRupees, toRupeeString } from "@/lib/money";
 import { STATES } from "@/lib/gstin";
@@ -16,8 +16,10 @@ type Line = { key: number; itemId: string; description: string; hsn: string; uni
 let nextKey = 1;
 const blank = (): Line => ({ key: nextKey++, itemId: "", description: "", hsn: "", unit: "pcs", qty: "1", rate: "", taxRateBp: 1800 });
 
-export function InvoiceForm({ parties, items, businessState, today, preselect }: { parties: PartyOpt[]; items: ItemOpt[]; businessState: string; today: string; preselect: string }) {
-  const [state, action, pending] = useActionState(createInvoice, {});
+/** Line-item editor shared by GST invoices and quotations. */
+export function DocumentForm({ kind, parties, items, businessState, today, preselect }: { kind: "INVOICE" | "QUOTE"; parties: PartyOpt[]; items: ItemOpt[]; businessState: string; today: string; preselect: string }) {
+  const isQuote = kind === "QUOTE";
+  const [state, action, pending] = useActionState(isQuote ? createQuote : createInvoice, {});
   const initial = parties.find((p) => p.id === preselect) ?? parties[0];
   const [partyId, setPartyId] = useState(initial.id);
   const [pos, setPos] = useState(initial.stateCode);
@@ -62,8 +64,8 @@ export function InvoiceForm({ parties, items, businessState, today, preselect }:
             {Object.entries(STATES).map(([c, n]) => <option key={c} value={c}>{c} · {n}</option>)}
           </Select>
         </Field>
-        <Field label="Invoice date"><Input type="date" value={date} onChange={(e) => setDate(e.target.value)} required /></Field>
-        <Field label="Due date" hint="Blank = customer’s credit days"><Input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} /></Field>
+        <Field label={isQuote ? "Quotation date" : "Invoice date"}><Input type="date" value={date} onChange={(e) => setDate(e.target.value)} required /></Field>
+        <Field label={isQuote ? "Valid until" : "Due date"} hint={isQuote ? "Optional" : "Blank = customer’s credit days"}><Input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} /></Field>
       </Card>
 
       <Card className="space-y-3">
@@ -120,7 +122,7 @@ export function InvoiceForm({ parties, items, businessState, today, preselect }:
       </div>
 
       <ErrorText>{state.error}</ErrorText>
-      <SubmitButton>Create invoice</SubmitButton>
+      <SubmitButton>{isQuote ? "Create quotation" : "Create invoice"}</SubmitButton>
     </ActionForm>
   );
 }

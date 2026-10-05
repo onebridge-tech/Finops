@@ -24,7 +24,7 @@ export function ReminderButton({ partyId, href, text }: { partyId: string; href:
   );
 }
 
-export function CopyLink({ url }: { url: string }) {
+export function CopyLink({ url, label = "Copy link" }: { url: string; label?: string }) {
   const [copied, setCopied] = useState(false);
   return (
     <button
@@ -36,7 +36,7 @@ export function CopyLink({ url }: { url: string }) {
         setTimeout(() => setCopied(false), 1500);
       }}
     >
-      {copied ? "Copied" : "Copy statement link"}
+      {copied ? "Copied" : label}
     </button>
   );
 }

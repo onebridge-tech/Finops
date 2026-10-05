@@ -108,3 +108,16 @@ describe("share", () => {
     expect(link).toBe("upi://pay?pa=shop%40okicici&pn=Sri%20Sai%20Traders&cu=INR&am=1250.50&tn=INV-1");
   });
 });
+
+describe("amount in words", () => {
+  it("uses the Indian numbering system", async () => {
+    const { amountInWords, numberInWords } = await import("./words");
+    expect(amountInWords(3629900)).toBe("Rupees Thirty Six Thousand Two Hundred Ninety Nine Only");
+    expect(amountInWords(12345678950)).toBe("Rupees Twelve Crore Thirty Four Lakh Fifty Six Thousand Seven Hundred Eighty Nine and Fifty Paise Only");
+    expect(amountInWords(100)).toBe("Rupees One Only");
+    expect(amountInWords(5)).toBe("Rupees Zero and Five Paise Only");
+    expect(numberInWords(100000)).toBe("One Lakh");
+    expect(numberInWords(1010)).toBe("One Thousand Ten");
+    expect(numberInWords(2000000000)).toBe("Two Hundred Crore");
+  });
+});

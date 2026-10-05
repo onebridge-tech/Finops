@@ -32,38 +32,52 @@ model OtpCode {
 }
 
 model Business {
-  id            String       @id @default(cuid())
-  name          String
-  gstin         String?
-  stateCode     String // 2-digit GST state code
-  address       String?
-  phone         String?
-  email         String?
-  upiId         String?
-  invoicePrefix String       @default("INV-")
-  nextInvoiceNo Int          @default(1)
-  receiptPrefix String       @default("RCPT-")
-  nextReceiptNo Int          @default(1)
-  creditBalance Int          @default(0) // messaging credits (CP-12)
-  autoReceipt   Boolean      @default(true) // CP-11: send a receipt for every payment
-  entryConfirm  Boolean      @default(false) // LG-02: default for "notify party" on new entries
+  id                     String         @id @default(cuid())
+  name                   String
+  gstin                  String?
+  stateCode              String // 2-digit GST state code
+  address                String?
+  phone                  String?
+  email                  String?
+  upiId                  String?
+  invoicePrefix          String         @default("INV-")
+  nextInvoiceNo          Int            @default(1)
+  receiptPrefix          String         @default("RCPT-")
+  nextReceiptNo          Int            @default(1)
+  quotePrefix            String         @default("QT-")
+  nextQuoteNo            Int            @default(1)
+  // Branding on documents (BD-04)
+  logoFileId             String?
+  signatureFileId        String?
+  brandColor             String         @default("#0f766e")
+  docTemplate            String         @default("CLASSIC") // CLASSIC | MODERN | COMPACT
+  docTerms               String?
+  bankName               String?
+  bankAccountName        String?
+  bankAccountNo          String?
+  bankIfsc               String?
+  creditBalance          Int            @default(0) // messaging credits (CP-12)
+  autoReceipt            Boolean        @default(true) // CP-11: send a receipt for every payment
+  entryConfirm           Boolean        @default(false) // LG-02: default for "notify party" on new entries
   // Default auto-reminder rule (CP-02). Parties can override it.
-  reminderEnabled        Boolean @default(false)
-  reminderDaysBefore     Int?    @default(3)
-  reminderOnDue          Boolean @default(true)
-  reminderEveryDaysAfter Int?    @default(7)
-  reminderChannel        String  @default("WHATSAPP") // WHATSAPP | SMS | EMAIL
-  createdAt     DateTime     @default(now())
-  memberships   Membership[]
-  parties       Party[]
-  items         Item[]
-  invoices      Invoice[]
-  entries       LedgerEntry[]
-  messages      Message[]
-  auditEvents   AuditEvent[]
-  creditTxns    CreditTxn[]
-  consentEvents ConsentEvent[]
-  receipts      Receipt[]
+  reminderEnabled        Boolean        @default(false)
+  reminderDaysBefore     Int?           @default(3)
+  reminderOnDue          Boolean        @default(true)
+  reminderEveryDaysAfter Int?           @default(7)
+  reminderChannel        String         @default("WHATSAPP") // WHATSAPP | SMS | EMAIL
+  createdAt              DateTime       @default(now())
+  memberships            Membership[]
+  parties                Party[]
+  items                  Item[]
+  invoices               Invoice[]
+  entries                LedgerEntry[]
+  messages               Message[]
+  auditEvents            AuditEvent[]
+  creditTxns             CreditTxn[]
+  consentEvents          ConsentEvent[]
+  receipts               Receipt[]
+  files                  StoredFile[]
+  quotes                 Quote[]
 }
 
 model Membership {
@@ -79,40 +93,41 @@ model Membership {
 }
 
 model Party {
-  id         String        @id @default(cuid())
-  businessId String
-  name       String
-  type       String        @default("CUSTOMER") // CUSTOMER | SUPPLIER | BOTH
-  phone      String?
-  email      String?
-  gstin      String?
-  stateCode  String?
-  address    String?
-  creditDays Int?
-  language   String        @default("en")
-  source     String?
-  shareToken String        @unique
+  id                     String         @id @default(cuid())
+  businessId             String
+  name                   String
+  type                   String         @default("CUSTOMER") // CUSTOMER | SUPPLIER | BOTH
+  phone                  String?
+  email                  String?
+  gstin                  String?
+  stateCode              String?
+  address                String?
+  creditDays             Int?
+  language               String         @default("en")
+  source                 String?
+  shareToken             String         @unique
   // Messaging consent (SE-06). consentAt = the business attests the party agreed to receive messages.
-  consentAt        DateTime?
-  whatsappOptOutAt DateTime?
-  smsOptOutAt      DateTime?
-  emailOptOutAt    DateTime?
-  disputedAt       DateTime? // pauses auto-reminders
+  consentAt              DateTime?
+  whatsappOptOutAt       DateTime?
+  smsOptOutAt            DateTime?
+  emailOptOutAt          DateTime?
+  disputedAt             DateTime? // pauses auto-reminders
   // Auto-reminder override (CP-02). DEFAULT follows the business rule.
-  reminderMode           String   @default("DEFAULT") // DEFAULT | CUSTOM | OFF
+  reminderMode           String         @default("DEFAULT") // DEFAULT | CUSTOM | OFF
   reminderDaysBefore     Int?
   reminderOnDue          Boolean?
   reminderEveryDaysAfter Int?
   reminderChannel        String?
   lastAutoReminderAt     DateTime?
-  createdAt  DateTime      @default(now())
-  archivedAt DateTime?
-  business   Business      @relation(fields: [businessId], references: [id])
-  entries    LedgerEntry[]
-  invoices   Invoice[]
-  messages   Message[]
-  consentEvents ConsentEvent[]
-  receipts   Receipt[]
+  createdAt              DateTime       @default(now())
+  archivedAt             DateTime?
+  business               Business       @relation(fields: [businessId], references: [id])
+  entries                LedgerEntry[]
+  invoices               Invoice[]
+  messages               Message[]
+  consentEvents          ConsentEvent[]
+  receipts               Receipt[]
+  quotes                 Quote[]
 
   @@index([businessId, name])
 }
@@ -120,7 +135,7 @@ model Party {
 // Append-only. Corrections are made with a REVERSAL entry, never by update/delete.
 // Sign convention: GAVE increases what the party owes us, GOT decreases it.
 model LedgerEntry {
-  id           String        @id @default(cuid())
+  id           String       @id @default(cuid())
   businessId   String
   partyId      String
   direction    String // GAVE | GOT
@@ -128,35 +143,112 @@ model LedgerEntry {
   date         DateTime
   dueDate      DateTime?
   note         String?
-  source       String        @default("MANUAL") // MANUAL | OPENING | INVOICE | REVERSAL
+  source       String       @default("MANUAL") // MANUAL | OPENING | INVOICE | REVERSAL
   invoiceId    String?
   paymentMode  String? // GOT entries: CASH | UPI | BANK | CHEQUE | CARD | OTHER
-  reversalOfId String?       @unique
+  reversalOfId String?      @unique
   createdById  String
-  createdAt    DateTime      @default(now())
-  business     Business      @relation(fields: [businessId], references: [id])
-  party        Party         @relation(fields: [partyId], references: [id])
-  reversalOf   LedgerEntry?  @relation("Reversal", fields: [reversalOfId], references: [id])
-  reversedBy   LedgerEntry?  @relation("Reversal")
+  createdAt    DateTime     @default(now())
+  business     Business     @relation(fields: [businessId], references: [id])
+  party        Party        @relation(fields: [partyId], references: [id])
+  reversalOf   LedgerEntry? @relation("Reversal", fields: [reversalOfId], references: [id])
+  reversedBy   LedgerEntry? @relation("Reversal")
   receipt      Receipt?
 
   @@index([businessId, partyId, date])
 }
 
 model Item {
-  id         String    @id @default(cuid())
-  businessId String
-  name       String
-  sku        String?
-  unit       String    @default("pcs")
-  pricePaise BigInt
-  hsn        String?
-  taxRateBp  Int       @default(1800) // basis points: 1800 = 18%
-  createdAt  DateTime  @default(now())
-  archivedAt DateTime?
-  business   Business  @relation(fields: [businessId], references: [id])
+  id                 String    @id @default(cuid())
+  businessId         String
+  name               String
+  description        String?
+  sku                String?
+  unit               String    @default("pcs")
+  pricePaise         BigInt // sale price, excluding GST
+  purchasePricePaise BigInt?
+  hsn                String?
+  taxRateBp          Int       @default(1800) // basis points: 1800 = 18%
+  isPublic           Boolean   @default(false) // shown in the shareable catalogue (CI-02)
+  imageFileId        String?
+  parentId           String? // set on a variant; the parent is the base product
+  variantName        String? // e.g. "Red / XL"
+  createdAt          DateTime  @default(now())
+  archivedAt         DateTime?
+  business           Business  @relation(fields: [businessId], references: [id])
+  parent             Item?     @relation("Variants", fields: [parentId], references: [id])
+  variants           Item[]    @relation("Variants")
 
   @@index([businessId, name])
+}
+
+// Uploaded file (logo, signature, item image, entry attachment). Bytes live in storage.
+model StoredFile {
+  id          String   @id @default(cuid())
+  businessId  String
+  kind        String // LOGO | SIGNATURE | ITEM_IMAGE | ATTACHMENT
+  name        String
+  mime        String
+  size        Int
+  storageKey  String
+  entryId     String?
+  createdById String
+  createdAt   DateTime @default(now())
+  business    Business @relation(fields: [businessId], references: [id])
+
+  @@index([businessId, kind])
+  @@index([entryId])
+}
+
+model Quote {
+  id                 String      @id @default(cuid())
+  businessId         String
+  partyId            String
+  number             String
+  date               DateTime
+  validUntil         DateTime?
+  placeOfSupply      String
+  interState         Boolean
+  taxablePaise       BigInt
+  cgstPaise          BigInt
+  sgstPaise          BigInt
+  igstPaise          BigInt
+  roundOffPaise      BigInt
+  totalPaise         BigInt
+  status             String      @default("OPEN") // OPEN | ACCEPTED | DECLINED | CONVERTED
+  notes              String?
+  shareToken         String      @unique
+  viewCount          Int         @default(0)
+  firstViewedAt      DateTime?
+  lastViewedAt       DateTime?
+  respondedAt        DateTime?
+  responderName      String?
+  convertedInvoiceId String?
+  createdById        String
+  createdAt          DateTime    @default(now())
+  business           Business    @relation(fields: [businessId], references: [id])
+  party              Party       @relation(fields: [partyId], references: [id])
+  lines              QuoteLine[]
+
+  @@unique([businessId, number])
+}
+
+model QuoteLine {
+  id           String  @id @default(cuid())
+  quoteId      String
+  itemId       String?
+  description  String
+  hsn          String?
+  qtyMilli     Int
+  unit         String
+  ratePaise    BigInt
+  taxRateBp    Int
+  taxablePaise BigInt
+  cgstPaise    BigInt
+  sgstPaise    BigInt
+  igstPaise    BigInt
+  totalPaise   BigInt
+  quote        Quote   @relation(fields: [quoteId], references: [id])
 }
 
 model Invoice {
@@ -177,6 +269,12 @@ model Invoice {
   status        String        @default("ISSUED") // ISSUED | CANCELLED
   notes         String?
   shareToken    String        @unique
+  viewCount     Int           @default(0)
+  firstViewedAt DateTime?
+  lastViewedAt  DateTime?
+  cancelledAt   DateTime?
+  cancelReason  String?
+  quoteId       String?
   createdById   String
   createdAt     DateTime      @default(now())
   business      Business      @relation(fields: [businessId], references: [id])

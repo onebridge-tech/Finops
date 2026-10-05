@@ -7,6 +7,8 @@ import { isTestMode } from "@/lib/messaging/providers";
 import { BusinessForm } from "@/components/business-form";
 import { Card, LinkButton, PageHeader } from "@/components/ui";
 import { MessagingSettingsForm, RunRemindersButton } from "./messaging-form";
+import { BrandingForm } from "./branding-form";
+import { fileUrl } from "@/lib/files";
 
 export const metadata = { title: "Settings" };
 
@@ -45,6 +47,22 @@ export default async function Settings() {
             <p className="text-sm text-muted">Add a UPI ID to generate your QR.</p>
           )}
         </Card>
+
+        <Card className="lg:col-span-2">
+          <h2 className="mb-4 font-semibold">Invoice & quotation branding</h2>
+          {owner ? (
+            <BrandingForm
+              values={{
+                brandColor: business.brandColor, docTemplate: business.docTemplate, docTerms: business.docTerms, quotePrefix: business.quotePrefix,
+                bankName: business.bankName, bankAccountName: business.bankAccountName, bankAccountNo: business.bankAccountNo, bankIfsc: business.bankIfsc,
+                logoUrl: fileUrl(business.logoFileId), signatureUrl: fileUrl(business.signatureFileId),
+              }}
+            />
+          ) : (
+            <p className="text-sm text-muted">Only the owner or an admin can change branding.</p>
+          )}
+        </Card>
+        <div className="hidden lg:block" />
 
         <Card className="lg:col-span-2">
           <h2 className="mb-1 font-semibold">Messages & reminders</h2>

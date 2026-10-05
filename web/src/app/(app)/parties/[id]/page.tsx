@@ -51,10 +51,13 @@ export default async function PartyPage({ params }: PageProps<"/parties/[id]">) 
         sub={[party.phone && `+${party.phone}`, party.gstin, party.creditDays && `${party.creditDays} days credit`].filter(Boolean).join(" · ") || undefined}
         action={
           <div className="flex flex-wrap gap-2">
-            <CopyLink url={statementUrl} />
+            <CopyLink url={statementUrl} label="Copy statement link" />
             {balance > 0 && can(role, "reminder:send") && <ReminderButton partyId={party.id} href={wa} text={reminder} />}
             {can(role, "invoice:write") && (
-              <Link href={`/invoices/new?party=${party.id}`} className="rounded-lg border border-line bg-card px-3.5 py-2 text-sm font-medium hover:bg-bg">New invoice</Link>
+              <>
+                <Link href={`/quotes/new?party=${party.id}`} className="rounded-lg border border-line bg-card px-3.5 py-2 text-sm font-medium hover:bg-bg">New quotation</Link>
+                <Link href={`/invoices/new?party=${party.id}`} className="rounded-lg border border-line bg-card px-3.5 py-2 text-sm font-medium hover:bg-bg">New invoice</Link>
+              </>
             )}
           </div>
         }

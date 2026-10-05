@@ -17,7 +17,8 @@ export function ActionForm({ dispatch, pending, ...props }: Omit<ComponentProps<
         {...props}
         onSubmit={(e) => {
           e.preventDefault();
-          const data = new FormData(e.currentTarget);
+          // Include the clicked button's name/value, as a native submit would.
+          const data = new FormData(e.currentTarget, (e.nativeEvent as SubmitEvent).submitter);
           startTransition(() => dispatch(data));
         }}
       />

@@ -16,7 +16,15 @@ export default async function Invoices() {
   });
   return (
     <>
-      <PageHeader title="Invoices" action={<LinkButton href="/invoices/new">New invoice</LinkButton>} />
+      <PageHeader
+        title="Invoices"
+        action={
+          <div className="flex gap-2">
+            <LinkButton href="/quotes" variant="secondary">Quotations</LinkButton>
+            <LinkButton href="/invoices/new">New invoice</LinkButton>
+          </div>
+        }
+      />
       {invoices.length === 0 ? (
         <EmptyState title="No invoices yet">Create a GST invoice and share it on WhatsApp with a pay link.</EmptyState>
       ) : (
@@ -25,9 +33,12 @@ export default async function Invoices() {
             <Link key={i.id} href={`/invoices/${i.id}`} className="flex items-center justify-between px-4 py-3 hover:bg-bg">
               <span>
                 <span className="block font-medium">{i.number} · {i.party.name}</span>
-                <span className="text-xs text-muted">{fmtDate(i.date)}{i.dueDate ? ` · due ${fmtDate(i.dueDate)}` : ""}</span>
+                <span className="text-xs text-muted">
+                  {fmtDate(i.date)}{i.dueDate ? ` · due ${fmtDate(i.dueDate)}` : ""}
+                  {i.status === "CANCELLED" ? " · cancelled" : i.viewCount > 0 ? ` · viewed ${i.viewCount}×` : ""}
+                </span>
               </span>
-              <span className="font-semibold tabular-nums">{formatINR(i.totalPaise)}</span>
+              <span className={`font-semibold tabular-nums ${i.status === "CANCELLED" ? "text-muted line-through" : ""}`}>{formatINR(i.totalPaise)}</span>
             </Link>
           ))}
         </Card>

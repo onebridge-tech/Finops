@@ -11,14 +11,15 @@ export type Permission =
   | "ledger:reverse"
   | "item:write"
   | "invoice:write"
+  | "invoice:cancel"
   | "reminder:send"
   | "settings:write";
 
 // Default role templates (PRD section 8). Branch / party-group scoping comes in Phase 2.
 const GRANTS: Record<Role, Permission[]> = {
-  OWNER: ["party:write", "ledger:write", "ledger:reverse", "item:write", "invoice:write", "reminder:send", "settings:write"],
-  ADMIN: ["party:write", "ledger:write", "ledger:reverse", "item:write", "invoice:write", "reminder:send", "settings:write"],
-  ACCOUNTANT: ["party:write", "ledger:write", "ledger:reverse", "item:write", "invoice:write", "reminder:send"],
+  OWNER: ["party:write", "ledger:write", "ledger:reverse", "item:write", "invoice:write", "invoice:cancel", "reminder:send", "settings:write"],
+  ADMIN: ["party:write", "ledger:write", "ledger:reverse", "item:write", "invoice:write", "invoice:cancel", "reminder:send", "settings:write"],
+  ACCOUNTANT: ["party:write", "ledger:write", "ledger:reverse", "item:write", "invoice:write", "invoice:cancel", "reminder:send"],
   BILLING: ["party:write", "ledger:write", "invoice:write", "reminder:send"],
   REP: ["party:write", "ledger:write", "reminder:send"],
   VIEWER: [],
