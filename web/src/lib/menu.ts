@@ -12,6 +12,8 @@ export const MENU: MenuItem[] = [
   { href: "/price-lists", icon: "💲", label: "Price lists", about: "Dealer, distributor and party rates", group: "Stock" },
   { href: "/expenses", icon: "🧾", label: "Expenses", about: "Rent, transport, salaries…", group: "Money", permission: "ledger:write" },
   { href: "/cashbook", icon: "💵", label: "Cashbook", about: "Daily cash in and out, day close", group: "Money", permission: "ledger:write" },
+  { href: "/payments", icon: "💳", label: "Online payments", about: "Payments customers made through links, auto-reconciled", group: "Money", permission: "reports:view" },
+  { href: "/payments", icon: "💳", label: "Online payments", about: "Payments customers made through links, auto-reconciled", group: "Money", permission: "reports:view" },
   { href: "/shared", icon: "🤝", label: "Shared ledgers", about: "Entries from businesses you trade with, balance checks", group: "Money", permission: "ledger:write" },
   { href: "/reports", icon: "📊", label: "Reports", about: "Ageing, daybook, top lists, sales and expense analysis", group: "Money", permission: "reports:view" },
   { href: "/field", icon: "🚶", label: "Field sales", about: "Visits, beats, targets, attendance", group: "Field" },

@@ -9,6 +9,8 @@ import { STATES } from "@/lib/gstin";
 import { fmtDate } from "@/components/ui";
 import { Attachments } from "@/components/attachments";
 import { PrintButton } from "@/components/print-button";
+import { gatewayMode } from "@/lib/payments/gateway";
+import { PayButton } from "@/components/pay-button";
 import { InviteCta } from "@/components/invite-cta";
 
 // Public, read-only party statement (no login). Access is by unguessable token.
@@ -62,6 +64,7 @@ export default async function Statement({ params, searchParams }: PageProps<"/s/
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={qr} alt="UPI QR code" width={120} height={120} className="rounded bg-white p-1" />
             <div>
+              {gatewayMode() && <div className="mb-2"><PayButton kind="party" token={token} label={`Pay ${formatINR(balance)} online`} color={b.brandColor} /></div>}
               <a href={pay} className="no-print inline-block rounded-lg px-4 py-2 font-semibold text-white" style={{ background: b.brandColor }}>Pay {formatINR(balance)} by UPI</a>
               <p className="mt-2 text-xs text-muted">Scan with any UPI app. {b.upiId}</p>
             </div>
