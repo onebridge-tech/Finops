@@ -7,8 +7,9 @@ import {
 } from "./reports";
 import { ordersReport, stockReport } from "./reports2";
 import { todayIST } from "./format";
+import { attendanceRows, missedVisits } from "./field-team";
 
-export const REPORT_KINDS = ["ageing", "daybook", "top", "sales", "expenses", "sources", "orders", "stock"] as const;
+export const REPORT_KINDS = ["ageing", "daybook", "top", "sales", "expenses", "sources", "orders", "stock", "attendance", "missed"] as const;
 export type ReportKind = (typeof REPORT_KINDS)[number];
 
 export const REPORT_TITLES: Record<ReportKind, { name: string; about: string; needsPeriod: boolean }> = {
@@ -20,6 +21,8 @@ export const REPORT_TITLES: Record<ReportKind, { name: string; about: string; ne
   sources: { name: "Lead sources & reps", about: "Where customers come from and what they bring", needsPeriod: true },
   orders: { name: "Pending orders", about: "What is ordered but not yet delivered", needsPeriod: false },
   stock: { name: "Stock", about: "Levels, low stock and value", needsPeriod: false },
+  attendance: { name: "Attendance", about: "Days each rep started work; export for payroll", needsPeriod: true },
+  missed: { name: "Missed visits", about: "Planned beat stops with no visit", needsPeriod: true },
 };
 
 type Sp = Record<string, string | string[] | undefined>;
@@ -55,6 +58,35 @@ export async function runReport(ctx: Ctx, kind: ReportKind, sp: Sp): Promise<{ r
     case "stock":
       result = await stockReport(ctx, s(sp.low) === "1");
       break;
+    case "attendance": {
+      const rows = await attendanceRows(ctx, period.from, period.to);
+      const time = (d: Date) => d.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", timeZone: "Asia/Kolkata" });
+      if (pick(s(sp.by), ["days", "log"], "days") === "log") {
+        result = {
+          title: "Attendance log", note: "First check-in of each day, from Start my day or the first visit.",
+          columns: [{ key: "date", label: "Date" }, { key: "rep", label: "Rep" }, { key: "time", label: "Started" }, { key: "source", label: "How" }, { key: "selfie", label: "Selfie" }],
+          rows: rows.map((r) => ({ date: r.date, rep: r.rep, time: time(r.at), source: r.source === "DAYSTART" ? "Start my day" : "First visit", selfie: r.hasPhoto ? "Yes" : "" })),
+        };
+      } else {
+        const by = new Map<string, number>();
+        for (const r of rows) by.set(r.rep, (by.get(r.rep) ?? 0) + 1);
+        result = {
+          title: "Days present", note: "Number of days each rep started work in the period. Use for payroll.",
+          columns: [{ key: "rep", label: "Rep" }, { key: "days", label: "Days present", right: true }],
+          rows: [...by].sort((a, b) => b[1] - a[1]).map(([rep, days]) => ({ rep, days })),
+        };
+      }
+      break;
+    }
+    case "missed": {
+      const rows = await missedVisits(ctx, period.from, period.to);
+      result = {
+        title: "Missed visits", note: "Customers on a rep’s beat for that weekday who were not visited.",
+        columns: [{ key: "date", label: "Date" }, { key: "rep", label: "Rep" }, { key: "beat", label: "Beat" }, { key: "party", label: "Customer" }],
+        rows, totals: { date: `${rows.length} missed` },
+      };
+      break;
+    }
   }
   return { result, period };
 }

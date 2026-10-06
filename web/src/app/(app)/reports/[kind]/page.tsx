@@ -57,6 +57,7 @@ export default async function ReportPage({ params, searchParams }: PageProps<"/r
             <Choice name="n" value={one(sp.n) || "10"} label="Top" options={[["5", "5"], ["10", "10"], ["50", "50"]]} />
           </>
         )}
+        {k === "attendance" && <Choice name="by" value={one(sp.by) || "days"} label="Show" options={[["days", "Days per rep"], ["log", "Daily log"]]} />}
         {k === "sales" && <Choice name="by" value={one(sp.by) || "month"} label="Group by" options={[["month", "Month"], ["item", "Item"], ["category", "Category"], ["location", "Location"], ["rep", "Rep"], ["branch", "Branch"], ["customer", "Customer"]]} />}
         {k === "expenses" && <Choice name="by" value={one(sp.by) || "category"} label="Group by" options={[["category", "Category"], ["branch", "Branch"], ["month", "Month"], ["entries", "All entries"]]} />}
         {k === "sources" && <Choice name="by" value={one(sp.by) || "source"} label="Group by" options={[["source", "Lead source"], ["rep", "Rep"]]} />}

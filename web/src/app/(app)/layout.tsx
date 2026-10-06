@@ -4,6 +4,11 @@ import { db } from "@/lib/db";
 import { translator } from "@/lib/i18n";
 import { logout } from "@/app/actions/auth";
 import { I18nProvider } from "@/components/i18n-provider";
+import { MENU } from "@/lib/menu";
+import { can } from "@/lib/auth";
+import { CommandPalette } from "@/components/command-palette";
+import { OfflineRegister } from "@/components/offline-register";
+import { SignOutButton } from "@/components/sign-out-button";
 import { NavLinks } from "./nav-links";
 import { BranchSwitcher, BusinessSwitcher, IdleLock, LockButton } from "./header-controls";
 
@@ -22,6 +27,8 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
   return (
     <I18nProvider lang={user.uiLanguage} mode={user.uiMode}>
       <div className="min-h-screen pb-20 md:pb-0" lang={user.uiLanguage}>
+        <OfflineRegister />
+        <CommandPalette screens={MENU.filter((m) => !m.permission || can(role, m.permission)).map((m) => ({ href: m.href, label: m.label, hint: m.about }))} />
         {user.pinHash && <IdleLock minutes={user.lockAfterMin} />}
         <header className="no-print border-b border-line bg-card">
           <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-2">
@@ -43,7 +50,7 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
                 {user.name ?? `+${user.phone}`} · {role.toLowerCase()}{user.uiMode === "ACCOUNTANT" && " · accountant view"}
               </Link>
               {user.pinHash && <LockButton />}
-              <form action={logout}><button className="hover:text-ink">{t("nav.signout")}</button></form>
+              <SignOutButton action={logout} label={t("nav.signout")} />
             </div>
           </div>
         </header>

@@ -21,6 +21,7 @@ import { LANGUAGE_NAMES } from "@/lib/messaging/templates";
 import { sendToParty } from "@/lib/messaging/send";
 import type { Channel } from "@/lib/reminder-rule";
 import { checkUpload, saveUpload } from "@/lib/files";
+import { issueReceipt } from "@/lib/receipts";
 
 export type FormState = { error?: string; ok?: boolean; warning?: string[] };
 
@@ -251,19 +252,6 @@ export async function addEntry(_prev: FormState, form: FormData): Promise<FormSt
   });
   revalidatePath(`/parties/${party.id}`);
   return { ok: true };
-}
-
-type Tx = Parameters<Parameters<typeof db.$transaction>[0]>[0];
-
-/** Reserves the next receipt number and issues a receipt for a money-in entry. */
-async function issueReceipt(tx: Tx, businessId: string, e: { id: string; partyId: string; branchId: string | null; amountPaise: bigint; date: Date; paymentMode: string | null }) {
-  const b = await tx.business.update({ where: { id: businessId }, data: { nextReceiptNo: { increment: 1 } } });
-  return tx.receipt.create({
-    data: {
-      businessId, partyId: e.partyId, branchId: e.branchId, entryId: e.id, number: `${b.receiptPrefix}${b.nextReceiptNo - 1}`,
-      amountPaise: e.amountPaise, date: e.date, mode: e.paymentMode, shareToken: newShareToken(),
-    },
-  });
 }
 
 /** Entries are immutable: "deleting" posts an equal and opposite reversal entry. */

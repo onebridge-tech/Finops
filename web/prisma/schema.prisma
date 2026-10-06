@@ -905,3 +905,16 @@ model SharedEntry {
 
   @@index([businessId, status])
 }
+
+// An operation uploaded by an offline client (FS-08). Recording its id makes a retried upload harmless.
+model ClientOp {
+  id         String   @id @default(cuid())
+  businessId String
+  userId     String
+  clientId   String   @unique
+  kind       String // CHECKIN | CHECKOUT | ORDER | COLLECTION
+  refId      String? // what it created
+  createdAt  DateTime @default(now())
+
+  @@index([businessId, userId])
+}
