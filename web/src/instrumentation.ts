@@ -10,10 +10,10 @@ export async function register() {
     setTimeout(job, 30_000);
   };
   if (process.env.REMINDER_SCHEDULER === "1") {
-    const { runAutoReminders } = await import("./lib/reminders");
+    const { runHourly } = await import("./lib/jobs");
     every(60 * 60 * 1000, () =>
-      runAutoReminders()
-        .then((s) => s.checked && console.log("[reminders]", s))
+      runHourly()
+        .then((s) => console.log("[hourly]", JSON.stringify(s)))
         .catch((e) => console.error("[reminders] run failed", e)),
     );
   }

@@ -3,7 +3,8 @@ import Link from "next/link";
 import { can, requireBusiness } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { partyLedger } from "@/lib/queries";
-import { reversedIds, withRunningBalance } from "@/lib/ledger";
+import { istDay, openDues, reversedIds, withRunningBalance } from "@/lib/ledger";
+import { promiseStatus } from "@/lib/rules";
 import { formatINR } from "@/lib/money";
 import { appUrl, whatsappLink } from "@/lib/share";
 import { renderMessage } from "@/lib/messaging/templates";
@@ -20,6 +21,7 @@ import { AttachToEntry } from "./attach";
 import { Attachments } from "@/components/attachments";
 import { AddFollowUpForm, CompleteFollowUp } from "@/components/follow-up-forms";
 import { teamOptions } from "@/lib/team";
+import { PromiseForm } from "@/components/promise-form";
 import { translator } from "@/lib/i18n";
 import { drCr, ledgerGroup, voucherType } from "@/lib/accounting";
 import { convertLead } from "@/app/actions/ledger";
@@ -33,7 +35,13 @@ export default async function PartyPage({ params }: PageProps<"/parties/[id]">) 
   const { business, role } = ctx;
   const data = await partyLedger(ctx, id);
   if (!data) notFound();
-  const { party, entries, balance, overdue } = data;
+  const { party, entries, allocations, balance, overdue } = data;
+  const dues = openDues(entries, allocations);
+  const openById = new Map(dues.map((d) => [d.id, d.open]));
+  const openBills = dues.map((d) => {
+    const e = entries.find((x) => x.id === d.id)!;
+    return { id: d.id, label: (e.note ?? "Credit") + " · " + fmtDate(e.date), due: fmtDate(d.due), open: formatINR(d.open), openPaise: d.open };
+  });
 
   const [invoices, messages, receipts, files] = await Promise.all([
     db.invoice.findMany({ where: { partyId: id, businessId: business.id }, orderBy: { date: "desc" }, take: 10 }),
@@ -42,6 +50,9 @@ export default async function PartyPage({ params }: PageProps<"/parties/[id]">) 
     db.storedFile.findMany({ where: { businessId: business.id, entryId: { in: entries.map((e) => e.id) } }, orderBy: { createdAt: "asc" } }),
   ]);
   const filesByEntry = Map.groupBy(files, (f) => f.entryId!);
+  const promises = await db.promiseToPay.findMany({ where: { partyId: id, businessId: business.id }, orderBy: { createdAt: "desc" }, take: 8 });
+  const cancelledIds = reversedIds(entries);
+  const liveEntries = entries.filter((e) => !cancelledIds.has(e.id));
   const [followUps, team] = await Promise.all([
     db.followUp.findMany({ where: { partyId: id, businessId: business.id }, orderBy: [{ doneAt: { sort: "desc", nulls: "first" } }, { dueAt: "asc" }], take: 15 }),
     ctx.assignedOnly ? null : teamOptions(business.id),
@@ -91,7 +102,7 @@ export default async function PartyPage({ params }: PageProps<"/parties/[id]">) 
         </Card>
       )}
 
-      <div className="grid gap-3 sm:grid-cols-2">
+      <div className={"grid gap-3 " + (party.creditLimitPaise !== null ? "sm:grid-cols-3" : "sm:grid-cols-2")}>
         <Card>
           <p className="text-sm text-muted">{t("party.balance")}</p>
           <Balance paise={balance} className="mt-1 block text-2xl" t={t} accountant={accountant} />
@@ -100,6 +111,15 @@ export default async function PartyPage({ params }: PageProps<"/parties/[id]">) 
           <p className="text-sm text-muted">{t("party.overdue")}</p>
           <p className={`mt-1 text-2xl font-semibold tabular-nums ${overdue > 0 ? "text-gave" : "text-muted"}`}>{formatINR(overdue)}</p>
         </Card>
+        {party.creditLimitPaise !== null && (
+          <Card>
+            <p className="text-sm text-muted">Credit limit</p>
+            <p className="mt-1 text-2xl font-semibold tabular-nums">{formatINR(party.creditLimitPaise)}</p>
+            <p className={"text-xs " + (balance > Number(party.creditLimitPaise) ? "font-medium text-gave" : "text-muted")}>
+              {balance > Number(party.creditLimitPaise) ? "Over by " + formatINR(balance - Number(party.creditLimitPaise)) : formatINR(Number(party.creditLimitPaise) - Math.max(balance, 0)) + " available"}
+            </p>
+          </Card>
+        )}
       </div>
 
       {can(role, "ledger:write") && party.type !== "LEAD" && (
@@ -111,6 +131,7 @@ export default async function PartyPage({ params }: PageProps<"/parties/[id]">) 
             canNotify={canMessage}
             notifyDefault={business.entryConfirm}
             autoReceipt={business.autoReceipt}
+            openBills={openBills}
           />
         </Card>
       )}
@@ -143,6 +164,11 @@ export default async function PartyPage({ params }: PageProps<"/parties/[id]">) 
                     <td className="px-4 py-2">
                       {e.note ?? "—"}
                       {e.dueDate && e.direction === "GAVE" && !cancelled && <span className="block text-xs text-muted no-underline">Due {fmtDate(e.dueDate)}</span>}
+                      {e.direction === "GAVE" && !cancelled && e.source !== "REVERSAL" && (
+                        <span className={"block text-xs no-underline " + (openById.has(e.id) ? (openById.get(e.id)! < Number(e.amountPaise) ? "text-gave" : "text-muted") : "text-got")}>
+                          {openById.has(e.id) ? (openById.get(e.id)! < Number(e.amountPaise) ? "Part-paid · " + formatINR(openById.get(e.id)!) + " open" : "Unpaid") : "Paid"}
+                        </span>
+                      )}
                       <Attachments files={filesByEntry.get(e.id) ?? []} />
                       {e.paymentMode && (
                         <span className="block text-xs text-muted">
@@ -172,6 +198,34 @@ export default async function PartyPage({ params }: PageProps<"/parties/[id]">) 
       )}
 
       <div className="mt-6 grid gap-6 lg:grid-cols-2">
+        {balance > 0 && can(role, "party:write") && (
+          <section className="space-y-3 lg:col-span-2">
+            <h2 className="font-semibold">Promises to pay</h2>
+            <Card className="space-y-3 text-sm">
+              <PromiseForm partyId={party.id} today={todayIST()} />
+              {promises.length > 0 && (
+                <ul className="divide-y divide-line border-t border-line">
+                  {promises.map((p) => {
+                    const received = liveEntries.filter((e) => e.direction === "GOT" && e.createdAt > p.createdAt).reduce((s, e) => s + Number(e.amountPaise), 0);
+                    const st = promiseStatus({ promisedFor: p.promisedFor, amountPaise: p.amountPaise === null ? null : Number(p.amountPaise), receivedSince: received, balanceNow: balance, today: new Date(), istDay });
+                    return (
+                      <li key={p.id} className="flex flex-wrap justify-between gap-2 py-2">
+                        <span>
+                          {fmtDate(p.promisedFor)}
+                          {p.amountPaise !== null && " · " + formatINR(p.amountPaise)}
+                          {p.note && <span className="text-muted"> · {p.note}</span>}
+                        </span>
+                        <span className={"text-xs font-medium " + (st === "KEPT" ? "text-got" : st === "BROKEN" ? "text-gave" : "text-muted")}>
+                          {st === "KEPT" ? "Kept" : st === "BROKEN" ? "Not kept" : "Waiting"}
+                        </span>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+            </Card>
+          </section>
+        )}
         <section className="space-y-3 lg:col-span-2">
           <h2 className="font-semibold">{t("party.followUps")}</h2>
           <Card className="space-y-3 text-sm">

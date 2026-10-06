@@ -11,14 +11,18 @@ import { newShareToken } from "@/lib/session";
 import { parseRupees } from "@/lib/money";
 import { isValidGstin, normalizeGstin, STATES } from "@/lib/gstin";
 import { appUrl, normalizeIndianMobile } from "@/lib/share";
-import { balanceOf } from "@/lib/ledger";
+import { balanceOf, openByEntry } from "@/lib/ledger";
+import { creditGate } from "@/lib/credit-gate";
+import { formatINR } from "@/lib/money";
+import { snoozeUntil } from "@/lib/rules";
+import { proposeShared, withdrawShared } from "@/lib/shared-ledger";
 import { fmtDate, PAYMENT_MODES } from "@/lib/format";
 import { LANGUAGE_NAMES } from "@/lib/messaging/templates";
 import { sendToParty } from "@/lib/messaging/send";
 import type { Channel } from "@/lib/reminder-rule";
 import { checkUpload, saveUpload } from "@/lib/files";
 
-export type FormState = { error?: string; ok?: boolean };
+export type FormState = { error?: string; ok?: boolean; warning?: string[] };
 
 const PartyInput = z.object({
   name: z.string().trim().min(1, "Name is required").max(120),
@@ -33,6 +37,7 @@ const PartyInput = z.object({
   source: z.string().trim().max(60),
   opening: z.string().trim(),
   openingDirection: z.enum(["GAVE", "GOT"]),
+  creditLimit: z.string().trim().refine((v) => v === "" || parseRupees(v) !== null, "Credit limit must be an amount like 50000"),
 });
 
 const field = (f: FormData, k: string) => String(f.get(k) ?? "");
@@ -75,6 +80,7 @@ export async function createParty(_prev: FormState, form: FormData): Promise<For
         stateCode: d.gstin ? d.gstin.slice(0, 2) : d.stateCode || null,
         address: d.address || null,
         creditDays: d.creditDays ? Number(d.creditDays) : null,
+        creditLimitPaise: d.creditLimit ? BigInt(parseRupees(d.creditLimit)!) : null,
         language: d.language,
         source: d.source || null,
         shareToken: newShareToken(),
@@ -116,6 +122,7 @@ export async function updateParty(_prev: FormState, form: FormData): Promise<For
     name: d.name, type: d.type, phone: d.phone ? normalizeIndianMobile(d.phone) : null, email: d.email || null,
     gstin: d.gstin || null, stateCode: d.gstin ? d.gstin.slice(0, 2) : d.stateCode || null, address: d.address || null,
     creditDays: d.creditDays ? Number(d.creditDays) : null, language: d.language, source: d.source || null,
+    creditLimitPaise: d.creditLimit ? BigInt(parseRupees(d.creditLimit)!) : null,
     // Reps can't reassign parties; branch-tied members can't move them out of their branch.
     ...(ctx.assignedOnly ? {} : { ownerId: await validOwner(business.id, field(form, "ownerId")) }),
     ...(ctx.membership.branchId ? {} : { branchId: await validBranch(business.id, field(form, "branchId")) }),
@@ -169,6 +176,32 @@ export async function addEntry(_prev: FormState, form: FormData): Promise<FormSt
   const party = await findParty(ctx, d.partyId);
   if (!party) return { error: "Party not found" };
 
+  if (d.direction === "GAVE") {
+    const gate = await creditGate(ctx, party, amount, form.get("override") === "1");
+    if (gate.error) return { error: gate.error };
+    if (gate.warning) return { warning: gate.warning };
+  }
+
+  // Receipts can be assigned to specific bills; the rest settles the oldest first (CP-10).
+  const assign: { entryId: string; amount: number }[] = [];
+  if (d.direction === "GOT" && field(form, "settle") === "BILLS") {
+    const [all, existing] = await Promise.all([db.ledgerEntry.findMany({ where: { partyId: party.id } }), db.allocation.findMany({ where: { partyId: party.id } })]);
+    const open = openByEntry(all, existing);
+    let total = 0;
+    for (const [k, v] of form.entries()) {
+      if (!k.startsWith("alloc_") || typeof v !== "string" || !v.trim()) continue;
+      const id = k.slice(6);
+      const amt = parseRupees(v);
+      if (amt === null || amt <= 0) return { error: "Bill amounts must be amounts like 500" };
+      const left = open.get(id);
+      if (left === undefined) return { error: "One of the bills is no longer open" };
+      if (amt > left) return { error: `A bill only has ${formatINR(left)} open` };
+      assign.push({ entryId: id, amount: amt });
+      total += amt;
+    }
+    if (total > amount) return { error: "The bill amounts add up to more than the payment" };
+  }
+
   const date = istNoon(d.date);
   let dueDate: Date | null = d.dueDate ? new Date(`${d.dueDate}T23:59:59+05:30`) : null;
   if (!dueDate && d.direction === "GAVE" && party.creditDays) {
@@ -180,16 +213,21 @@ export async function addEntry(_prev: FormState, form: FormData): Promise<FormSt
       data: {
         businessId: business.id, partyId: party.id, branchId: ctx.branchId ?? party.branchId, direction: d.direction, amountPaise: BigInt(amount),
         date, dueDate, note: d.note || null, createdById: user.id,
-        paymentMode: d.direction === "GOT" ? d.paymentMode || null : null,
+        // Payments out to a supplier carry a mode too, for the cashbook.
+        paymentMode: d.direction === "GOT" || party.type === "SUPPLIER" ? d.paymentMode || null : null,
       },
     });
-    await audit(tx, { businessId: business.id, actorId: user.id, action: "create", entity: "LedgerEntry", entityId: e.id, data: e });
+    for (const a of assign) {
+      await tx.allocation.create({ data: { businessId: business.id, partyId: party.id, receiptEntryId: e.id, invoiceEntryId: a.entryId, amountPaise: BigInt(a.amount), createdById: user.id } });
+    }
+    await audit(tx, { businessId: business.id, actorId: user.id, action: "create", entity: "LedgerEntry", entityId: e.id, data: { ...e, allocations: assign } });
     // Every payment received gets a numbered receipt (CP-11). A "got" entry without a
     // payment mode is goods received from a supplier, not money.
     const rc = e.direction === "GOT" && e.paymentMode ? await issueReceipt(tx, business.id, e) : null;
     return { entry: e, receipt: rc };
   });
   for (const f of files) await saveUpload(f, { businessId: business.id, userId: user.id, kind: "ATTACHMENT", entryId: entry.id });
+  await proposeShared(entry.id).catch(() => false); // offer it to the other side if they're on the platform (LG-10)
 
   // Messages go out after the response so a slow provider never blocks the form.
   const channel = business.reminderChannel as Channel;
@@ -244,6 +282,7 @@ export async function reverseEntry(form: FormData): Promise<void> {
     });
     await audit(tx, { businessId: business.id, actorId: user.id, action: "reverse", entity: "LedgerEntry", entityId: entry.id, data: { reversalId: rev.id } });
   });
+  await withdrawShared(entry.id);
   revalidatePath(`/parties/${entry.partyId}`);
 }
 
@@ -272,4 +311,42 @@ export async function convertLead(form: FormData): Promise<void> {
     await audit(tx, { businessId: ctx.business.id, actorId: ctx.user.id, action: "convert_lead", entity: "Party", entityId: party.id });
   });
   revalidatePath(`/parties/${party.id}`);
+}
+
+const PromiseInput = z.object({
+  partyId: z.string().min(1),
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Pick the promised date"),
+  amount: z.string().trim().refine((v) => v === "" || parseRupees(v) !== null, "Amount must be like 5000"),
+  note: z.string().trim().max(200),
+});
+
+/**
+ * Logs a promise to pay after a call or visit (CP-09): creates a follow-up for
+ * the promised day and holds automatic reminders until the day after it.
+ */
+export async function addPromise(_prev: FormState, form: FormData): Promise<FormState> {
+  const ctx = await requireBusiness("party:write");
+  const r = PromiseInput.safeParse(Object.fromEntries(Object.keys(PromiseInput.shape).map((k) => [k, field(form, k)])));
+  if (!r.success) return { error: r.error.issues[0].message };
+  const d = r.data;
+  const party = await findParty(ctx, d.partyId);
+  if (!party) return { error: "Party not found" };
+  const promisedFor = new Date(`${d.date}T12:00:00+05:30`);
+  if (promisedFor.getTime() < Date.now() - 86400_000) return { error: "Pick today or a later date" };
+  const amount = d.amount ? parseRupees(d.amount) : null;
+  await db.$transaction(async (tx) => {
+    const fu = await tx.followUp.create({
+      data: {
+        businessId: ctx.business.id, partyId: party.id, assignedToId: ctx.user.id, dueAt: new Date(`${d.date}T10:00:00+05:30`), source: "PROMISE",
+        note: `Promised to pay${amount ? " " + formatINR(amount) : ""} — check it came${d.note ? ": " + d.note : ""}`, createdById: ctx.user.id,
+      },
+    });
+    const p = await tx.promiseToPay.create({
+      data: { businessId: ctx.business.id, partyId: party.id, amountPaise: amount === null ? null : BigInt(amount), promisedFor, note: d.note || null, followUpId: fu.id, createdById: ctx.user.id },
+    });
+    await tx.party.update({ where: { id: party.id }, data: { reminderSnoozeUntil: snoozeUntil(promisedFor) } });
+    await audit(tx, { businessId: ctx.business.id, actorId: ctx.user.id, action: "create", entity: "PromiseToPay", entityId: p.id, data: p });
+  });
+  revalidatePath(`/parties/${party.id}`);
+  return { ok: true };
 }

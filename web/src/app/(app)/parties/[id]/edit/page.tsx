@@ -3,6 +3,7 @@ import { findParty, requireBusiness } from "@/lib/auth";
 import { partyFormOptions } from "@/lib/team";
 import { archiveParty } from "@/app/actions/ledger";
 import { Card, PageHeader } from "@/components/ui";
+import { toRupeeString } from "@/lib/money";
 import { PartyForm } from "../../new/party-form";
 
 export const metadata = { title: "Edit party" };
@@ -22,7 +23,7 @@ export default async function EditParty({ params }: PageProps<"/parties/[id]/edi
           {...opts}
           party={{
             id: party.id, name: party.name, type: party.type, phone: party.phone ?? "", email: party.email ?? "", gstin: party.gstin ?? "",
-            stateCode: party.stateCode ?? "", address: party.address ?? "", creditDays: party.creditDays?.toString() ?? "",
+            stateCode: party.stateCode ?? "", address: party.address ?? "", creditDays: party.creditDays?.toString() ?? "", creditLimit: party.creditLimitPaise === null ? "" : toRupeeString(Number(party.creditLimitPaise)),
             language: party.language, source: party.source ?? "", ownerId: party.ownerId ?? "", branchId: party.branchId ?? "",
           }}
         />

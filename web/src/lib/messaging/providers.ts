@@ -11,7 +11,7 @@ import type { MessageKind } from "./templates";
 //   SMS_PROVIDER=msg91        MSG91 Flow API (DLT) (MSG91_AUTH_KEY, MSG91_TEMPLATE_<KIND>, MSG91_TEMPLATE_OTP for login codes)
 //   EMAIL_PROVIDER=resend     Resend               (RESEND_API_KEY, EMAIL_FROM)
 
-export type Outbound = { channel: Channel; to: string; body: string; subject: string; kind: MessageKind | "OTP"; lang: string; params: string[] };
+export type Outbound = { channel: Channel; to: string; body: string; subject: string; kind: MessageKind | "OTP" | "DIGEST" | "ALERT"; lang: string; params: string[] };
 export type SendResult =
   | { ok: true; provider: string; id: string; status: "SENT" | "DELIVERED" }
   | { ok: false; provider: string; error: string };

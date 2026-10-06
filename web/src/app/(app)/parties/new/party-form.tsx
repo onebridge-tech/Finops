@@ -11,7 +11,7 @@ import { LANGUAGE_NAMES } from "@/lib/messaging/templates";
 
 export type PartyValues = {
   id: string; name: string; type: string; phone: string; email: string; gstin: string; stateCode: string; address: string;
-  creditDays: string; language: string; source: string; ownerId: string; branchId: string;
+  creditDays: string; creditLimit: string; language: string; source: string; ownerId: string; branchId: string;
 };
 
 type Opt = { id: string; name: string };
@@ -57,6 +57,9 @@ export function PartyForm({ defaultState, party, owners, branches, defaultBranch
       <Field label="Email"><Input name="email" type="email" defaultValue={v?.email} /></Field>
       <Field label="Credit days" hint="Default due date for credit you give.">
         <Input name="creditDays" inputMode="numeric" placeholder="30" defaultValue={v?.creditDays} />
+      </Field>
+      <Field label="Credit limit (₹)" hint="Optional. Credit control warns or blocks above this.">
+        <Input name="creditLimit" inputMode="decimal" defaultValue={v?.creditLimit} />
       </Field>
       <Field label="Message language">
         <Select name="language" defaultValue={v?.language ?? "en"}>

@@ -1,8 +1,14 @@
 import "server-only";
 import type { Prisma } from "@prisma/client";
 import { db } from "./db";
-import { ageing, balanceOf, openDues, overdueAmount } from "./ledger";
+import { ageing, balanceOf, openByEntry, openDues, overdueAmount } from "./ledger";
 import { docWhere, partyWhere, type Ctx } from "./auth";
+
+/** Bill-wise allocations for a business, grouped by party (CP-10). */
+export async function allocationsByParty(businessId: string, partyIds?: string[]) {
+  const rows = await db.allocation.findMany({ where: { businessId, ...(partyIds ? { partyId: { in: partyIds } } : {}) } });
+  return Map.groupBy(rows, (a) => a.partyId);
+}
 
 /** Balance per party for a business, derived from entries (never stored). */
 export async function balancesByParty(businessId: string): Promise<Map<string, number>> {
@@ -55,9 +61,10 @@ export async function dashboard(ctx: Ctx) {
   const now = new Date();
   const entries = await db.ledgerEntry.findMany({ where: { businessId: ctx.business.id, partyId: { in: receivable.map((p) => p.id) } } });
   const byParty = Map.groupBy(entries, (e) => e.partyId);
+  const allocs = await allocationsByParty(ctx.business.id, receivable.map((p) => p.id));
 
   const overdue = receivable
-    .map((p) => ({ ...p, overdue: overdueAmount(byParty.get(p.id) ?? [], now) }))
+    .map((p) => ({ ...p, overdue: overdueAmount(byParty.get(p.id) ?? [], now, allocs.get(p.id) ?? []) }))
     .filter((p) => p.overdue > 0)
     .sort((a, b) => b.overdue - a.overdue);
 
@@ -126,18 +133,48 @@ export async function collections(ctx: Ctx) {
   const parties = (await partiesWithBalance(ctx)).filter((p) => p.balance > 0);
   const entries = await db.ledgerEntry.findMany({ where: { businessId: ctx.business.id, partyId: { in: parties.map((p) => p.id) } } });
   const byParty = Map.groupBy(entries, (e) => e.partyId);
+  const allocs = await allocationsByParty(ctx.business.id, parties.map((p) => p.id));
   const now = new Date();
   return parties.map((p) => {
     const es = byParty.get(p.id) ?? [];
-    const dues = openDues(es);
-    const age = ageing(es, now);
+    const al = allocs.get(p.id) ?? [];
+    const dues = openDues(es, al);
+    const age = ageing(es, now, al);
     return { ...p, dues, ageing: age, overdue: Object.values(age).reduce((a, b) => a + b, 0) };
   });
+}
+
+export type InvoicePay = { open: number; total: number; status: "PAID" | "PART" | "UNPAID" | "CANCELLED" };
+
+/** Paid / part-paid / unpaid for each invoice, from its ledger entry and the receipts settling it (CP-10). */
+export async function invoicePayments(businessId: string, invoices: { id: string; partyId: string; totalPaise: bigint; status: string }[]) {
+  const out = new Map<string, InvoicePay>();
+  const live = invoices.filter((i) => i.status !== "CANCELLED");
+  for (const i of invoices) if (i.status === "CANCELLED") out.set(i.id, { open: 0, total: Number(i.totalPaise), status: "CANCELLED" });
+  if (live.length === 0) return out;
+  const partyIds = [...new Set(live.map((i) => i.partyId))];
+  const [entries, allocs] = await Promise.all([
+    db.ledgerEntry.findMany({ where: { businessId, partyId: { in: partyIds } } }),
+    allocationsByParty(businessId, partyIds),
+  ]);
+  const byParty = Map.groupBy(entries, (e) => e.partyId);
+  const invoiceEntry = new Map(entries.filter((e) => e.source === "INVOICE" && e.invoiceId).map((e) => [e.invoiceId!, e.id]));
+  for (const pid of partyIds) {
+    const open = openByEntry(byParty.get(pid) ?? [], allocs.get(pid) ?? []);
+    for (const inv of live.filter((i) => i.partyId === pid)) {
+      const eid = invoiceEntry.get(inv.id);
+      const left = eid ? (open.get(eid) ?? 0) : Number(inv.totalPaise);
+      const total = Number(inv.totalPaise);
+      out.set(inv.id, { open: left, total, status: left === 0 ? "PAID" : left < total ? "PART" : "UNPAID" });
+    }
+  }
+  return out;
 }
 
 export async function partyLedger(ctx: Ctx, partyId: string) {
   const party = await db.party.findFirst({ where: { ...partyWhere(ctx), id: partyId } });
   if (!party) return null;
   const entries = await db.ledgerEntry.findMany({ where: { partyId, businessId: ctx.business.id }, orderBy: [{ date: "asc" }, { createdAt: "asc" }] });
-  return { party, entries, balance: balanceOf(entries), overdue: overdueAmount(entries, new Date()) };
+  const allocations = await db.allocation.findMany({ where: { partyId, businessId: ctx.business.id } });
+  return { party, entries, allocations, balance: balanceOf(entries), overdue: overdueAmount(entries, new Date(), allocations) };
 }

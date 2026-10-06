@@ -130,3 +130,24 @@ export async function updateBusiness(_prev: FormState, form: FormData): Promise<
   revalidatePath("/", "layout");
   return { ok: true };
 }
+
+const ControlsInput = z.object({
+  creditControl: z.enum(["OFF", "WARN", "BLOCK"]),
+  digestFrequency: z.enum(["OFF", "DAILY", "WEEKLY"]),
+  digestChannel: z.enum(["WHATSAPP", "SMS", "EMAIL"]),
+});
+
+/** Credit control (CP-07) and the owner's daily/weekly digest (IR-09). */
+export async function updateControls(_prev: FormState, form: FormData): Promise<FormState> {
+  const { user, business } = await requireBusiness("settings:write");
+  const r = ControlsInput.safeParse({ creditControl: form.get("creditControl"), digestFrequency: form.get("digestFrequency"), digestChannel: form.get("digestChannel") });
+  if (!r.success) return { error: r.error.issues[0].message };
+  const data = { ...r.data, creditBlockOverdue: form.get("creditBlockOverdue") === "on" };
+  if (data.digestFrequency !== "OFF" && data.digestChannel === "EMAIL" && !business.email) return { error: "Add a business email in the profile above to get the digest by email" };
+  await db.$transaction(async (tx) => {
+    await tx.business.update({ where: { id: business.id }, data });
+    await audit(tx, { businessId: business.id, actorId: user.id, action: "update", entity: "Business", entityId: business.id, data });
+  });
+  revalidatePath("/settings");
+  return { ok: true };
+}

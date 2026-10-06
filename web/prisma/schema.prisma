@@ -55,6 +55,12 @@ model Branch {
   archivedAt DateTime?
   business   Business  @relation(fields: [businessId], references: [id])
 
+  // Own GSTIN and invoice series for this branch (BD-10)
+  gstin         String?
+  stateCode     String?
+  invoicePrefix String?
+  nextInvoiceNo Int     @default(1)
+
   @@index([businessId])
 }
 
@@ -121,6 +127,40 @@ model Business {
   files                  StoredFile[]
   quotes                 Quote[]
   branches               Branch[]
+
+  // Phase 2
+  creditControl      String           @default("WARN") // OFF | WARN | BLOCK  (CP-07)
+  creditBlockOverdue Boolean          @default(false) // also act when the party has overdue bills
+  cashOpeningPaise   BigInt           @default(0) // cash in hand when the cashbook starts (LG-08)
+  digestFrequency    String           @default("OFF") // OFF | DAILY | WEEKLY (IR-09)
+  digestChannel      String           @default("WHATSAPP")
+  catalogToken       String?          @unique // public catalogue link (CI-02)
+  catalogEnabled     Boolean          @default(false)
+  orderPrefix        String           @default("SO-")
+  nextOrderNo        Int              @default(1)
+  poPrefix           String           @default("PO-")
+  nextPoNo           Int              @default(1)
+  creditNotePrefix   String           @default("CN-")
+  nextCreditNoteNo   Int              @default(1)
+  debitNotePrefix    String           @default("DN-")
+  nextDebitNoteNo    Int              @default(1)
+  tallyKeyHash       String? // connector API key (IN-01), stored hashed
+  tallyLastSyncAt    DateTime?
+  expenses           Expense[]
+  cashAdjustments    CashAdjustment[]
+  dayCloses          DayClose[]
+  orders             Order[]
+  notes              Note[]
+  priceLists         PriceList[]
+  stockMovements     StockMovement[]
+  visits             Visit[]
+  beats              Beat[]
+  targets            Target[]
+  attendances        Attendance[]
+  promises           PromiseToPay[]
+  allocations        Allocation[]
+  payments           Payment[]
+  tallySyncs         TallySync[]
 }
 
 model Membership {
@@ -181,6 +221,13 @@ model Party {
   quotes                 Quote[]
   followUps              FollowUp[]
 
+  creditLimitPaise    BigInt?
+  reminderSnoozeUntil DateTime? // set by a promise-to-pay (CP-09)
+  priceListId         String? // CI-03
+  lat                 Float? // saved customer location (FS-01)
+  lng                 Float?
+  linkedBusinessId    String? // counterpart business on the platform (LG-10)
+
   @@index([businessId, name])
 }
 
@@ -232,6 +279,11 @@ model Item {
   parent             Item?     @relation("Variants", fields: [parentId], references: [id])
   variants           Item[]    @relation("Variants")
 
+  category          String?
+  trackStock        Boolean   @default(false)
+  reorderLevelMilli Int?
+  lowStockAlertedAt DateTime?
+
   @@index([businessId, name])
 }
 
@@ -248,6 +300,9 @@ model StoredFile {
   createdById String
   createdAt   DateTime @default(now())
   business    Business @relation(fields: [businessId], references: [id])
+
+  expenseId String?
+  visitId   String?
 
   @@index([businessId, kind])
   @@index([entryId])
@@ -336,6 +391,10 @@ model Invoice {
   business      Business      @relation(fields: [businessId], references: [id])
   party         Party         @relation(fields: [partyId], references: [id])
   lines         InvoiceLine[]
+
+  sellerGstin     String? // GSTIN the invoice was issued under (BD-10)
+  sellerStateCode String?
+  orderId         String?
 
   @@unique([businessId, number])
 }
@@ -476,6 +535,373 @@ model FollowUp {
   business     Business  @relation(fields: [businessId], references: [id])
   party        Party     @relation(fields: [partyId], references: [id])
 
+  source String @default("MANUAL") // MANUAL | PROMISE | INACTIVE
+
   @@index([businessId, assignedToId, doneAt, dueAt])
   @@index([partyId])
+}
+
+// ── Phase 2 ──────────────────────────────────────────────────────────────────
+
+// A receipt (GOT entry) assigned to specific bills (CP-10). Whatever isn't assigned
+// settles the oldest dues first.
+model Allocation {
+  id             String   @id @default(cuid())
+  businessId     String
+  partyId        String
+  receiptEntryId String
+  invoiceEntryId String
+  amountPaise    BigInt
+  createdById    String
+  createdAt      DateTime @default(now())
+  business       Business @relation(fields: [businessId], references: [id])
+
+  @@index([partyId])
+  @@index([receiptEntryId])
+}
+
+model PromiseToPay {
+  id          String   @id @default(cuid())
+  businessId  String
+  partyId     String
+  amountPaise BigInt?
+  promisedFor DateTime
+  note        String?
+  followUpId  String?
+  createdById String
+  createdAt   DateTime @default(now())
+  business    Business @relation(fields: [businessId], references: [id])
+
+  @@index([businessId, partyId])
+}
+
+model Expense {
+  id          String    @id @default(cuid())
+  businessId  String
+  branchId    String?
+  date        DateTime
+  amountPaise BigInt
+  category    String
+  paymentMode String // CASH | UPI | BANK | CHEQUE | CARD | OTHER
+  note        String?
+  vendorId    String? // supplier party
+  voidedAt    DateTime?
+  voidReason  String?
+  createdById String
+  createdAt   DateTime  @default(now())
+  business    Business  @relation(fields: [businessId], references: [id])
+
+  @@index([businessId, date])
+}
+
+model CashAdjustment {
+  id          String    @id @default(cuid())
+  businessId  String
+  branchId    String?
+  date        DateTime
+  direction   String // IN | OUT
+  amountPaise BigInt
+  note        String
+  voidedAt    DateTime?
+  createdById String
+  createdAt   DateTime  @default(now())
+  business    Business  @relation(fields: [businessId], references: [id])
+
+  @@index([businessId, date])
+}
+
+// Counted cash against expected at the end of a day (LG-08).
+model DayClose {
+  id              String   @id @default(cuid())
+  businessId      String
+  branchKey       String // branch id, or ALL
+  date            String // yyyy-mm-dd (IST)
+  expectedPaise   BigInt
+  countedPaise    BigInt
+  differencePaise BigInt
+  note            String?
+  closedById      String
+  createdAt       DateTime @default(now())
+  business        Business @relation(fields: [businessId], references: [id])
+
+  @@unique([businessId, branchKey, date])
+}
+
+model Order {
+  id            String      @id @default(cuid())
+  businessId    String
+  branchId      String?
+  kind          String // SALES | PURCHASE
+  number        String
+  partyId       String
+  date          DateTime
+  expectedDate  DateTime?
+  status        String      @default("OPEN") // REQUEST | OPEN | PARTIAL | FULFILLED | CANCELLED
+  source        String      @default("MANUAL") // MANUAL | CATALOGUE | VISIT | QUOTE
+  visitId       String?
+  quoteId       String?
+  placeOfSupply String
+  interState    Boolean
+  taxablePaise  BigInt
+  cgstPaise     BigInt
+  sgstPaise     BigInt
+  igstPaise     BigInt
+  roundOffPaise BigInt
+  totalPaise    BigInt
+  notes         String?
+  shareToken    String      @unique
+  createdById   String?
+  createdAt     DateTime    @default(now())
+  business      Business    @relation(fields: [businessId], references: [id])
+  lines         OrderLine[]
+
+  @@unique([businessId, kind, number])
+  @@index([businessId, status])
+}
+
+model OrderLine {
+  id             String  @id @default(cuid())
+  orderId        String
+  itemId         String?
+  description    String
+  hsn            String?
+  qtyMilli       Int
+  fulfilledMilli Int     @default(0)
+  unit           String
+  ratePaise      BigInt
+  discountBp     Int     @default(0)
+  taxRateBp      Int
+  taxablePaise   BigInt
+  cgstPaise      BigInt
+  sgstPaise      BigInt
+  igstPaise      BigInt
+  totalPaise     BigInt
+  order          Order   @relation(fields: [orderId], references: [id])
+}
+
+// Credit note (sales return / discount after sale) or debit note (BD-06).
+model Note {
+  id            String     @id @default(cuid())
+  businessId    String
+  branchId      String?
+  kind          String // CREDIT | DEBIT
+  number        String
+  partyId       String
+  invoiceId     String?
+  date          DateTime
+  reason        String
+  placeOfSupply String
+  interState    Boolean
+  taxablePaise  BigInt
+  cgstPaise     BigInt
+  sgstPaise     BigInt
+  igstPaise     BigInt
+  roundOffPaise BigInt
+  totalPaise    BigInt
+  status        String     @default("ISSUED")
+  shareToken    String     @unique
+  createdById   String
+  createdAt     DateTime   @default(now())
+  business      Business   @relation(fields: [businessId], references: [id])
+  lines         NoteLine[]
+
+  @@unique([businessId, kind, number])
+}
+
+model NoteLine {
+  id            String  @id @default(cuid())
+  noteId        String
+  itemId        String?
+  description   String
+  hsn           String?
+  qtyMilli      Int
+  unit          String
+  ratePaise     BigInt
+  discountBp    Int     @default(0)
+  taxRateBp     Int
+  taxablePaise  BigInt
+  cgstPaise     BigInt
+  sgstPaise     BigInt
+  igstPaise     BigInt
+  totalPaise    BigInt
+  returnToStock Boolean @default(true)
+  note          Note    @relation(fields: [noteId], references: [id])
+}
+
+model PriceList {
+  id         String          @id @default(cuid())
+  businessId String
+  name       String
+  createdAt  DateTime        @default(now())
+  archivedAt DateTime?
+  business   Business        @relation(fields: [businessId], references: [id])
+  items      PriceListItem[]
+
+  @@index([businessId])
+}
+
+// A rate for an item on a price list; minQtyMilli > 0 makes it a quantity slab (CI-03).
+model PriceListItem {
+  id          String    @id @default(cuid())
+  priceListId String
+  itemId      String
+  minQtyMilli Int       @default(0)
+  ratePaise   BigInt
+  priceList   PriceList @relation(fields: [priceListId], references: [id])
+
+  @@unique([priceListId, itemId, minQtyMilli])
+}
+
+// Stock is the sum of signed movements (CI-04). Never edited; corrected with a new movement.
+model StockMovement {
+  id          String   @id @default(cuid())
+  businessId  String
+  branchId    String?
+  itemId      String
+  qtyMilli    Int
+  reason      String // INVOICE | PURCHASE | RETURN | ADJUSTMENT | OPENING | CANCEL
+  refType     String?
+  refId       String?
+  note        String?
+  createdById String?
+  createdAt   DateTime @default(now())
+  business    Business @relation(fields: [businessId], references: [id])
+
+  @@index([businessId, itemId])
+}
+
+model Visit {
+  id          String    @id @default(cuid())
+  businessId  String
+  branchId    String?
+  partyId     String
+  userId      String
+  clientId    String?   @unique // set by offline clients so a retried upload isn't duplicated
+  checkInAt   DateTime
+  inLat       Float?
+  inLng       Float?
+  inAccuracy  Float?
+  distanceM   Int? // from the customer's saved location at check-in
+  photoFileId String?
+  note        String?
+  outcome     String?
+  checkOutAt  DateTime?
+  outLat      Float?
+  outLng      Float?
+  createdAt   DateTime  @default(now())
+  business    Business  @relation(fields: [businessId], references: [id])
+
+  @@index([businessId, userId, checkInAt])
+  @@index([partyId])
+}
+
+model Beat {
+  id         String      @id @default(cuid())
+  businessId String
+  name       String
+  userId     String // the rep who walks it
+  weekdays   String // comma list, 0 = Sunday … 6 = Saturday
+  archivedAt DateTime?
+  createdAt  DateTime    @default(now())
+  business   Business    @relation(fields: [businessId], references: [id])
+  parties    BeatParty[]
+
+  @@index([businessId, userId])
+}
+
+model BeatParty {
+  id       String @id @default(cuid())
+  beatId   String
+  partyId  String
+  position Int
+  beat     Beat   @relation(fields: [beatId], references: [id])
+
+  @@unique([beatId, partyId])
+}
+
+model Target {
+  id         String   @id @default(cuid())
+  businessId String
+  userId     String
+  month      String // yyyy-mm
+  metric     String // VISITS | NEW_CUSTOMERS | ORDERS | COLLECTIONS | SALES
+  value      BigInt // count, or paise for money metrics
+  business   Business @relation(fields: [businessId], references: [id])
+
+  @@unique([businessId, userId, month, metric])
+}
+
+model Attendance {
+  id          String   @id @default(cuid())
+  businessId  String
+  userId      String
+  date        String // yyyy-mm-dd (IST)
+  checkInAt   DateTime
+  lat         Float?
+  lng         Float?
+  photoFileId String?
+  source      String // DAYSTART | VISIT
+  business    Business @relation(fields: [businessId], references: [id])
+
+  @@unique([businessId, userId, date])
+}
+
+// Online payment through a gateway (CP-05).
+model Payment {
+  id                String    @id @default(cuid())
+  businessId        String
+  partyId           String
+  invoiceId         String?
+  amountPaise       BigInt
+  provider          String // test | razorpay | cashfree
+  providerOrderId   String
+  providerPaymentId String?
+  status            String    @default("CREATED") // CREATED | PAID | FAILED
+  token             String    @unique
+  entryId           String? // the ledger entry posted when paid
+  createdAt         DateTime  @default(now())
+  paidAt            DateTime?
+  business          Business  @relation(fields: [businessId], references: [id])
+
+  @@index([providerOrderId])
+  @@index([businessId, status])
+}
+
+// Log of what the Tally connector pushed and pulled (IN-01).
+model TallySync {
+  id         String   @id @default(cuid())
+  businessId String
+  direction  String // PUSH | PULL
+  kind       String // LEDGER | ITEM | VOUCHER | OUTSTANDING
+  status     String // OK | FAILED | CONFLICT
+  refType    String?
+  refId      String?
+  message    String?
+  retries    Int      @default(0)
+  createdAt  DateTime @default(now())
+  business   Business @relation(fields: [businessId], references: [id])
+
+  @@index([businessId, createdAt])
+}
+
+// An entry one platform business made against another, offered to the other
+// side to accept (LG-10).
+model SharedEntry {
+  id               String    @id @default(cuid())
+  businessId       String // the business that receives the proposal
+  counterpartBizId String // the business that made the entry
+  sourceEntryId    String    @unique
+  partyId          String // recipient's party for the counterpart
+  direction        String // from the recipient's side: GAVE | GOT
+  amountPaise      BigInt
+  date             DateTime
+  note             String?
+  status           String    @default("PENDING") // PENDING | ACCEPTED | AUTO_ACCEPTED | REJECTED
+  autoAcceptAt     DateTime
+  entryId          String? // created on accept
+  resolvedById     String?
+  resolvedAt       DateTime?
+  createdAt        DateTime  @default(now())
+
+  @@index([businessId, status])
 }

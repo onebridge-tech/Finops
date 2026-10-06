@@ -5,6 +5,7 @@ import { useActionState, useMemo, useState } from "react";
 import { createInvoice, createQuote } from "@/app/actions/billing";
 import { Card, ErrorText, Field, Input, Select, inputClass } from "./ui";
 import { SubmitButton } from "./submit-button";
+import { CreditWarning } from "./credit-warning";
 import { computeInvoice, GST_RATES_BP, isInterState } from "@/lib/gst";
 import { formatINR, parseRupees, toRupeeString } from "@/lib/money";
 import { STATES } from "@/lib/gstin";
@@ -123,6 +124,7 @@ export function DocumentForm({ kind, parties, items, businessState, today, prese
         </Card>
       </div>
 
+      <CreditWarning reasons={state.warning} pending={pending} />
       <ErrorText>{state.error}</ErrorText>
       <SubmitButton>{isQuote ? "Create quotation" : "Create invoice"}</SubmitButton>
     </ActionForm>

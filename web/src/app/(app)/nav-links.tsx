@@ -12,17 +12,18 @@ const LINKS: [string, UiKey, string][] = [
   ["/invoices", "nav.invoices", "🧾"],
   ["/collections", "nav.collect", "💰"],
   ["/follow-ups", "nav.followups", "📞"],
-  ["/items", "nav.items", "📦"],
-  ["/settings", "nav.settings", "⚙️"],
+  ["/more", "nav.more", "☰"],
 ];
 
 export function NavLinks({ mobile = false, followUpsDue = 0 }: { mobile?: boolean; followUpsDue?: number }) {
   const path = usePathname();
   const t = useT();
   return (
-    <ul className={mobile ? "grid grid-cols-7 text-center text-[11px] leading-tight" : "flex gap-1 text-sm"}>
+    <ul className={mobile ? "grid grid-cols-6 text-center text-[11px] leading-tight" : "flex gap-1 text-sm"}>
       {LINKS.map(([href, key, icon]) => {
-        const active = path === href || path.startsWith(href + "/");
+        // "More" stays highlighted on the screens it leads to.
+        const moreRoutes = ["/items", "/stock", "/orders", "/notes", "/quotes", "/price-lists", "/expenses", "/cashbook", "/reports", "/field", "/data", "/settings", "/search"];
+        const active = href === "/more" ? path === "/more" || moreRoutes.some((r) => path === r || path.startsWith(r + "/")) : path === href || path.startsWith(href + "/");
         return (
           <li key={href} className="min-w-0">
             <Link

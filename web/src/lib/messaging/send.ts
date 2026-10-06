@@ -115,3 +115,59 @@ export async function applyDeliveryStatus(providerMessageId: string, status: "SE
     },
   });
 }
+
+export type OwnerMessage = {
+  business: Pick<Business, "id" | "name" | "email">;
+  to: { phone?: string | null; email?: string | null };
+  channel: Channel;
+  kind: "DIGEST" | "ALERT";
+  subject: string;
+  body: string;
+  userId?: string | null;
+};
+
+/**
+ * Messages the business's own people (owner digest, low-stock alert). No party
+ * consent is involved, but credits are charged for WhatsApp/SMS like any other
+ * message, and a failed send is refunded and recorded.
+ */
+export async function sendToOwner(o: OwnerMessage): Promise<SendOutcome> {
+  const { business, channel } = o;
+  const to = channel === "EMAIL" ? (o.to.email ?? "") : (normalizeIndianMobile(o.to.phone ?? "") ?? "");
+  const base = { businessId: business.id, partyId: null, kind: o.kind, channel, to, template: o.kind.toLowerCase(), body: o.body, trigger: "AUTO", createdById: o.userId ?? null };
+  if (!to) {
+    const m = await db.message.create({ data: { ...base, status: "SKIPPED", provider: providerName(channel), error: channel === "EMAIL" ? "No email address" : "No mobile number" } });
+    return { ok: false, status: "SKIPPED", error: "No address to send to", messageId: m.id };
+  }
+  const cost = CREDIT_COST[channel];
+  const message = await db.$transaction(async (tx) => {
+    if (cost > 0) {
+      const debited = await tx.business.updateMany({ where: { id: business.id, creditBalance: { gte: cost } }, data: { creditBalance: { decrement: cost } } });
+      if (debited.count === 0) return null;
+    }
+    const m = await tx.message.create({ data: { ...base, status: "QUEUED", provider: providerName(channel), credits: cost } });
+    if (cost > 0) {
+      const b = await tx.business.findUniqueOrThrow({ where: { id: business.id }, select: { creditBalance: true } });
+      await tx.creditTxn.create({ data: { businessId: business.id, delta: -cost, balanceAfter: b.creditBalance, reason: "MESSAGE", messageId: m.id } });
+    }
+    return m;
+  });
+  if (!message) {
+    const m = await db.message.create({ data: { ...base, status: "FAILED", provider: providerName(channel), error: "Not enough messaging credits" } });
+    return { ok: false, status: "FAILED", error: "Not enough messaging credits", messageId: m.id };
+  }
+  const r = await deliver({ channel, to, body: o.body, subject: o.subject, kind: o.kind, lang: "en", params: [o.body] });
+  const now = new Date();
+  if (r.ok) {
+    await db.message.update({ where: { id: message.id }, data: { status: r.status, provider: r.provider, providerMessageId: r.id, sentAt: now, deliveredAt: r.status === "DELIVERED" ? now : null } });
+    return { ok: true, status: r.status, messageId: message.id };
+  }
+  await db.$transaction(async (tx) => {
+    await tx.message.update({ where: { id: message.id }, data: { status: "FAILED", provider: r.provider, error: r.error.slice(0, 500) } });
+    if (cost > 0) {
+      const b = await tx.business.update({ where: { id: business.id }, data: { creditBalance: { increment: cost } } });
+      await tx.creditTxn.create({ data: { businessId: business.id, delta: cost, balanceAfter: b.creditBalance, reason: "REFUND", messageId: message.id } });
+    }
+  });
+  return { ok: false, status: "FAILED", error: r.error, messageId: message.id };
+}

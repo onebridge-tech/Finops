@@ -11,6 +11,10 @@ export type Permission =
   | "invoice:cancel"
   | "reminder:send"
   | "reports:view" // business-wide totals, exports
+  | "credit:override" // go past a credit limit when credit control blocks
+  | "cash:manage" // cash adjustments and day close
+  | "stock:write" // stock adjustments, purchase receipts
+  | "field:manage" // beats, targets, attendance of other reps
   | "team:manage"
   | "settings:write";
 
@@ -26,10 +30,10 @@ export const ROLE_LABEL: Record<Role, { name: string; about: string }> = {
 };
 
 const GRANTS: Record<Role, Permission[]> = {
-  OWNER: ["party:write", "ledger:write", "ledger:reverse", "item:write", "invoice:write", "invoice:cancel", "reminder:send", "reports:view", "team:manage", "settings:write"],
-  ADMIN: ["party:write", "ledger:write", "ledger:reverse", "item:write", "invoice:write", "invoice:cancel", "reminder:send", "reports:view", "team:manage", "settings:write"],
-  ACCOUNTANT: ["party:write", "ledger:write", "ledger:reverse", "item:write", "invoice:write", "invoice:cancel", "reminder:send", "reports:view"],
-  BILLING: ["party:write", "ledger:write", "invoice:write", "reminder:send"],
+  OWNER: ["credit:override", "cash:manage", "stock:write", "field:manage", "party:write", "ledger:write", "ledger:reverse", "item:write", "invoice:write", "invoice:cancel", "reminder:send", "reports:view", "team:manage", "settings:write"],
+  ADMIN: ["credit:override", "cash:manage", "stock:write", "field:manage", "party:write", "ledger:write", "ledger:reverse", "item:write", "invoice:write", "invoice:cancel", "reminder:send", "reports:view", "team:manage", "settings:write"],
+  ACCOUNTANT: ["credit:override", "cash:manage", "stock:write", "party:write", "ledger:write", "ledger:reverse", "item:write", "invoice:write", "invoice:cancel", "reminder:send", "reports:view"],
+  BILLING: ["stock:write", "party:write", "ledger:write", "invoice:write", "reminder:send"],
   REP: ["party:write", "ledger:write", "reminder:send"],
   VIEWER: [],
 };

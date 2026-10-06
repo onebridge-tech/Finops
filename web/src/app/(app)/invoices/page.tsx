@@ -3,6 +3,7 @@ import { docWhere, requireBusiness } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { formatINR } from "@/lib/money";
 import { Card, EmptyState, LinkButton, PageHeader, fmtDate } from "@/components/ui";
+import { invoicePayments } from "@/lib/queries";
 
 export const metadata = { title: "Invoices" };
 
@@ -14,6 +15,7 @@ export default async function Invoices() {
     take: 100,
     include: { party: { select: { name: true, gstin: true } } },
   });
+  const pay = await invoicePayments(ctx.business.id, invoices);
   return (
     <>
       <PageHeader
@@ -38,6 +40,9 @@ export default async function Invoices() {
                 <span className="text-xs text-muted">
                   {fmtDate(i.date)}{i.dueDate ? ` · due ${fmtDate(i.dueDate)}` : ""}
                   {i.status === "CANCELLED" ? " · cancelled" : i.viewCount > 0 ? ` · viewed ${i.viewCount}×` : ""}
+                  {pay.get(i.id) && pay.get(i.id)!.status !== "CANCELLED" && (
+                    <> · <span className={pay.get(i.id)!.status === "PAID" ? "text-got" : pay.get(i.id)!.status === "PART" ? "text-gave" : ""}>{pay.get(i.id)!.status === "PAID" ? "Paid" : pay.get(i.id)!.status === "PART" ? `${formatINR(pay.get(i.id)!.open)} due` : "Unpaid"}</span></>
+                  )}
                 </span>
               </span>
               <span className={`font-semibold tabular-nums ${i.status === "CANCELLED" ? "text-muted line-through" : ""}`}>{formatINR(i.totalPaise)}</span>

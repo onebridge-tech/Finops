@@ -8,6 +8,7 @@ import { BusinessForm } from "@/components/business-form";
 import { Card, LinkButton, PageHeader } from "@/components/ui";
 import { MessagingSettingsForm, RunRemindersButton } from "./messaging-form";
 import { BrandingForm } from "./branding-form";
+import { ControlsForm } from "@/components/controls-form";
 import { fileUrl } from "@/lib/files";
 import { inviteUrl } from "@/lib/referral";
 import { db } from "@/lib/db";
@@ -68,6 +69,12 @@ export default async function Settings() {
           ) : (
             <p className="text-sm text-muted">Only the owner or an admin can change branding.</p>
           )}
+        </Card>
+        <div className="hidden lg:block" />
+
+        <Card className="lg:col-span-2">
+          <h2 className="mb-4 font-semibold">Credit control & owner digest</h2>
+          {owner ? <ControlsForm v={{ creditControl: business.creditControl, creditBlockOverdue: business.creditBlockOverdue, digestFrequency: business.digestFrequency, digestChannel: business.digestChannel }} /> : <p className="text-sm text-muted">Only the owner or an admin can change these.</p>}
         </Card>
         <div className="hidden lg:block" />
 

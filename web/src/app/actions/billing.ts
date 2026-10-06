@@ -15,8 +15,10 @@ import { saveUpload } from "@/lib/files";
 import { CHANNELS, type Channel } from "@/lib/reminder-rule";
 import { sendToParty } from "@/lib/messaging/send";
 import { balanceOf } from "@/lib/ledger";
+import { creditGate } from "@/lib/credit-gate";
+import { proposeShared } from "@/lib/shared-ledger";
 
-export type FormState = { error?: string; ok?: boolean; info?: string };
+export type FormState = { error?: string; ok?: boolean; info?: string; warning?: string[] };
 
 const field = (f: FormData, k: string) => String(f.get(k) ?? "");
 const ymd = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
@@ -224,12 +226,22 @@ export async function createInvoice(_prev: FormState, form: FormData): Promise<F
   if ("error" in p) return { error: p.error };
   const party = await findParty(ctx, p.doc.partyId);
   if (!party) return { error: "Customer not found" };
+  const gate = await creditGate(ctx, party, priceLines(toRows(p.lines), isInterState(business.stateCode, p.doc.placeOfSupply)).total, form.get("override") === "1");
+  if (gate.error) return { error: gate.error };
+  if (gate.warning) return { warning: gate.warning };
   const date = istNoon(p.doc.date);
   const dueDate = p.doc.dueDate ? endOfDay(p.doc.dueDate) : party.creditDays ? new Date(date.getTime() + party.creditDays * 86400_000) : null;
   const invoice = await db.$transaction((tx) =>
     issueInvoice(tx, { businessId: business.id, userId: user.id, partyId: party.id, branchId: ctx.branchId ?? party.branchId, date, dueDate, placeOfSupply: p.doc.placeOfSupply, notes: p.doc.notes || null, lines: toRows(p.lines) }),
   );
+  await shareInvoice(invoice.id);
   redirect(`/invoices/${invoice.id}`);
+}
+
+/** Offers an invoice's ledger entry to the customer's books when they are on the platform (LG-10). */
+async function shareInvoice(invoiceId: string) {
+  const e = await db.ledgerEntry.findFirst({ where: { invoiceId, source: "INVOICE" }, select: { id: true } });
+  if (e) await proposeShared(e.id).catch(() => false);
 }
 
 /**

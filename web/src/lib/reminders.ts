@@ -34,10 +34,12 @@ export async function runAutoReminders(opts: { now?: Date; businessId?: string; 
       const rule = effectiveRule(business, party);
       if (!rule) continue;
       summary.checked++;
+      if (party.reminderSnoozeUntil && party.reminderSnoozeUntil > now) continue; // promise to pay (CP-09)
       const entries = await db.ledgerEntry.findMany({ where: { partyId: party.id } });
+      const allocations = await db.allocation.findMany({ where: { partyId: party.id } });
       const balance = balanceOf(entries);
       if (balance <= 0) continue; // paid up: reminders pause by themselves
-      if (!reminderReason(rule, openDues(entries), now, party.lastAutoReminderAt)) continue;
+      if (!reminderReason(rule, openDues(entries, allocations), now, party.lastAutoReminderAt)) continue;
 
       const r = await sendToParty({
         business, party, kind: "REMINDER", channel: rule.channel, trigger: "AUTO",

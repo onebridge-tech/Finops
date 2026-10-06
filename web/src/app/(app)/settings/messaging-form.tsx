@@ -45,7 +45,7 @@ export function RunRemindersButton() {
   const [state, action, pending] = useActionState(runRemindersNow, {});
   return (
     <ActionForm dispatch={() => action()} pending={pending} className="space-y-2">
-      <SubmitButton variant="secondary">Run today’s reminders now</SubmitButton>
+      <SubmitButton variant="secondary">Run reminders, digest & tasks now</SubmitButton>
       {state.info && <p className="text-xs text-muted">{state.info}</p>}
     </ActionForm>
   );

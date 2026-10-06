@@ -57,7 +57,7 @@ export async function checkUpload(file: File, kind: FileKind): Promise<string | 
   return mime && rule.types.includes(mime) ? null : "This file type is not allowed";
 }
 
-export async function saveUpload(file: File, o: { businessId: string; userId: string; kind: FileKind; entryId?: string }): Promise<SaveResult> {
+export async function saveUpload(file: File, o: { businessId: string; userId: string; kind: FileKind; entryId?: string; expenseId?: string; visitId?: string }): Promise<SaveResult> {
   const error = await checkUpload(file, o.kind);
   if (error) return { ok: false, error };
   const bytes = new Uint8Array(await file.arrayBuffer());
@@ -68,7 +68,7 @@ export async function saveUpload(file: File, o: { businessId: string; userId: st
   const rec = await db.storedFile.create({
     data: {
       businessId: o.businessId, kind: o.kind, name: file.name.slice(0, 120) || "file", mime, size: file.size,
-      storageKey, entryId: o.entryId ?? null, createdById: o.userId,
+      storageKey, entryId: o.entryId ?? null, expenseId: o.expenseId ?? null, visitId: o.visitId ?? null, createdById: o.userId,
     },
   });
   return { ok: true, id: rec.id };

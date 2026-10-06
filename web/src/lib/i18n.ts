@@ -7,7 +7,7 @@ export const UI_LANGUAGES = { en: "English", hi: "हिन्दी", te: "త�
 export type UiLang = keyof typeof UI_LANGUAGES;
 
 const en = {
-  "nav.home": "Home", "nav.parties": "Parties", "nav.invoices": "Invoices", "nav.collect": "Collect", "nav.followups": "Follow-ups",
+  "nav.home": "Home", "nav.more": "More", "nav.parties": "Parties", "nav.invoices": "Invoices", "nav.collect": "Collect", "nav.followups": "Follow-ups",
   "nav.items": "Items", "nav.settings": "Settings", "nav.search": "Search", "nav.signout": "Sign out",
   "dash.today": "Today", "dash.addParty": "Add party", "dash.newInvoice": "New invoice",
   "dash.toCollect": "To collect", "dash.overdue": "Overdue", "dash.toPay": "To pay", "dash.collectedToday": "Collected today",
@@ -41,7 +41,7 @@ export type UiKey = keyof typeof en;
 type Dict = Partial<Record<UiKey, string>>;
 
 const hi: Dict = {
-  "nav.home": "होम", "nav.parties": "पार्टियाँ", "nav.invoices": "बिल", "nav.collect": "वसूली", "nav.followups": "फ़ॉलो-अप",
+  "nav.home": "होम", "nav.more": "और", "nav.parties": "पार्टियाँ", "nav.invoices": "बिल", "nav.collect": "वसूली", "nav.followups": "फ़ॉलो-अप",
   "nav.items": "सामान", "nav.settings": "सेटिंग्स", "nav.search": "खोजें", "nav.signout": "साइन आउट",
   "dash.today": "आज", "dash.addParty": "पार्टी जोड़ें", "dash.newInvoice": "नया बिल",
   "dash.toCollect": "लेना है", "dash.overdue": "बकाया (समय निकला)", "dash.toPay": "देना है", "dash.collectedToday": "आज की वसूली",
@@ -72,7 +72,7 @@ const hi: Dict = {
 };
 
 const te: Dict = {
-  "nav.home": "హోమ్", "nav.parties": "పార్టీలు", "nav.invoices": "బిల్లులు", "nav.collect": "వసూలు", "nav.followups": "ఫాలో-అప్",
+  "nav.home": "హోమ్", "nav.more": "మరిన్ని", "nav.parties": "పార్టీలు", "nav.invoices": "బిల్లులు", "nav.collect": "వసూలు", "nav.followups": "ఫాలో-అప్",
   "nav.items": "వస్తువులు", "nav.settings": "సెట్టింగ్స్", "nav.search": "వెతుకు", "nav.signout": "సైన్ అవుట్",
   "dash.today": "ఈరోజు", "dash.addParty": "పార్టీ చేర్చు", "dash.newInvoice": "కొత్త బిల్లు",
   "dash.toCollect": "రావలసింది", "dash.overdue": "గడువు దాటిన బాకీ", "dash.toPay": "ఇవ్వవలసింది", "dash.collectedToday": "ఈరోజు వసూలు",
@@ -103,7 +103,7 @@ const te: Dict = {
 };
 
 const ta: Dict = {
-  "nav.home": "முகப்பு", "nav.parties": "தரப்பினர்", "nav.invoices": "பில்கள்", "nav.collect": "வசூல்", "nav.followups": "பின்தொடர்வு",
+  "nav.home": "முகப்பு", "nav.more": "மேலும்", "nav.parties": "தரப்பினர்", "nav.invoices": "பில்கள்", "nav.collect": "வசூல்", "nav.followups": "பின்தொடர்வு",
   "nav.items": "பொருட்கள்", "nav.settings": "அமைப்புகள்", "nav.search": "தேடு", "nav.signout": "வெளியேறு",
   "dash.today": "இன்று", "dash.addParty": "தரப்பினரைச் சேர்", "dash.newInvoice": "புதிய பில்",
   "dash.toCollect": "வர வேண்டியது", "dash.overdue": "காலம் கடந்த பாக்கி", "dash.toPay": "கொடுக்க வேண்டியது", "dash.collectedToday": "இன்றைய வசூல்",
@@ -134,7 +134,7 @@ const ta: Dict = {
 };
 
 const kn: Dict = {
-  "nav.home": "ಮುಖಪುಟ", "nav.parties": "ಪಾರ್ಟಿಗಳು", "nav.invoices": "ಬಿಲ್‌ಗಳು", "nav.collect": "ವಸೂಲಿ", "nav.followups": "ಫಾಲೋ-ಅಪ್",
+  "nav.home": "ಮುಖಪುಟ", "nav.more": "ಇನ್ನಷ್ಟು", "nav.parties": "ಪಾರ್ಟಿಗಳು", "nav.invoices": "ಬಿಲ್‌ಗಳು", "nav.collect": "ವಸೂಲಿ", "nav.followups": "ಫಾಲೋ-ಅಪ್",
   "nav.items": "ವಸ್ತುಗಳು", "nav.settings": "ಸೆಟ್ಟಿಂಗ್ಸ್", "nav.search": "ಹುಡುಕು", "nav.signout": "ಸೈನ್ ಔಟ್",
   "dash.today": "ಇಂದು", "dash.addParty": "ಪಾರ್ಟಿ ಸೇರಿಸಿ", "dash.newInvoice": "ಹೊಸ ಬಿಲ್",
   "dash.toCollect": "ಬರಬೇಕಾದದ್ದು", "dash.overdue": "ಅವಧಿ ಮೀರಿದ ಬಾಕಿ", "dash.toPay": "ಕೊಡಬೇಕಾದದ್ದು", "dash.collectedToday": "ಇಂದಿನ ವಸೂಲಿ",

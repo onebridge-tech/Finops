@@ -12,6 +12,7 @@ import { CREDIT_PACKS } from "@/lib/credits";
 import { recordConsent, recordOptIn, recordOptOut } from "@/lib/consent";
 import { sendToParty } from "@/lib/messaging/send";
 import { runAutoReminders } from "@/lib/reminders";
+import { runDigests, runInactiveScan } from "@/lib/jobs";
 import { inviteUrl } from "@/lib/referral";
 import { formatINR } from "@/lib/money";
 
@@ -153,8 +154,10 @@ export async function runRemindersNow(): Promise<MessageState> {
   const ctx = await requireBusiness("settings:write");
   const { business } = ctx;
   const s = await runAutoReminders({ businessId: business.id, ignoreHours: true });
+  const d = business.digestFrequency === "OFF" ? null : await runDigests(new Date(), { force: true, businessId: business.id });
+  const t = await runInactiveScan(new Date(), business.id);
   revalidatePath("/settings");
-  return { ok: true, info: `Checked ${s.checked} parties · sent ${s.sent} · skipped ${s.skipped} · failed ${s.failed}` };
+  return { ok: true, info: `Reminders: checked ${s.checked}, sent ${s.sent}, skipped ${s.skipped}, failed ${s.failed}. ${d ? `Digest sent to ${d.digests} owner(s). ` : ""}New tasks: ${t.inactive} inactive, ${t.upsell} upsell.` };
 }
 
 /**
