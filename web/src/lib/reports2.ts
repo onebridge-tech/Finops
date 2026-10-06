@@ -1,6 +1,6 @@
 import "server-only";
 import { db } from "./db";
-import { partyWhere, type Ctx } from "./auth";
+import { branchOrShared, partyWhere, type Ctx } from "./auth";
 import { istDay } from "./ledger";
 import { isLowStock, pendingMilli } from "./rules";
 import type { ReportResult } from "./reports";
@@ -13,7 +13,7 @@ export async function ordersReport(ctx: Ctx, kind: "SALES" | "PURCHASE"): Promis
   const parties = await db.party.findMany({ where: partyWhere(ctx), select: { id: true, name: true } });
   const pn = new Map(parties.map((p) => [p.id, p.name]));
   const orders = await db.order.findMany({
-    where: { businessId: ctx.business.id, kind, status: { in: ["OPEN", "PARTIAL"] }, partyId: { in: [...pn.keys()] }, ...(ctx.branchId ? { branchId: ctx.branchId } : {}) },
+    where: { businessId: ctx.business.id, kind, status: { in: ["OPEN", "PARTIAL"] }, partyId: { in: [...pn.keys()] }, ...branchOrShared(ctx) },
     include: { lines: true },
     orderBy: { date: "asc" },
   });

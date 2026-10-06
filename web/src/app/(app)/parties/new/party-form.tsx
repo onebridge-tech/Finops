@@ -11,7 +11,7 @@ import { LANGUAGE_NAMES } from "@/lib/messaging/templates";
 
 export type PartyValues = {
   id: string; name: string; type: string; phone: string; email: string; gstin: string; stateCode: string; address: string;
-  creditDays: string; creditLimit: string; language: string; source: string; ownerId: string; branchId: string;
+  creditDays: string; creditLimit: string; language: string; source: string; ownerId: string; branchId: string; priceListId: string;
 };
 
 type Opt = { id: string; name: string };
@@ -22,9 +22,10 @@ type Props = {
   owners: Opt[] | null; // null = this member can't assign parties
   branches: Opt[] | null; // null = branch is fixed for this member
   defaultBranch?: string;
+  priceLists?: Opt[];
 };
 
-export function PartyForm({ defaultState, party, owners, branches, defaultBranch = "" }: Props) {
+export function PartyForm({ defaultState, party, owners, branches, defaultBranch = "", priceLists = [] }: Props) {
   const [state, action, pending] = useActionState(party ? updateParty : createParty, {});
   const v = party;
 
@@ -61,6 +62,14 @@ export function PartyForm({ defaultState, party, owners, branches, defaultBranch
       <Field label="Credit limit (₹)" hint="Optional. Credit control warns or blocks above this.">
         <Input name="creditLimit" inputMode="decimal" defaultValue={v?.creditLimit} />
       </Field>
+      {priceLists.length > 0 && (
+        <Field label="Price list" hint="Rates and quantity slabs fill in on documents for this party">
+          <Select name="priceListId" defaultValue={v?.priceListId ?? ""}>
+            <option value="">Standard prices</option>
+            {priceLists.map((l) => <option key={l.id} value={l.id}>{l.name}</option>)}
+          </Select>
+        </Field>
+      )}
       <Field label="Message language">
         <Select name="language" defaultValue={v?.language ?? "en"}>
           {Object.entries(LANGUAGE_NAMES).map(([c, n]) => <option key={c} value={c}>{n}</option>)}

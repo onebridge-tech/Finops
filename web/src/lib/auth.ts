@@ -68,6 +68,11 @@ export function findParty(ctx: Ctx, id: string) {
   return db.party.findFirst({ where: { ...partyWhere(ctx), id } });
 }
 
+/** Records tagged with a branch show in that branch's view; untagged (shared) ones show in every view. */
+export function branchOrShared(ctx: Ctx) {
+  return ctx.branchId ? { OR: [{ branchId: ctx.branchId }, { branchId: null }] } : {};
+}
+
 /** Invoices / quotations in view: the active branch, and for reps their own parties only. */
 export function docWhere(ctx: Ctx) {
   return {

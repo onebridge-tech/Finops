@@ -114,13 +114,12 @@ export const DAYBOOK_TYPES = ["Sales", "Sales (credit)", "Receipt", "Receipt (ca
 export async function daybook(ctx: Ctx, p: Period, f: { type?: string; user?: string; branch?: string }): Promise<ReportResult> {
   const { gte, lte } = rangeDates(p.from, p.to);
   const branch = f.branch ? { branchId: f.branch === "none" ? null : f.branch } : ctx.branchId ? { branchId: ctx.branchId } : {};
-  const [entries, expenses, adj, quotes, orders, notes, parties, n] = await Promise.all([
+  const [entries, expenses, adj, quotes, orders, parties, n] = await Promise.all([
     db.ledgerEntry.findMany({ where: { businessId: ctx.business.id, party: partyWhere(ctx), ...branch, date: { gte, lte }, ...(f.user ? { createdById: f.user } : {}) }, orderBy: [{ date: "asc" }, { createdAt: "asc" }], take: 3000 }),
     db.expense.findMany({ where: { businessId: ctx.business.id, ...branch, date: { gte, lte }, voidedAt: null, ...(f.user ? { createdById: f.user } : {}) } }),
     db.cashAdjustment.findMany({ where: { businessId: ctx.business.id, ...branch, date: { gte, lte }, voidedAt: null, ...(f.user ? { createdById: f.user } : {}) } }),
     db.quote.findMany({ where: { ...docWhere(ctx), date: { gte, lte }, ...(f.user ? { createdById: f.user } : {}) } }),
     db.order.findMany({ where: { businessId: ctx.business.id, ...branch, date: { gte, lte }, status: { not: "CANCELLED" }, ...(f.user ? { createdById: f.user } : {}) } }),
-    db.note.findMany({ where: { businessId: ctx.business.id, ...branch, date: { gte, lte }, ...(f.user ? { createdById: f.user } : {}) } }),
     partiesWithBalance(ctx, { includeArchived: true }),
     names(ctx),
   ]);
@@ -138,7 +137,6 @@ export async function daybook(ctx: Ctx, p: Period, f: { type?: string; user?: st
   for (const x of adj) rows.push({ at: x.createdAt, date: istDay(x.date), type: "Cash adjustment", party: "—", details: x.note, by: n.user(x.createdById), branch: n.branch(x.branchId), debit: x.direction === "OUT" ? Number(x.amountPaise) : null, credit: x.direction === "IN" ? Number(x.amountPaise) : null, href: "/cashbook" });
   for (const x of quotes) rows.push({ at: x.createdAt, date: istDay(x.date), type: "Quotation", party: party.get(x.partyId)?.name ?? "—", details: `${x.number} · ${x.status.toLowerCase()}`, by: n.user(x.createdById), branch: n.branch(x.branchId), debit: null, credit: null, href: `/quotes/${x.id}` });
   for (const x of orders) rows.push({ at: x.createdAt, date: istDay(x.date), type: "Order", party: party.get(x.partyId)?.name ?? "—", details: `${x.number} · ${x.kind === "PURCHASE" ? "purchase" : "sales"} · ${x.status.toLowerCase()}`, by: n.user(x.createdById), branch: n.branch(x.branchId), debit: null, credit: null, href: `/orders/${x.id}` });
-  for (const x of notes) rows.push({ at: x.createdAt, date: istDay(x.date), type: x.kind === "CREDIT" ? "Credit note" : "Debit note", party: party.get(x.partyId)?.name ?? "—", details: `${x.number} · ${x.reason}`, by: n.user(x.createdById), branch: n.branch(x.branchId), debit: null, credit: null, href: `/notes/${x.id}` });
 
   const shown = rows.filter((r) => !f.type || r.type === f.type).sort((a, b) => (a.date === b.date ? a.at.getTime() - b.at.getTime() : a.date < b.date ? -1 : 1));
   return {

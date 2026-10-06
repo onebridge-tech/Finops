@@ -29,7 +29,7 @@ export default async function Branches() {
               </summary>
               {edit && (
                 <div className="mt-3 space-y-3 border-t border-line pt-3">
-                  {!b.archivedAt && <BranchForm branch={{ id: b.id, name: b.name, address: b.address ?? "", phone: b.phone ?? "" }} />}
+                  {!b.archivedAt && <BranchForm branch={{ id: b.id, name: b.name, address: b.address ?? "", phone: b.phone ?? "", gstin: b.gstin ?? "", invoicePrefix: b.invoicePrefix ?? "" }} />}
                   <form action={archiveBranch}>
                     <input type="hidden" name="branchId" value={b.id} />
                     <button className="text-xs text-muted underline hover:text-ink">{b.archivedAt ? "Restore branch" : "Archive branch"}</button>

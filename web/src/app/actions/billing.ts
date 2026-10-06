@@ -8,8 +8,7 @@ import { docWhere, findParty, requireBusiness } from "@/lib/auth";
 import { audit } from "@/lib/audit";
 import { newShareToken } from "@/lib/session";
 import { parseRupees } from "@/lib/money";
-import { computeInvoice, GST_RATES_BP, isInterState } from "@/lib/gst";
-import { STATES } from "@/lib/gstin";
+import { GST_RATES_BP, isInterState } from "@/lib/gst";
 import { appUrl } from "@/lib/share";
 import { saveUpload } from "@/lib/files";
 import { CHANNELS, type Channel } from "@/lib/reminder-rule";
@@ -17,12 +16,12 @@ import { sendToParty } from "@/lib/messaging/send";
 import { balanceOf } from "@/lib/ledger";
 import { creditGate } from "@/lib/credit-gate";
 import { proposeShared } from "@/lib/shared-ledger";
+import { applyStock, checkLowStock } from "@/lib/stock";
+import { endOfDay, issueInvoice, istNoon, parseDoc, priceLines, sellerFor, toRows } from "@/lib/doc-core";
 
 export type FormState = { error?: string; ok?: boolean; info?: string; warning?: string[] };
 
 const field = (f: FormData, k: string) => String(f.get(k) ?? "");
-const ymd = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
-const optionalYmd = z.string().refine((v) => v === "" || /^\d{4}-\d{2}-\d{2}$/.test(v));
 
 // ── Items (CI-01) ────────────────────────────────────────────────────────────
 
@@ -37,6 +36,9 @@ const ItemInput = z.object({
   taxRateBp: z.coerce.number().refine((v) => GST_RATES_BP.includes(v), "Pick a GST rate"),
   parentId: z.string(),
   variantName: z.string().trim().max(60),
+  category: z.string().trim().max(40),
+  reorderLevel: z.string().trim().refine((v) => v === "" || /^\d+(\.\d{1,3})?$/.test(v), "Reorder level must be a number"),
+  openingStock: z.string().trim().refine((v) => v === "" || /^\d+(\.\d{1,3})?$/.test(v), "Opening stock must be a number"),
 });
 
 async function parseItem(form: FormData, businessId: string) {
@@ -57,7 +59,9 @@ async function parseItem(form: FormData, businessId: string) {
       name: d.name, description: d.description || null, sku: d.sku || null, unit: d.unit, pricePaise: BigInt(price),
       purchasePricePaise: purchase === null ? null : BigInt(purchase), hsn: d.hsn || null, taxRateBp: d.taxRateBp,
       isPublic: form.get("isPublic") === "on", parentId: d.parentId || null, variantName: d.parentId ? d.variantName : null,
+      category: d.category || null, trackStock: form.get("trackStock") === "on", reorderLevelMilli: d.reorderLevel ? Math.round(Number(d.reorderLevel) * 1000) : null,
     },
+    openingMilli: d.openingStock ? Math.round(Number(d.openingStock) * 1000) : 0,
   } as const;
 }
 
@@ -77,6 +81,7 @@ export async function createItem(_prev: FormState, form: FormData): Promise<Form
   if (img.error) return { error: img.error };
   await db.$transaction(async (tx) => {
     const item = await tx.item.create({ data: { businessId: business.id, ...p.data, imageFileId: img.id ?? null } });
+    if (p.data.trackStock && p.openingMilli > 0) await applyStock(tx, { businessId: business.id, branchId: ctx.branchId, itemId: item.id, qtyMilli: p.openingMilli, reason: "OPENING", userId: user.id });
     await audit(tx, { businessId: business.id, actorId: user.id, action: "create", entity: "Item", entityId: item.id, data: item });
   });
   revalidatePath("/items");
@@ -115,110 +120,6 @@ export async function archiveItem(form: FormData): Promise<void> {
   revalidatePath("/items");
 }
 
-// ── Documents: shared line handling for invoices and quotations ──────────────
-
-const DocInput = z.object({
-  partyId: z.string().min(1, "Choose a customer"),
-  date: ymd,
-  dueDate: optionalYmd, // invoice: due date · quotation: valid until
-  placeOfSupply: z.string().refine((v) => v in STATES, "Choose the place of supply"),
-  notes: z.string().trim().max(500),
-  lines: z
-    .array(
-      z.object({
-        itemId: z.string().optional(),
-        description: z.string().trim().min(1, "Every line needs a description").max(200),
-        hsn: z.string().trim().max(8).optional(),
-        unit: z.string().trim().max(12).default("pcs"),
-        qty: z.string(),
-        rate: z.string(),
-        discount: z.string().optional(), // percent, e.g. "10" or "2.5"
-        taxRateBp: z.number().refine((v) => GST_RATES_BP.includes(v), "Invalid GST rate"),
-      }),
-    )
-    .min(1, "Add at least one line"),
-});
-
-type DocInputT = z.infer<typeof DocInput>;
-type ParsedLine = DocInputT["lines"][number] & { qtyMilli: number; ratePaise: number; discountBp: number };
-
-function parseDoc(form: FormData, maxDiscountBp: number | null): { error: string } | { doc: DocInputT; lines: ParsedLine[] } {
-  let raw: unknown;
-  try {
-    raw = JSON.parse(field(form, "payload"));
-  } catch {
-    return { error: "Invalid form data" };
-  }
-  const r = DocInput.safeParse(raw);
-  if (!r.success) return { error: r.error.issues[0].message };
-  const lines: ParsedLine[] = [];
-  for (const [i, l] of r.data.lines.entries()) {
-    const qtyMilli = Math.round(Number(l.qty) * 1000);
-    const rate = parseRupees(l.rate);
-    if (!Number.isFinite(qtyMilli) || qtyMilli <= 0) return { error: `Line ${i + 1}: quantity must be more than zero` };
-    if (rate === null) return { error: `Line ${i + 1}: rate must be an amount` };
-    const d = (l.discount ?? "").trim();
-    if (d && !/^\d{1,2}(\.\d{1,2})?$|^100$/.test(d)) return { error: `Line ${i + 1}: discount must be a percentage like 5 or 2.5` };
-    const discountBp = d ? Math.round(Number(d) * 100) : 0;
-    if (maxDiscountBp !== null && discountBp > maxDiscountBp) return { error: `Line ${i + 1}: your discount limit is ${maxDiscountBp / 100}%` };
-    lines.push({ ...l, qtyMilli, ratePaise: rate, discountBp });
-  }
-  return { doc: r.data, lines };
-}
-
-type LineRow = { itemId: string | null; description: string; hsn: string | null; qtyMilli: number; unit: string; ratePaise: number; taxRateBp: number; discountBp: number };
-
-/** Totals and per-line rows ready to store on an invoice or quotation. */
-function priceLines(lines: LineRow[], interState: boolean) {
-  const totals = computeInvoice(lines, interState);
-  return {
-    header: {
-      interState,
-      taxablePaise: BigInt(totals.taxable), cgstPaise: BigInt(totals.cgst), sgstPaise: BigInt(totals.sgst),
-      igstPaise: BigInt(totals.igst), roundOffPaise: BigInt(totals.roundOff), totalPaise: BigInt(totals.total),
-    },
-    rows: lines.map((l, i) => ({
-      itemId: l.itemId, description: l.description, hsn: l.hsn, qtyMilli: l.qtyMilli, unit: l.unit,
-      ratePaise: BigInt(l.ratePaise), taxRateBp: l.taxRateBp, discountBp: l.discountBp,
-      taxablePaise: BigInt(totals.lines[i].taxable), cgstPaise: BigInt(totals.lines[i].cgst),
-      sgstPaise: BigInt(totals.lines[i].sgst), igstPaise: BigInt(totals.lines[i].igst), totalPaise: BigInt(totals.lines[i].total),
-    })),
-    total: totals.total,
-  };
-}
-
-const istNoon = (d: string) => new Date(`${d}T12:00:00+05:30`);
-const endOfDay = (d: string) => new Date(`${d}T23:59:59+05:30`);
-const toRows = (lines: ParsedLine[]): LineRow[] =>
-  lines.map((l) => ({ itemId: l.itemId || null, description: l.description, hsn: l.hsn || null, qtyMilli: l.qtyMilli, unit: l.unit, ratePaise: l.ratePaise, taxRateBp: l.taxRateBp, discountBp: l.discountBp }));
-
-type Tx = Parameters<Parameters<typeof db.$transaction>[0]>[0];
-
-/** Creates an invoice and posts it to the party ledger (PRD flow F1). */
-async function issueInvoice(
-  tx: Tx,
-  o: { businessId: string; userId: string; partyId: string; branchId: string | null; date: Date; dueDate: Date | null; placeOfSupply: string; notes: string | null; lines: LineRow[]; quoteId?: string },
-) {
-  const business = await tx.business.update({ where: { id: o.businessId }, data: { nextInvoiceNo: { increment: 1 } } });
-  const number = `${business.invoicePrefix}${business.nextInvoiceNo - 1}`;
-  const priced = priceLines(o.lines, isInterState(business.stateCode, o.placeOfSupply));
-  const inv = await tx.invoice.create({
-    data: {
-      businessId: o.businessId, partyId: o.partyId, branchId: o.branchId, number, date: o.date, dueDate: o.dueDate, placeOfSupply: o.placeOfSupply,
-      ...priced.header, notes: o.notes, shareToken: newShareToken(), createdById: o.userId, quoteId: o.quoteId ?? null,
-      lines: { create: priced.rows },
-    },
-  });
-  await tx.ledgerEntry.create({
-    data: {
-      businessId: o.businessId, partyId: o.partyId, branchId: o.branchId, direction: "GAVE", amountPaise: priced.header.totalPaise, date: o.date, dueDate: o.dueDate,
-      note: `Invoice ${number}`, source: "INVOICE", invoiceId: inv.id, createdById: o.userId,
-    },
-  });
-  await audit(tx, { businessId: o.businessId, actorId: o.userId, action: "create", entity: "Invoice", entityId: inv.id, data: { number, total: priced.total, quoteId: o.quoteId } });
-  return inv;
-}
-
 export async function createInvoice(_prev: FormState, form: FormData): Promise<FormState> {
   const ctx = await requireBusiness("invoice:write");
   const { user, business } = ctx;
@@ -226,15 +127,18 @@ export async function createInvoice(_prev: FormState, form: FormData): Promise<F
   if ("error" in p) return { error: p.error };
   const party = await findParty(ctx, p.doc.partyId);
   if (!party) return { error: "Customer not found" };
-  const gate = await creditGate(ctx, party, priceLines(toRows(p.lines), isInterState(business.stateCode, p.doc.placeOfSupply)).total, form.get("override") === "1");
+  const branchId = ctx.branchId ?? party.branchId;
+  const seller = await sellerFor(db, business.id, branchId);
+  const gate = await creditGate(ctx, party, priceLines(toRows(p.lines), isInterState(seller.stateCode, p.doc.placeOfSupply)).total, form.get("override") === "1");
   if (gate.error) return { error: gate.error };
   if (gate.warning) return { warning: gate.warning };
   const date = istNoon(p.doc.date);
   const dueDate = p.doc.dueDate ? endOfDay(p.doc.dueDate) : party.creditDays ? new Date(date.getTime() + party.creditDays * 86400_000) : null;
   const invoice = await db.$transaction((tx) =>
-    issueInvoice(tx, { businessId: business.id, userId: user.id, partyId: party.id, branchId: ctx.branchId ?? party.branchId, date, dueDate, placeOfSupply: p.doc.placeOfSupply, notes: p.doc.notes || null, lines: toRows(p.lines) }),
+    issueInvoice(tx, { businessId: business.id, userId: user.id, partyId: party.id, branchId, date, dueDate, placeOfSupply: p.doc.placeOfSupply, notes: p.doc.notes || null, lines: toRows(p.lines) }),
   );
   await shareInvoice(invoice.id);
+  await checkLowStock(business.id, p.lines.map((l) => l.itemId || null)).catch(() => undefined);
   redirect(`/invoices/${invoice.id}`);
 }
 
@@ -267,6 +171,8 @@ export async function cancelInvoice(_prev: FormState, form: FormData): Promise<F
         },
       });
     }
+    const lines = await tx.invoiceLine.findMany({ where: { invoiceId: invoice.id } });
+    for (const l of lines) await applyStock(tx, { businessId: business.id, branchId: invoice.branchId, itemId: l.itemId, qtyMilli: l.qtyMilli, reason: "CANCEL", refType: "Invoice", refId: invoice.id, userId: user.id });
     await audit(tx, { businessId: business.id, actorId: user.id, action: "cancel", entity: "Invoice", entityId: invoice.id, data: { reason } });
   });
   revalidatePath(`/invoices/${invoice.id}`);

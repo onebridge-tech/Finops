@@ -11,6 +11,7 @@ type EntryLike = { direction: string; source: string; paymentMode: string | null
 export function voucherType(e: EntryLike, partyType: string): string {
   if (e.source === "INVOICE") return "Sales";
   if (e.source === "OPENING") return "Opening balance";
+  if (e.source === "NOTE") return e.direction === "GOT" ? "Credit note" : "Debit note";
   if (e.source === "REVERSAL") return "Journal (reversal)";
   if (e.direction === "GOT") {
     if (e.paymentMode) return e.paymentMode === "CASH" ? "Receipt (cash)" : "Receipt (bank)";

@@ -6,6 +6,7 @@ import { db } from "@/lib/db";
 import { requireBusiness, requireUser, ROLES, type Role } from "@/lib/auth";
 import { audit } from "@/lib/audit";
 import { normalizeIndianMobile } from "@/lib/share";
+import { isValidGstin, normalizeGstin } from "@/lib/gstin";
 import { UI_LANGUAGES } from "@/lib/i18n";
 import { TILES } from "@/lib/tiles";
 
@@ -109,14 +110,22 @@ const BranchInput = z.object({
   name: z.string().trim().min(2, "Branch name is required").max(60),
   address: z.string().trim().max(300),
   phone: z.string().trim().max(20),
+  gstin: z.string().trim().transform(normalizeGstin).refine((v) => v === "" || isValidGstin(v), "GSTIN is not valid"),
+  invoicePrefix: z.string().trim().max(10),
 });
 
 export async function saveBranch(_prev: TeamState, form: FormData): Promise<TeamState> {
   const ctx = await requireBusiness("settings:write");
-  const r = BranchInput.safeParse({ name: field(form, "name"), address: field(form, "address"), phone: field(form, "phone") });
+  const r = BranchInput.safeParse({ name: field(form, "name"), address: field(form, "address"), phone: field(form, "phone"), gstin: field(form, "gstin"), invoicePrefix: field(form, "invoicePrefix") });
   if (!r.success) return { error: r.error.issues[0].message };
-  const data = { name: r.data.name, address: r.data.address || null, phone: r.data.phone || null };
   const id = field(form, "branchId");
+  // Invoice numbers must stay unique across the business, so each series needs its own prefix.
+  const prefix = r.data.invoicePrefix;
+  if (prefix) {
+    const clash = (prefix === ctx.business.invoicePrefix) || (await db.branch.count({ where: { businessId: ctx.business.id, invoicePrefix: prefix, id: { not: id || undefined } } })) > 0;
+    if (clash) return { error: "Another series already uses that prefix" };
+  }
+  const data = { name: r.data.name, address: r.data.address || null, phone: r.data.phone || null, gstin: r.data.gstin || null, stateCode: r.data.gstin ? r.data.gstin.slice(0, 2) : null, invoicePrefix: prefix || null };
   await db.$transaction(async (tx) => {
     if (id) {
       const b = await tx.branch.findFirst({ where: { id, businessId: ctx.business.id } });

@@ -10,6 +10,7 @@ import { GST_RATES_BP } from "@/lib/gst";
 export type ItemValues = {
   id: string; name: string; description: string; sku: string; unit: string; price: string; purchasePrice: string;
   hsn: string; taxRateBp: number; isPublic: boolean; parentId: string; variantName: string; imageUrl: string | null;
+  category: string; trackStock: boolean; reorderLevel: string;
 };
 
 export function ItemForm({ item, bases }: { item?: ItemValues; bases: { id: string; name: string }[] }) {
@@ -41,6 +42,10 @@ export function ItemForm({ item, bases }: { item?: ItemValues; bases: { id: stri
       </Field>
       <Field label="Variant name" hint="e.g. Red / XL"><Input name="variantName" defaultValue={v?.variantName} /></Field>
       <div className="sm:col-span-2"><Field label="Description"><Input name="description" defaultValue={v?.description} /></Field></div>
+      <Field label="Category" hint="Used in sales analysis and the catalogue"><Input name="category" defaultValue={v?.category} placeholder="Grains, Furniture…" /></Field>
+      <label className="flex items-center gap-2 self-center text-sm"><input type="checkbox" name="trackStock" defaultChecked={v?.trackStock} className="size-4 accent-[var(--brand)]" /> Track stock</label>
+      <Field label="Reorder at" hint="Alert when stock falls to this"><Input name="reorderLevel" inputMode="decimal" defaultValue={v?.reorderLevel} /></Field>
+      {!v && <Field label="Opening stock" hint="If tracking"><Input name="openingStock" inputMode="decimal" /></Field>}
       <div className="sm:col-span-3">
         <Field label="Image" hint="PNG, JPG or WebP, up to 2 MB">
           <div className="flex items-center gap-3">

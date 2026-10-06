@@ -28,6 +28,7 @@ export default async function EditItem({ params }: PageProps<"/items/[id]">) {
             purchasePrice: item.purchasePricePaise === null ? "" : toRupeeString(Number(item.purchasePricePaise)),
             hsn: item.hsn ?? "", taxRateBp: item.taxRateBp, isPublic: item.isPublic, parentId: item.parentId ?? "",
             variantName: item.variantName ?? "", imageUrl: fileUrl(item.imageFileId),
+            category: item.category ?? "", trackStock: item.trackStock, reorderLevel: item.reorderLevelMilli === null ? "" : String(item.reorderLevelMilli / 1000),
           }}
         />
       </Card>

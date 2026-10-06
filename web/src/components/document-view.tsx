@@ -14,7 +14,9 @@ type Line = {
 };
 
 export type Doc = {
-  kind: "INVOICE" | "QUOTE";
+  kind: "INVOICE" | "QUOTE" | "SALES_ORDER" | "PURCHASE_ORDER" | "CREDIT_NOTE" | "DEBIT_NOTE";
+  sellerGstin?: string | null; // the GSTIN the document was issued under (BD-10)
+  sellerStateCode?: string | null;
   number: string;
   date: Date;
   dueDate: Date | null; // invoice due date or quotation validity
@@ -42,7 +44,10 @@ export async function DocumentView({ doc, business: b, party, payAmountPaise }: 
   const compact = t === "COMPACT";
   const modern = t === "MODERN";
   const style = { "--doc-brand": b.brandColor } as CSSProperties;
-  const title = isInvoice ? (b.gstin ? "Tax Invoice" : "Invoice") : "Quotation";
+  const gstin = doc.sellerGstin ?? b.gstin;
+  const sellerState = doc.sellerStateCode ?? b.stateCode;
+  const title = { INVOICE: gstin ? "Tax Invoice" : "Invoice", QUOTE: "Quotation", SALES_ORDER: "Sales Order", PURCHASE_ORDER: "Purchase Order", CREDIT_NOTE: "Credit Note", DEBIT_NOTE: "Debit Note" }[doc.kind];
+  const dateLabel = { INVOICE: "Due", QUOTE: "Valid until", SALES_ORDER: "Expected", PURCHASE_ORDER: "Expected", CREDIT_NOTE: "", DEBIT_NOTE: "" }[doc.kind];
   const hasBank = b.bankAccountNo && b.bankIfsc;
   const hasDiscount = doc.lines.some((l) => l.discountBp > 0);
 
@@ -59,21 +64,21 @@ export async function DocumentView({ doc, business: b, party, payAmountPaise }: 
           <div>
             <h2 className={`${compact ? "text-base" : "text-lg"} font-bold`}>{b.name}</h2>
             {b.address && <p className={modern ? "opacity-90" : "text-muted"}>{b.address}</p>}
-            <p className={modern ? "opacity-90" : "text-muted"}>{STATES[b.stateCode]} ({b.stateCode}){b.phone && ` · ${b.phone}`}{b.email && ` · ${b.email}`}</p>
-            {b.gstin && <p>GSTIN: <span className="font-mono">{b.gstin}</span></p>}
+            <p className={modern ? "opacity-90" : "text-muted"}>{STATES[sellerState]} ({sellerState}){b.phone && ` · ${b.phone}`}{b.email && ` · ${b.email}`}</p>
+            {gstin && <p>GSTIN: <span className="font-mono">{gstin}</span></p>}
           </div>
         </div>
         <div className="text-right">
           <p className="text-xs font-semibold uppercase tracking-wide" style={modern ? undefined : { color: "var(--doc-brand)" }}>{title}</p>
           <p className="text-lg font-semibold">{doc.number}</p>
           <p>Date: {fmtDate(doc.date)}</p>
-          {doc.dueDate && <p>{isInvoice ? "Due" : "Valid until"}: {fmtDate(doc.dueDate)}</p>}
+          {doc.dueDate && dateLabel && <p>{dateLabel}: {fmtDate(doc.dueDate)}</p>}
         </div>
       </header>
 
       <section className="grid gap-4 border-b border-line py-4 sm:grid-cols-2">
         <div>
-          <p className="text-xs uppercase text-muted">{isInvoice ? "Bill to" : "Prepared for"}</p>
+          <p className="text-xs uppercase text-muted">{doc.kind === "PURCHASE_ORDER" ? "Supplier" : doc.kind === "INVOICE" || doc.kind === "DEBIT_NOTE" ? "Bill to" : doc.kind === "CREDIT_NOTE" ? "Credit to" : "Prepared for"}</p>
           <p className="font-semibold">{party.name}</p>
           {party.address && <p className="text-muted">{party.address}</p>}
           {party.gstin && <p>GSTIN: <span className="font-mono">{party.gstin}</span></p>}

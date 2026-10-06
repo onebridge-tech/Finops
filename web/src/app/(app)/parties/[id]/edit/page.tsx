@@ -24,7 +24,7 @@ export default async function EditParty({ params }: PageProps<"/parties/[id]/edi
           party={{
             id: party.id, name: party.name, type: party.type, phone: party.phone ?? "", email: party.email ?? "", gstin: party.gstin ?? "",
             stateCode: party.stateCode ?? "", address: party.address ?? "", creditDays: party.creditDays?.toString() ?? "", creditLimit: party.creditLimitPaise === null ? "" : toRupeeString(Number(party.creditLimitPaise)),
-            language: party.language, source: party.source ?? "", ownerId: party.ownerId ?? "", branchId: party.branchId ?? "",
+            language: party.language, source: party.source ?? "", ownerId: party.ownerId ?? "", branchId: party.branchId ?? "", priceListId: party.priceListId ?? "",
           }}
         />
       </Card>

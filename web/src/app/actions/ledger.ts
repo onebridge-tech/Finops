@@ -38,6 +38,7 @@ const PartyInput = z.object({
   opening: z.string().trim(),
   openingDirection: z.enum(["GAVE", "GOT"]),
   creditLimit: z.string().trim().refine((v) => v === "" || parseRupees(v) !== null, "Credit limit must be an amount like 50000"),
+  priceListId: z.string(),
 });
 
 const field = (f: FormData, k: string) => String(f.get(k) ?? "");
@@ -81,6 +82,7 @@ export async function createParty(_prev: FormState, form: FormData): Promise<For
         address: d.address || null,
         creditDays: d.creditDays ? Number(d.creditDays) : null,
         creditLimitPaise: d.creditLimit ? BigInt(parseRupees(d.creditLimit)!) : null,
+        priceListId: d.priceListId && (await tx.priceList.count({ where: { id: d.priceListId, businessId: business.id, archivedAt: null } })) ? d.priceListId : null,
         language: d.language,
         source: d.source || null,
         shareToken: newShareToken(),
@@ -123,6 +125,7 @@ export async function updateParty(_prev: FormState, form: FormData): Promise<For
     gstin: d.gstin || null, stateCode: d.gstin ? d.gstin.slice(0, 2) : d.stateCode || null, address: d.address || null,
     creditDays: d.creditDays ? Number(d.creditDays) : null, language: d.language, source: d.source || null,
     creditLimitPaise: d.creditLimit ? BigInt(parseRupees(d.creditLimit)!) : null,
+    priceListId: d.priceListId && (await db.priceList.count({ where: { id: d.priceListId, businessId: business.id, archivedAt: null } })) ? d.priceListId : null,
     // Reps can't reassign parties; branch-tied members can't move them out of their branch.
     ...(ctx.assignedOnly ? {} : { ownerId: await validOwner(business.id, field(form, "ownerId")) }),
     ...(ctx.membership.branchId ? {} : { branchId: await validBranch(business.id, field(form, "branchId")) }),

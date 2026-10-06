@@ -6,6 +6,7 @@ import { appUrl, whatsappLink } from "@/lib/share";
 import { renderMessage } from "@/lib/messaging/templates";
 import { blockedReason } from "@/lib/messaging/send";
 import { convertQuote, setQuoteStatus } from "@/app/actions/billing";
+import { quoteToOrder } from "@/app/actions/orders";
 import { DocumentView } from "@/components/document-view";
 import { SendDocumentForm } from "@/components/document-actions";
 import { PrintButton } from "@/components/print-button";
@@ -50,6 +51,12 @@ export default async function QuotePage({ params }: PageProps<"/quotes/[id]">) {
                 <form action={convertQuote}>
                   <input type="hidden" name="quoteId" value={quote.id} />
                   <button className={buttonClass("primary")}>Convert to invoice</button>
+                </form>
+              )}
+              {write && open && (
+                <form action={quoteToOrder}>
+                  <input type="hidden" name="quoteId" value={quote.id} />
+                  <button className={buttonClass("secondary")}>Create order</button>
                 </form>
               )}
             </div>

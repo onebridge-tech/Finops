@@ -9,6 +9,8 @@ import { Card, LinkButton, PageHeader } from "@/components/ui";
 import { MessagingSettingsForm, RunRemindersButton } from "./messaging-form";
 import { BrandingForm } from "./branding-form";
 import { ControlsForm } from "@/components/controls-form";
+import { CatalogueForm } from "@/components/catalogue-form";
+import { appUrl } from "@/lib/share";
 import { fileUrl } from "@/lib/files";
 import { inviteUrl } from "@/lib/referral";
 import { db } from "@/lib/db";
@@ -23,9 +25,10 @@ export default async function Settings() {
     : null;
   const testChannels = (["WHATSAPP", "SMS", "EMAIL"] as const).filter(isTestMode);
   const owner = can(role, "settings:write");
-  const [invite, referred] = await Promise.all([
+  const [invite, referred, publicItems] = await Promise.all([
     inviteUrl(business.id),
     db.business.count({ where: { referredById: business.id } }),
+    db.item.count({ where: { businessId: business.id, isPublic: true, archivedAt: null } }),
   ]);
 
   return (
@@ -75,6 +78,12 @@ export default async function Settings() {
         <Card className="lg:col-span-2">
           <h2 className="mb-4 font-semibold">Credit control & owner digest</h2>
           {owner ? <ControlsForm v={{ creditControl: business.creditControl, creditBlockOverdue: business.creditBlockOverdue, digestFrequency: business.digestFrequency, digestChannel: business.digestChannel }} /> : <p className="text-sm text-muted">Only the owner or an admin can change these.</p>}
+        </Card>
+        <div className="hidden lg:block" />
+
+        <Card className="lg:col-span-2">
+          <h2 className="mb-4 font-semibold">Shareable catalogue</h2>
+          {owner ? <CatalogueForm enabled={business.catalogEnabled} url={business.catalogToken ? appUrl("/c/" + business.catalogToken) : null} count={publicItems} /> : <p className="text-sm text-muted">Only the owner or an admin can change this.</p>}
         </Card>
         <div className="hidden lg:block" />
 
