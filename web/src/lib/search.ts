@@ -24,30 +24,30 @@ export async function search(ctx: Ctx, q: string, only?: SearchType, take = 10) 
 
   const [parties, entries, invoices, quotes, items, receipts] = await Promise.all([
     want("parties") ? db.party.findMany({
-      where: { AND: [party, { OR: [{ name: { contains: text } }, ...(phoneDigits ? [{ phone: { contains: phoneDigits } }] : []),{ gstin: { contains: upper } }, { email: { contains: text } }] }] },
+      where: { AND: [party, { OR: [{ name: { contains: text, mode: "insensitive" } }, ...(phoneDigits ? [{ phone: { contains: phoneDigits } }] : []),{ gstin: { contains: upper, mode: "insensitive" } }, { email: { contains: text, mode: "insensitive" } }] }] },
       take, orderBy: { name: "asc" },
     }) : [],
     want("entries") ? db.ledgerEntry.findMany({
       where: {
         businessId: ctx.business.id, party,
-        OR: [{ note: { contains: text } }, ...(amount ? [{ amountPaise: BigInt(amount) }] : [])],
+        OR: [{ note: { contains: text, mode: "insensitive" } }, ...(amount ? [{ amountPaise: BigInt(amount) }] : [])],
       },
       take, orderBy: { date: "desc" }, include: { party: { select: { name: true } } },
     }) : [],
     want("invoices") ? db.invoice.findMany({
-      where: { ...docs, OR: [{ number: { contains: upper } }, { party: { name: { contains: text } } }, ...(amount ? [{ totalPaise: BigInt(amount) }] : [])] },
+      where: { ...docs, OR: [{ number: { contains: upper, mode: "insensitive" } }, { party: { name: { contains: text, mode: "insensitive" } } }, ...(amount ? [{ totalPaise: BigInt(amount) }] : [])] },
       take, orderBy: { date: "desc" }, include: { party: { select: { name: true } } },
     }) : [],
     want("quotes") ? db.quote.findMany({
-      where: { ...docs, OR: [{ number: { contains: upper } }, { party: { name: { contains: text } } }, ...(amount ? [{ totalPaise: BigInt(amount) }] : [])] },
+      where: { ...docs, OR: [{ number: { contains: upper, mode: "insensitive" } }, { party: { name: { contains: text, mode: "insensitive" } } }, ...(amount ? [{ totalPaise: BigInt(amount) }] : [])] },
       take, orderBy: { date: "desc" }, include: { party: { select: { name: true } } },
     }) : [],
     want("items") ? db.item.findMany({
-      where: { businessId: ctx.business.id, OR: [{ name: { contains: text } }, { sku: { contains: text } }, { hsn: { contains: text } }, { variantName: { contains: text } }] },
+      where: { businessId: ctx.business.id, OR: [{ name: { contains: text, mode: "insensitive" } }, { sku: { contains: text, mode: "insensitive" } }, { hsn: { contains: text, mode: "insensitive" } }, { variantName: { contains: text, mode: "insensitive" } }] },
       take, orderBy: { name: "asc" },
     }) : [],
     want("receipts") ? db.receipt.findMany({
-      where: { businessId: ctx.business.id, party, OR: [{ number: { contains: upper } }, ...(amount ? [{ amountPaise: BigInt(amount) }] : [])] },
+      where: { businessId: ctx.business.id, party, OR: [{ number: { contains: upper, mode: "insensitive" } }, ...(amount ? [{ amountPaise: BigInt(amount) }] : [])] },
       take, orderBy: { date: "desc" }, include: { party: { select: { name: true } } },
     }) : [],
   ]);

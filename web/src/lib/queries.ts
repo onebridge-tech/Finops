@@ -35,7 +35,7 @@ export async function partiesWithBalance(ctx: Ctx, opts: { q?: string; where?: P
           partyWhere(ctx),
           opts.includeArchived ? {} : { archivedAt: null },
           opts.where ?? {},
-          q ? { OR: [{ name: { contains: q } }, { phone: { contains: q } }, { gstin: { contains: q.toUpperCase() } }] } : {},
+          q ? { OR: [{ name: { contains: q, mode: "insensitive" } }, { phone: { contains: q, mode: "insensitive" } }, { gstin: { contains: q.toUpperCase(), mode: "insensitive" } }] } : {},
         ],
       },
       orderBy: { name: "asc" },
