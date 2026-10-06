@@ -18,5 +18,6 @@ export const MENU: MenuItem[] = [
   { href: "/reports", icon: "📊", label: "Reports", about: "Ageing, daybook, top lists, sales and expense analysis", group: "Money", permission: "reports:view" },
   { href: "/field", icon: "🚶", label: "Field sales", about: "Visits, beats, targets, attendance", group: "Field" },
   { href: "/data", icon: "⬇️", label: "Import & export", about: "Excel, CSV, backups", group: "Business", permission: "reports:view" },
+  { href: "/settings/tally", icon: "🔗", label: "Tally connector", about: "Sync vouchers, ledgers and items with Tally", group: "Business", permission: "settings:write" },
   { href: "/settings", icon: "⚙️", label: "Settings", about: "Business, team, branches, messaging", group: "Business" },
 ];
