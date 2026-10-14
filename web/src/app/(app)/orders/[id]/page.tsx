@@ -51,7 +51,7 @@ export default async function OrderPage({ params }: PageProps<"/orders/[id]">) {
 
         {open && (
           <Card className="mb-4 space-y-3">
-            <h2 className="font-semibold">{sales ? "Deliver" : "Receive goods"}</h2>
+            <h2 className="text-base font-semibold tracking-tight">{sales ? "Deliver" : "Receive goods"}</h2>
             <p className="text-xs text-muted">
               {sales ? "Enter what you are delivering now. An invoice is created for those quantities; the rest stays pending." : "Enter what arrived. Stock goes up and the supplier’s account is credited for that value."}
             </p>

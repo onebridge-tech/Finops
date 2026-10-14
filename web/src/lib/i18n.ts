@@ -19,7 +19,7 @@ const en = {
   "bal.toCollect": "owes you", "bal.toPay": "you owe", "bal.settled": "All clear",
   "parties.title": "Customers & suppliers", "parties.search": "Search by name or phone", "parties.import": "Bring from Excel",
   "parties.all": "All", "parties.customers": "Customers", "parties.suppliers": "Suppliers", "parties.leads": "Possible customers", "parties.archived": "Hidden",
-  "parties.none": "Nobody added yet", "parties.noMatch": "No one with that name", "parties.total": "{n} people",
+  "parties.none": "Nobody added yet", "parties.noMatch": "No one with that name", "parties.total": "{n} in total",
   "type.CUSTOMER": "Customer", "type.SUPPLIER": "Supplier", "type.BOTH": "Customer & supplier", "type.LEAD": "Possible customer",
   "party.balance": "Total pending", "party.overdue": "Late amount", "party.entries": "Account", "party.noEntries": "Nothing written yet.",
   "party.edit": "Edit details", "party.copyStatement": "Copy link to share account", "party.remind": "Remind on WhatsApp",

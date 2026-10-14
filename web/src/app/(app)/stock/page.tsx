@@ -51,14 +51,14 @@ export default async function Stock({ searchParams }: PageProps<"/stock">) {
 
       {canAdjust && levels.length > 0 && (
         <Card className="mt-6 space-y-3">
-          <h2 className="font-semibold">Adjust stock</h2>
+          <h2 className="text-base font-semibold tracking-tight">Adjust stock</h2>
           <AdjustStockForm items={levels.map((r) => ({ id: r.item.id, name: label(r.item) }))} selected={selected?.item.id ?? ""} />
         </Card>
       )}
 
       {selected && (
         <>
-          <h2 className="mb-2 mt-6 font-semibold">History · {label(selected.item)}</h2>
+          <h2 className="mb-2 mt-6 text-base font-semibold tracking-tight">History · {label(selected.item)}</h2>
           <Card className="divide-y divide-line p-0 text-sm">
             {history.length === 0 && <p className="px-4 py-3 text-muted">No movements.</p>}
             {history.map((m) => (

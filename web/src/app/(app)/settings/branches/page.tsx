@@ -16,7 +16,7 @@ export default async function Branches() {
   return (
     <>
       <PageHeader title="Shop branches" sub="Shops, godowns or offices. Each bill and entry shows which branch made it. A staff member can be limited to one branch." />
-      {edit && <Card className="mb-6"><h2 className="mb-3 font-semibold">Add a branch</h2><BranchForm /></Card>}
+      {edit && <Card className="mb-6"><h2 className="mb-3 text-base font-semibold tracking-tight">Add a branch</h2><BranchForm /></Card>}
       {branches.length === 0 ? (
         <Card className="text-sm text-muted">No branches yet. With one location you don’t need any.</Card>
       ) : (

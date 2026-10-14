@@ -29,7 +29,7 @@ export default async function Shared() {
     <>
       <PageHeader title="Match accounts" sub={`${linked} of your parties also use the app. Entries they make appear here for you to accept.`} />
 
-      <h2 className="mb-2 font-semibold">Waiting for you ({pending.length})</h2>
+      <h2 className="mb-2 text-base font-semibold tracking-tight">Waiting for you ({pending.length})</h2>
       {pending.length === 0 ? <Card className="text-sm text-muted">Nothing waiting. Unanswered entries are accepted automatically after {AUTO_ACCEPT_DAYS} days.</Card> : (
         <Card className="divide-y divide-line p-0 text-sm">
           {pending.map((s) => (
@@ -48,7 +48,7 @@ export default async function Shared() {
         </Card>
       )}
 
-      <h2 className="mb-2 mt-6 font-semibold">Books that don’t match ({off.length})</h2>
+      <h2 className="mb-2 mt-6 text-base font-semibold tracking-tight">Books that don’t match ({off.length})</h2>
       {off.length === 0 ? <Card className="text-sm text-muted">Every linked party’s balance matches on both sides.</Card> : (
         <Card className="divide-y divide-line p-0 text-sm">
           {off.map((m) => (

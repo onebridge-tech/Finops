@@ -177,7 +177,7 @@ export function FieldApp({ data, businessId, userId }: { data: FieldDay; busines
       {!openVisit && (
         <>
           <section>
-            <h2 className="mb-2 font-semibold">Today’s route</h2>
+            <h2 className="mb-2 text-base font-semibold tracking-tight">Today’s route</h2>
             {plan.length === 0 ? <Card className="text-sm text-muted">No route is planned for today. You can still check in at any customer below.</Card> : (
               <Card className="divide-y divide-line p-0 text-sm">
                 {plan.map((p, i) => {
@@ -197,7 +197,7 @@ export function FieldApp({ data, businessId, userId }: { data: FieldDay; busines
             )}
           </section>
           <section>
-            <h2 className="mb-2 font-semibold">Any customer</h2>
+            <h2 className="mb-2 text-base font-semibold tracking-tight">Any customer</h2>
             <Input placeholder="Search by name or phone" value={search} onChange={(e) => setSearch(e.target.value)} className="mb-2" />
             <Card className="divide-y divide-line p-0 text-sm">
               {filtered.map((p) => (
@@ -214,7 +214,7 @@ export function FieldApp({ data, businessId, userId }: { data: FieldDay; busines
 
       {data.todayVisits.length > 0 && (
         <section>
-          <h2 className="mb-2 font-semibold">Today’s visits</h2>
+          <h2 className="mb-2 text-base font-semibold tracking-tight">Today’s visits</h2>
           <Card className="divide-y divide-line p-0 text-sm">
             {data.todayVisits.map((v) => (
               <div key={v.id} className="flex justify-between gap-3 px-4 py-2">

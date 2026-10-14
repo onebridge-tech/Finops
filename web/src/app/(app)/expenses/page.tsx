@@ -6,7 +6,7 @@ import { fileUrl } from "@/lib/files";
 import { PAYMENT_MODE_LABEL, todayIST, type PaymentMode } from "@/lib/format";
 import { rangeDates, resolvePeriod } from "@/lib/period";
 import { EXPENSE_CATEGORIES } from "@/lib/expense-categories";
-import { Card, Field, Input, PageHeader, Select, fmtDate } from "@/components/ui";
+import { AddPanel, Card, Field, Input, PageHeader, Select, fmtDate } from "@/components/ui";
 import { ExpenseForm, VoidExpense } from "./forms";
 
 export const metadata = { title: "Shop expenses" };
@@ -36,7 +36,7 @@ export default async function Expenses({ searchParams }: PageProps<"/expenses">)
   return (
     <>
       <PageHeader title="Shop expenses" sub={`${period.from} to ${period.to} · ${formatINR(total)}`} action={can(ctx.role, "reports:view") ? <Link href="/reports/expenses" className="text-sm text-brand underline">Where the money went</Link> : undefined} />
-      <Card className="mb-4"><ExpenseForm today={today} categories={categories} vendors={vendors} branches={branches && branches.length ? branches : null} /></Card>
+      <AddPanel title="Write a shop expense" open><ExpenseForm today={today} categories={categories} vendors={vendors} branches={branches && branches.length ? branches : null} /></AddPanel>
 
       <form className="mb-4 flex flex-wrap items-end gap-3 text-sm">
         <Field label="Period"><Select name="period" defaultValue={period.preset}><option value="today">Today</option><option value="7d">Last 7 days</option><option value="month">This month</option><option value="lastmonth">Last month</option><option value="quarter">This quarter</option><option value="fy">This financial year</option><option value="custom">Custom</option></Select></Field>

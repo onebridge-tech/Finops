@@ -105,7 +105,7 @@ export default async function PartyPage({ params }: PageProps<"/parties/[id]">) 
         </Card>
       )}
 
-      <div className={"grid gap-3 " + (party.creditLimitPaise !== null ? "sm:grid-cols-3" : "sm:grid-cols-2")}>
+      <div className={"grid grid-cols-2 gap-3 " + (party.creditLimitPaise !== null ? "sm:grid-cols-3" : "")}>
         <Card>
           <p className="text-[13px] font-medium text-muted">{t("party.balance")}</p>
           <Balance paise={balance} className="mt-2 block text-2xl" t={t} accountant={accountant} />
@@ -115,7 +115,7 @@ export default async function PartyPage({ params }: PageProps<"/parties/[id]">) 
           <p className={`mt-2 text-2xl font-semibold tabular-nums ${overdue > 0 ? "text-gave" : "text-muted"}`}>{formatINR(overdue)}</p>
         </Card>
         {party.creditLimitPaise !== null && (
-          <Card>
+          <Card className="col-span-2 sm:col-span-1">
             <p className="text-[13px] font-medium text-muted">Credit limit</p>
             <p className="mt-2 text-2xl font-semibold tabular-nums">{formatINR(party.creditLimitPaise)}</p>
             <p className={"text-xs " + (balance > Number(party.creditLimitPaise) ? "font-medium text-gave" : "text-muted")}>

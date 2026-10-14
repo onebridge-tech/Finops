@@ -45,14 +45,14 @@ export default async function DataPage({ searchParams }: PageProps<"/data">) {
           <div className="space-y-6">
             {can(role, "settings:write") && (
               <Card className="space-y-2 text-sm">
-                <h2 className="font-semibold">Full export</h2>
+                <h2 className="text-base font-semibold tracking-tight">Full export</h2>
                 <p className="text-muted">All your data and all your uploaded files in one ZIP file. Yours to keep.</p>
                 <a href="/export/all" download className="inline-block rounded-lg bg-brand px-3.5 py-2 font-medium text-brand-ink">Download full export (.zip)</a>
               </Card>
             )}
             {role === "OWNER" && (
               <Card className="space-y-3 text-sm">
-                <h2 className="font-semibold">Automatic backups</h2>
+                <h2 className="text-base font-semibold tracking-tight">Automatic backups</h2>
                 <p className="text-muted">Uploaded photos and files are copied every day. Your database is backed up by your hosting provider; the full download above is a copy you can keep yourself.</p>
                 <BackupButton />
                 {backups.length > 0 && (

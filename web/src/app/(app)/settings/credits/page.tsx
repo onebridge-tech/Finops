@@ -32,11 +32,11 @@ export default async function Credits() {
       <PageHeader title="Message credits" sub={`${business.creditBalance} credits available`} />
       <div className="grid gap-6 lg:grid-cols-3">
         <Card className="space-y-3 lg:col-span-1">
-          <h2 className="font-semibold">Buy credits</h2>
+          <h2 className="text-base font-semibold tracking-tight">Buy credits</h2>
           {can(role, "settings:write") ? <BuyCredits packs={CREDIT_PACKS.map((p) => ({ ...p }))} /> : <p className="text-sm text-muted">Ask the owner to buy credits.</p>}
         </Card>
         <Card className="lg:col-span-2">
-          <h2 className="mb-3 font-semibold">Usage in the last 30 days</h2>
+          <h2 className="mb-3 text-base font-semibold tracking-tight">Usage in the last 30 days</h2>
           {usage.length === 0 ? (
             <p className="text-sm text-muted">No paid messages yet.</p>
           ) : (
@@ -59,7 +59,7 @@ export default async function Credits() {
         </Card>
       </div>
 
-      <h2 className="mb-2 mt-6 font-semibold">History</h2>
+      <h2 className="mb-2 mt-6 text-base font-semibold tracking-tight">History</h2>
       <Card className="divide-y divide-line p-0 text-sm">
         {txns.map((t) => (
           <div key={t.id} className="flex justify-between gap-3 px-4 py-2">

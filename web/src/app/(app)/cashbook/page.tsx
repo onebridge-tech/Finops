@@ -47,7 +47,7 @@ export default async function Cashbook({ searchParams }: PageProps<"/cashbook">)
         <Card><p className="text-sm text-muted">Cash at the end</p><p className="mt-1 text-2xl font-semibold tabular-nums">{formatINR(book.closing)}</p></Card>
       </div>
 
-      <h2 className="mb-2 mt-6 font-semibold">Day by day</h2>
+      <h2 className="mb-2 mt-6 text-base font-semibold tracking-tight">Day by day</h2>
       {book.days.length === 0 ? <Card className="text-sm text-muted">No cash moved in this period. Cash receipts, cash expenses and adjustments appear here by themselves.</Card> : (
         <Card className="overflow-x-auto p-0">
           <table className="w-full min-w-[600px] text-sm">
@@ -78,12 +78,12 @@ export default async function Cashbook({ searchParams }: PageProps<"/cashbook">)
 
       {manage && (
         <div className="mt-6 grid gap-6 lg:grid-cols-2">
-          <Card className="space-y-3"><h2 className="font-semibold">Close today</h2><p className="text-xs text-muted">Count the cash in the drawer and type it here. If it doesn’t match your records, we note the difference.</p><CloseDayForm today={today} branchId={branchId ?? ""} /></Card>
-          <Card className="space-y-3"><h2 className="font-semibold">Other cash movements</h2><AdjustmentForm today={today} /></Card>
+          <Card className="space-y-3"><h2 className="text-base font-semibold tracking-tight">Close today</h2><p className="text-xs text-muted">Count the cash in the drawer and type it here. If it doesn’t match your records, we note the difference.</p><CloseDayForm today={today} branchId={branchId ?? ""} /></Card>
+          <Card className="space-y-3"><h2 className="text-base font-semibold tracking-tight">Other cash movements</h2><AdjustmentForm today={today} /></Card>
         </div>
       )}
 
-      <h2 className="mb-2 mt-6 font-semibold">All cash movements</h2>
+      <h2 className="mb-2 mt-6 text-base font-semibold tracking-tight">All cash movements</h2>
       <Card className="divide-y divide-line p-0 text-sm">
         {book.rows.length === 0 && <p className="px-4 py-3 text-muted">None.</p>}
         {[...book.rows].reverse().map((m, i) => (

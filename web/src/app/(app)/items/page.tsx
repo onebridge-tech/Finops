@@ -4,7 +4,7 @@ import { db } from "@/lib/db";
 import { formatINR } from "@/lib/money";
 import { fileUrl } from "@/lib/files";
 import { archiveItem } from "@/app/actions/billing";
-import { Card, EmptyState, PageHeader } from "@/components/ui";
+import { AddPanel, Card, EmptyState, PageHeader } from "@/components/ui";
 import { ItemForm } from "./item-form";
 
 export const metadata = { title: "Items" };
@@ -28,11 +28,11 @@ export default async function Items({ searchParams }: PageProps<"/items">) {
         sub="What you sell. Used on your bills and price quotes."
         action={<Link href={archived ? "/items" : "/items?archived=1"} className="text-sm text-muted underline">{archived ? "Back to active items" : "Archived items"}</Link>}
       />
-      {write && !archived && <Card className="mb-4"><ItemForm bases={bases} /></Card>}
+      {write && !archived && <AddPanel title="Add an item"><ItemForm bases={bases} /></AddPanel>}
       {ordered.length === 0 ? (
         <EmptyState title={archived ? "No archived items" : "No items yet"} />
       ) : (
-        <Card className="overflow-x-auto p-0">
+        <Card className="overflow-x-auto p-0 sm:p-0">
           <table className="w-full min-w-[720px] text-sm">
             <thead className="border-b border-line bg-bg/50 text-left text-xs font-medium text-muted">
               <tr>

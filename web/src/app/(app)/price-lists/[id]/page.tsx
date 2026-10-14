@@ -28,8 +28,8 @@ export default async function PriceListPage({ params }: PageProps<"/price-lists/
       <PageHeader title={list.name} sub={<><Link href="/price-lists" className="hover:underline">All lists</Link> · used by {parties.length === 0 ? "no parties yet" : parties.map((p) => p.name).join(", ")}</>} />
       {write && (
         <div className="mb-6 grid gap-4 lg:grid-cols-2">
-          <Card className="space-y-3"><h2 className="font-semibold">Add or change a rate</h2><RateForm listId={list.id} items={items.map((i) => ({ id: i.id, name: name.get(i.id)!, price: formatINR(i.pricePaise) }))} /></Card>
-          <Card className="space-y-3"><h2 className="font-semibold">Fill the whole list</h2><FillForm listId={list.id} /></Card>
+          <Card className="space-y-3"><h2 className="text-base font-semibold tracking-tight">Add or change a rate</h2><RateForm listId={list.id} items={items.map((i) => ({ id: i.id, name: name.get(i.id)!, price: formatINR(i.pricePaise) }))} /></Card>
+          <Card className="space-y-3"><h2 className="text-base font-semibold tracking-tight">Fill the whole list</h2><FillForm listId={list.id} /></Card>
         </div>
       )}
       {rows.length === 0 ? <Card className="text-sm text-muted">No rates yet. Items not on this list use their standard price.</Card> : (

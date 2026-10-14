@@ -27,12 +27,12 @@ export default async function Security() {
       <PageHeader title="You & your security" sub="Your name, language, how screens look, app lock and devices." />
       <div className="grid gap-6 lg:grid-cols-2">
         <Card className="space-y-3">
-          <h2 className="font-semibold">Your name</h2>
+          <h2 className="text-base font-semibold tracking-tight">Your name</h2>
           <NameForm name={user.name ?? ""} />
           <div className="border-t border-line pt-3"><PreferencesForm lang={user.uiLanguage} mode={user.uiMode} /></div>
         </Card>
         <Card className="space-y-3">
-          <h2 className="font-semibold">App lock</h2>
+          <h2 className="text-base font-semibold tracking-tight">App lock</h2>
           <p className="text-sm text-muted">
             {user.pinHash
               ? `On. The app locks after ${user.lockAfterMin} minute${user.lockAfterMin === 1 ? "" : "s"} without use and asks for your PIN.`
@@ -42,7 +42,7 @@ export default async function Security() {
         </Card>
       </div>
 
-      <h2 className="mb-2 mt-6 font-semibold">Signed-in devices</h2>
+      <h2 className="mb-2 mt-6 text-base font-semibold tracking-tight">Signed-in devices</h2>
       <Card className="divide-y divide-line p-0 text-sm">
         {sessions.map((s) => (
           <div key={s.id} className="flex flex-wrap items-center justify-between gap-2 px-4 py-3">

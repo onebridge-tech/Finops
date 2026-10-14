@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { can, requireBusiness } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { Card, EmptyState, PageHeader } from "@/components/ui";
+import { AddPanel, Card, EmptyState, PageHeader } from "@/components/ui";
 import { NewListForm } from "./forms";
 
 export const metadata = { title: "Special prices" };
@@ -16,7 +16,7 @@ export default async function PriceLists() {
   return (
     <>
       <PageHeader title="Special prices" sub="A different rate for dealers or regular customers, even by quantity. The right rate fills in by itself on price quotes, orders and bills." />
-      {can(ctx.role, "item:write") && <Card className="mb-4"><NewListForm /></Card>}
+      {can(ctx.role, "item:write") && <AddPanel title="New special price list"><NewListForm /></AddPanel>}
       {lists.length === 0 ? <EmptyState title="No price lists yet">Create one, add rates, then pick it on a party’s page (Edit).</EmptyState> : (
         <Card className="divide-y divide-line p-0 text-sm">
           {lists.map((l) => (

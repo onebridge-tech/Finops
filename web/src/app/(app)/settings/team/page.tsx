@@ -21,7 +21,7 @@ export default async function Team() {
     <>
       <PageHeader title="Your staff" sub="Who can use your shop’s account, what they can do and what they can see." />
       <Card className="mb-6">
-        <h2 className="mb-3 font-semibold">Add a staff member</h2>
+        <h2 className="mb-3 text-base font-semibold tracking-tight">Add a staff member</h2>
         <InviteForm branches={branchOpts} canAddOwner={ctx.role === "OWNER"} />
       </Card>
       <Card className="divide-y divide-line p-0">

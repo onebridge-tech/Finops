@@ -31,7 +31,7 @@ export function CatalogueCart({ token, products, business }: { token: string; pr
       <input type="hidden" name="lines" value={JSON.stringify(picks.map(({ p, q }) => ({ itemId: p.id, qty: q })))} />
       {[...groups.entries()].map(([cat, items]) => (
         <section key={cat}>
-          <h2 className="mb-2 font-semibold">{cat}</h2>
+          <h2 className="mb-2 text-base font-semibold tracking-tight">{cat}</h2>
           <div className="divide-y divide-line rounded-xl border border-line bg-card">
             {items.map((p) => (
               <div key={p.id} className="flex items-center gap-3 p-3">
@@ -52,7 +52,7 @@ export function CatalogueCart({ token, products, business }: { token: string; pr
       ))}
 
       <section className="no-print space-y-3 rounded-xl border border-line bg-card p-4">
-        <h2 className="font-semibold">Send an order request</h2>
+        <h2 className="text-base font-semibold tracking-tight">Send an order request</h2>
         {picks.length > 0 ? <p className="text-sm text-muted">{picks.length} item{picks.length === 1 ? "" : "s"} · about {formatINR(total)} including GST</p> : <p className="text-sm text-muted">Enter quantities above.</p>}
         <div className="grid gap-3 sm:grid-cols-2">
           <Input name="name" required placeholder="Your name / shop name" autoComplete="name" />

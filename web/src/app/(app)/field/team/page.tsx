@@ -28,7 +28,7 @@ export default async function Team() {
     <>
       <PageHeader title="Staff & targets" sub={`Live view for ${fmtDate(new Date())}`} action={<Link href="/field/beats" className="text-sm text-brand underline">Daily routes</Link>} />
       <section className="mb-6">
-        <h2 className="mb-2 font-semibold">Attendance today</h2>
+        <h2 className="mb-2 text-base font-semibold tracking-tight">Attendance today</h2>
         <Card className="divide-y divide-line p-0 text-sm">
           {att.length === 0 && <p className="px-4 py-3 text-muted">Nobody has started their day yet.</p>}
           {att.map((a) => <div key={a.rep} className="flex justify-between px-4 py-2"><span>{a.rep}</span><span className="text-muted">{time(a.at)} · {a.source === "DAYSTART" ? "started day" : "first visit"}{a.hasPhoto && " · selfie"}</span></div>)}
@@ -36,7 +36,7 @@ export default async function Team() {
         <p className="mt-1 text-xs"><Link className="text-brand underline" href="/reports/attendance">Attendance report and payroll export</Link> · <Link className="text-brand underline" href="/reports/missed">Missed visits</Link></p>
       </section>
       <section className="mb-6">
-        <h2 className="mb-2 font-semibold">Visits today</h2>
+        <h2 className="mb-2 text-base font-semibold tracking-tight">Visits today</h2>
         <Card className="divide-y divide-line p-0 text-sm">
           {live.length === 0 && <p className="px-4 py-3 text-muted">No visits yet today.</p>}
           {live.map((v) => (
@@ -48,7 +48,7 @@ export default async function Team() {
         </Card>
       </section>
       <section className="mb-6">
-        <h2 className="mb-2 font-semibold">Targets — {month}</h2>
+        <h2 className="mb-2 text-base font-semibold tracking-tight">Targets — {month}</h2>
         <Card className="mb-3 overflow-x-auto p-0 text-sm">
           <table className="w-full">
             <thead className="text-left text-xs text-muted"><tr><th className="px-4 py-2">Salesman</th><th>Measure</th><th className="text-right">So far</th><th className="text-right">Should be done by today</th><th className="px-4 text-right">Month target</th></tr></thead>

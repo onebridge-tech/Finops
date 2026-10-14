@@ -25,6 +25,20 @@ export function PageHeader({ title, action, sub, leading }: { title: string; sub
   );
 }
 
+/** A form that stays folded until it is needed, so the list below it is the first thing you see. */
+export function AddPanel({ title, children, open = false }: { title: string; children: ReactNode; open?: boolean }) {
+  return (
+    <details open={open} className="group mb-5 rounded-xl border border-line bg-card shadow-[var(--shadow)]">
+      <summary className="flex cursor-pointer list-none items-center gap-2.5 px-4 py-3 text-sm font-semibold [&::-webkit-details-marker]:hidden">
+        <span className="flex size-6 items-center justify-center rounded-md bg-brand-soft text-brand"><Icon name="plus" size={14} /></span>
+        {title}
+        <Icon name="chevron" size={16} className="ml-auto text-muted transition group-open:rotate-90" />
+      </summary>
+      <div className="border-t border-line p-4 sm:p-5">{children}</div>
+    </details>
+  );
+}
+
 export function SectionTitle({ children, action }: { children: ReactNode; action?: ReactNode }) {
   return (
     <div className="mb-3 mt-8 flex items-center justify-between gap-3 first:mt-0">
