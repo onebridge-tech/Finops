@@ -6,6 +6,8 @@ import { DocumentView } from "@/components/document-view";
 import { PrintButton } from "@/components/print-button";
 import { PageHeader } from "@/components/ui";
 
+export const metadata = { title: "Return note" };
+
 export default async function NotePage({ params }: PageProps<"/notes/[id]">) {
   const { id } = await params;
   const ctx = await requireBusiness();

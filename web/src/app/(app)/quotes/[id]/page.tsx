@@ -14,6 +14,8 @@ import { Card, PageHeader, buttonClass, fmtDate } from "@/components/ui";
 import { CopyLink } from "../../parties/[id]/reminder";
 import { quoteStatus } from "../status";
 
+export const metadata = { title: "Price quote" };
+
 export default async function QuotePage({ params }: PageProps<"/quotes/[id]">) {
   const { id } = await params;
   const ctx = await requireBusiness();

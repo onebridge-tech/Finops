@@ -7,7 +7,9 @@ import { Icon, type IconName } from "./icon";
 // Shared building blocks. Every screen is made from these, so the look stays the same everywhere.
 
 export function Card({ className = "", ...p }: ComponentProps<"div">) {
-  return <div className={`rounded-xl border border-line bg-card p-4 shadow-[var(--shadow)] sm:p-5 ${className}`} {...p} />;
+  // Lists that run edge to edge ask for p-0; then the default padding must not apply at all.
+  const flush = /(^|\s)p-0(\s|$)/.test(className);
+  return <div className={`rounded-xl border border-line bg-card shadow-[var(--shadow)] ${flush ? "overflow-hidden" : "p-4 sm:p-5"} ${className}`} {...p} />;
 }
 
 export function PageHeader({ title, action, sub, leading }: { title: string; sub?: ReactNode; action?: ReactNode; leading?: ReactNode }) {
@@ -144,14 +146,14 @@ export function StatCard({ label, value, hint, tone, icon, href }: { label: stri
  * Positive = they owe you ("to collect"); negative = you owe them. In the
  * accountant view the same balance reads as Dr / Cr.
  */
-export function Balance({ paise, className = "", t, accountant = false }: { paise: number; className?: string; t?: T; accountant?: boolean }) {
+export function Balance({ paise, className = "", t, accountant = false, stacked = false }: { paise: number; className?: string; t?: T; accountant?: boolean; stacked?: boolean }) {
   const tr = t ?? translator("en");
   if (paise === 0) return <span className={`text-muted ${className}`}>{tr("bal.settled")}</span>;
   const collect = paise > 0;
   return (
     <span className={`${collect ? "text-gave" : "text-got"} font-semibold tabular-nums ${className}`}>
       {formatINR(Math.abs(paise))}
-      <span className="ml-1.5 text-xs font-normal text-muted">{accountant ? (collect ? "Dr" : "Cr") : tr(collect ? "bal.toCollect" : "bal.toPay")}</span>
+      <span className={stacked ? "block text-xs font-normal text-muted" : "ml-1.5 text-xs font-normal text-muted"}>{accountant ? (collect ? "Dr" : "Cr") : tr(collect ? "bal.toCollect" : "bal.toPay")}</span>
     </span>
   );
 }

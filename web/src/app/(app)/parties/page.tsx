@@ -46,9 +46,9 @@ export default async function Parties({ searchParams }: PageProps<"/parties">) {
       />
 
       <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <nav className="flex flex-wrap gap-1 rounded-lg bg-line/50 p-1" aria-label="Filter">
+        <nav className="flex max-w-full gap-1 overflow-x-auto rounded-lg bg-line/50 p-1" aria-label="Filter">
           {TABS.map(([x, key]) => (
-            <Link key={x} href={href(x)} className={`rounded-md px-3 py-1.5 text-sm font-medium transition ${tab === x ? "bg-card text-ink shadow-sm" : "text-muted hover:text-ink"}`}>{t(key)}</Link>
+            <Link key={x} href={href(x)} className={`whitespace-nowrap rounded-md px-3 py-1.5 text-sm font-medium transition ${tab === x ? "bg-card text-ink shadow-sm" : "text-muted hover:text-ink"}`}>{t(key)}</Link>
           ))}
         </nav>
         <form className="relative w-full sm:w-72">
@@ -80,7 +80,7 @@ export default async function Parties({ searchParams }: PageProps<"/parties">) {
                   {accountant && p.gstin && <span>{p.gstin}</span>}
                 </span>
               </span>
-              {p.type !== "LEAD" && <Balance paise={p.balance} className="shrink-0 text-right" t={t} accountant={accountant} />}
+              {p.type !== "LEAD" && <Balance paise={p.balance} className="shrink-0 text-right" t={t} accountant={accountant} stacked />}
             </Link>
           ))}
         </Card>

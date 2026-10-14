@@ -10,6 +10,8 @@ import { PrintButton } from "@/components/print-button";
 import { Card, PageHeader, buttonClass, fmtDate } from "@/components/ui";
 import { FulfilForm } from "./fulfil-form";
 
+export const metadata = { title: "Order" };
+
 export default async function OrderPage({ params }: PageProps<"/orders/[id]">) {
   const { id } = await params;
   const ctx = await requireBusiness();

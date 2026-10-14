@@ -13,6 +13,8 @@ import { Card, PageHeader, buttonClass, fmtDate } from "@/components/ui";
 import { CopyLink } from "../../parties/[id]/reminder";
 import { invoicePayments } from "@/lib/queries";
 
+export const metadata = { title: "Bill" };
+
 export default async function InvoicePage({ params }: PageProps<"/invoices/[id]">) {
   const { id } = await params;
   const ctx = await requireBusiness();

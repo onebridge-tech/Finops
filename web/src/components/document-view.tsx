@@ -52,7 +52,7 @@ export async function DocumentView({ doc, business: b, party, payAmountPaise }: 
   const hasDiscount = doc.lines.some((l) => l.discountBp > 0);
 
   return (
-    <article style={style} className={`relative overflow-hidden rounded-xl border border-line bg-card ${compact ? "p-4 text-xs" : "p-6 text-sm"} print:border-0 print:p-0`}>
+    <article style={style} className={`paper relative overflow-hidden rounded-xl border border-line bg-card ${compact ? "p-4 text-xs" : "p-6 text-sm"} print:border-0 print:p-0`}>
       {cancelled && (
         <p className="mb-4 rounded-lg bg-gave/10 px-3 py-2 text-center font-semibold uppercase tracking-wide text-gave">Cancelled</p>
       )}

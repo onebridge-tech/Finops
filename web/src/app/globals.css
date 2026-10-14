@@ -52,6 +52,13 @@
 
 html { scroll-behavior: smooth; }
 
+/* Bills, quotes and receipts always look like paper, even when the app is in dark mode. */
+.paper {
+  --card: #ffffff; --ink: #0f172a; --muted: #5b6678; --line: #e4e7ee; --bg: #f5f6fa;
+  --gave: #d92d20; --got: #067647;
+  background: #ffffff; color: #0f172a; color-scheme: light;
+}
+
 body {
   background: var(--bg);
   color: var(--ink);
