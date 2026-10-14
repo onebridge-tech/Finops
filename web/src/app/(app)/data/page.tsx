@@ -53,7 +53,7 @@ export default async function DataPage({ searchParams }: PageProps<"/data">) {
             {role === "OWNER" && (
               <Card className="space-y-3 text-base">
                 <h2 className="font-semibold">Automatic backups</h2>
-                <p className="text-muted">A copy of everything is saved every day on the server.</p>
+                <p className="text-muted">Uploaded photos and files are copied every day. Your database is backed up by your hosting provider; the full download above is a copy you can keep yourself.</p>
                 <BackupButton />
                 {backups.length > 0 && (
                   <ul className="divide-y divide-line text-sm">

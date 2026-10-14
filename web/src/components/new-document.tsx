@@ -6,7 +6,7 @@ import { DocumentForm, type DocKind } from "./document-form";
 import type { PriceRow } from "@/lib/rules";
 
 const TITLE: Record<DocKind, string> = {
-  INVOICE: "New invoice", QUOTE: "New quotation", SALES_ORDER: "New sales order", PURCHASE_ORDER: "New purchase order", DEBIT_NOTE: "New debit note",
+  INVOICE: "Make a bill", QUOTE: "New price quote", SALES_ORDER: "New customer order", PURCHASE_ORDER: "New order to supplier", DEBIT_NOTE: "New extra charge note",
 };
 
 /** Every "new document" page shares this loader and form. */

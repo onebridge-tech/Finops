@@ -20,7 +20,7 @@ export default async function Expenses({ searchParams }: PageProps<"/expenses">)
   const period = resolvePeriod({ period: one(sp.period) || "month", from: one(sp.from), to: one(sp.to) }, today);
   const { gte, lte } = rangeDates(period.from, period.to);
   const [expenses, used, vendors, branches, files] = await Promise.all([
-    db.expense.findMany({ where: { businessId: ctx.business.id, ...(ctx.branchId ? { branchId: ctx.branchId } : {}), date: { gte, lte }, ...(one(sp.cat) ? { category: one(sp.cat) } : {}) }, orderBy: [{ date: "desc" }, { createdAt: "desc" }], take: 300 }),
+    db.expense.findMany({ where: { businessId: ctx.business.id, ...(ctx.branchId ? { branchId: ctx.branchId } : {}), ...(ctx.assignedOnly || ctx.role === "REP" ? { createdById: ctx.user.id } : {}), date: { gte, lte }, ...(one(sp.cat) ? { category: one(sp.cat) } : {}) }, orderBy: [{ date: "desc" }, { createdAt: "desc" }], take: 300 }),
     db.expense.findMany({ where: { businessId: ctx.business.id }, distinct: ["category"], select: { category: true } }),
     db.party.findMany({ where: { businessId: ctx.business.id, archivedAt: null, type: { in: ["SUPPLIER", "BOTH"] } }, select: { id: true, name: true }, orderBy: { name: "asc" } }),
     ctx.membership.branchId ? null : db.branch.findMany({ where: { businessId: ctx.business.id, archivedAt: null }, select: { id: true, name: true }, orderBy: { name: "asc" } }),

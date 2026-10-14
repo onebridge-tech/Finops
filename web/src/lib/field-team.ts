@@ -31,7 +31,7 @@ export async function teamProgress(ctx: Ctx, month: string, today: string): Prom
   const [visits, orders, got, newParties] = await Promise.all([
     db.visit.groupBy({ by: ["userId"], where: { businessId: bid, checkInAt: range }, _count: true }),
     db.order.groupBy({ by: ["createdById"], where: { businessId: bid, kind: "SALES", status: { not: "CANCELLED" }, createdAt: range }, _count: true, _sum: { totalPaise: true } }),
-    db.ledgerEntry.groupBy({ by: ["createdById"], where: { businessId: bid, direction: "GOT", reversedBy: null, reversalOfId: null, createdAt: range }, _sum: { amountPaise: true } }),
+    db.ledgerEntry.groupBy({ by: ["createdById"], where: { businessId: bid, direction: "GOT", paymentMode: { not: null }, reversedBy: null, reversalOfId: null, createdAt: range }, _sum: { amountPaise: true } }),
     db.party.groupBy({ by: ["ownerId"], where: { businessId: bid, createdAt: range }, _count: true }),
   ]);
   const out: Progress[] = [];

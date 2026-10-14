@@ -29,6 +29,8 @@ import { convertLead } from "@/app/actions/ledger";
 const CHANNEL_NAME: Record<string, string> = { WHATSAPP: "WhatsApp", SMS: "SMS", EMAIL: "Email", WHATSAPP_LINK: "WhatsApp (own phone)" };
 const STATUS_TONE: Record<string, string> = { DELIVERED: "text-got", READ: "text-got", SENT: "text-muted", QUEUED: "text-muted", FAILED: "text-gave", SKIPPED: "text-gave" };
 
+export const metadata = { title: "Customer account" };
+
 export default async function PartyPage({ params }: PageProps<"/parties/[id]">) {
   const { id } = await params;
   const ctx = await requireBusiness();

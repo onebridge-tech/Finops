@@ -20,11 +20,11 @@ type ItemOpt = { id: string; name: string; hsn: string; unit: string; ratePaise:
 type Line = { key: number; itemId: string; description: string; hsn: string; unit: string; qty: string; rate: string; manual: boolean; discount: string; taxRateBp: number };
 
 const TEXT: Record<DocKind, { party: string; state: string; date: string; due: string | null; dueHint?: string; submit: string; notes: string }> = {
-  INVOICE: { party: "Customer", state: "Place of supply", date: "Invoice date", due: "Due date", dueHint: "Blank = customer’s credit days", submit: "Create invoice", notes: "Notes / terms" },
-  QUOTE: { party: "Customer", state: "Place of supply", date: "Quotation date", due: "Valid until", dueHint: "Optional", submit: "Create quotation", notes: "Notes / terms" },
-  SALES_ORDER: { party: "Customer", state: "Place of supply", date: "Order date", due: "Expected delivery", dueHint: "Optional", submit: "Create order", notes: "Notes" },
-  PURCHASE_ORDER: { party: "Supplier", state: "Supplier’s state", date: "Order date", due: "Expected delivery", dueHint: "Optional", submit: "Create purchase order", notes: "Notes" },
-  DEBIT_NOTE: { party: "Party", state: "Place of supply", date: "Note date", due: null, submit: "Create debit note", notes: "Reason (required)" },
+  INVOICE: { party: "Customer", state: "Place of supply", date: "Bill date", due: "Pay by (date)", dueHint: "Blank = customer’s credit days", submit: "Make the bill", notes: "Notes / terms" },
+  QUOTE: { party: "Customer", state: "Place of supply", date: "Price quote date", due: "Valid until", dueHint: "Optional", submit: "Make the price quote", notes: "Notes / terms" },
+  SALES_ORDER: { party: "Customer", state: "Place of supply", date: "Order date", due: "Expected delivery", dueHint: "Optional", submit: "Make the order", notes: "Notes" },
+  PURCHASE_ORDER: { party: "Supplier", state: "Supplier’s state", date: "Order date", due: "Expected delivery", dueHint: "Optional", submit: "Make the supplier order", notes: "Notes" },
+  DEBIT_NOTE: { party: "Customer or supplier", state: "Place of supply", date: "Note date", due: null, submit: "Make the extra charge note", notes: "Reason (required)" },
 };
 
 let nextKey = 1;
@@ -116,18 +116,18 @@ export function DocumentForm({ kind, parties, items, businessState, today, prese
                     {items.map((i) => <option key={i.id} value={i.id}>{i.name}</option>)}
                   </select>
                 )}
-                <input className={inputClass} placeholder="Description" value={l.description} onChange={(e) => update(l.key, { description: e.target.value })} required />
+                <input className={inputClass} aria-label="Item description" placeholder="Description" value={l.description} onChange={(e) => update(l.key, { description: e.target.value })} required />
               </div>
-              <div className="sm:col-span-1"><label className="text-sm text-muted">HSN/SAC</label><input className={inputClass} value={l.hsn} onChange={(e) => update(l.key, { hsn: e.target.value })} /></div>
-              <div className="sm:col-span-1"><label className="text-sm text-muted">Qty</label><input className={inputClass} inputMode="decimal" value={l.qty} onChange={(e) => setQty(l, e.target.value)} /></div>
+              <div className="sm:col-span-1"><label className="text-sm text-muted">HSN/SAC</label><input className={inputClass} aria-label="HSN/SAC code" value={l.hsn} onChange={(e) => update(l.key, { hsn: e.target.value })} /></div>
+              <div className="sm:col-span-1"><label className="text-sm text-muted">Qty</label><input className={inputClass} aria-label="Quantity" inputMode="decimal" value={l.qty} onChange={(e) => setQty(l, e.target.value)} /></div>
               <div className="sm:col-span-2">
                 <label className="text-sm text-muted">Rate (₹){l.itemId && !l.manual && hasList && <span className="ml-1 text-brand">list</span>}</label>
-                <input className={inputClass} inputMode="decimal" value={l.rate} onChange={(e) => update(l.key, { rate: e.target.value, manual: true })} required />
+                <input className={inputClass} aria-label="Rate in rupees" inputMode="decimal" value={l.rate} onChange={(e) => update(l.key, { rate: e.target.value, manual: true })} required />
               </div>
-              <div className="sm:col-span-1"><label className="text-sm text-muted">Discount %</label><input className={inputClass} inputMode="decimal" value={l.discount} onChange={(e) => update(l.key, { discount: e.target.value })} /></div>
+              <div className="sm:col-span-1"><label className="text-sm text-muted">Discount %</label><input className={inputClass} aria-label="Discount percent" inputMode="decimal" value={l.discount} onChange={(e) => update(l.key, { discount: e.target.value })} /></div>
               <div className="sm:col-span-1">
                 <label className="text-sm text-muted">GST</label>
-                <select className={inputClass} value={l.taxRateBp} onChange={(e) => update(l.key, { taxRateBp: Number(e.target.value) })}>
+                <select className={inputClass} aria-label="GST rate" value={l.taxRateBp} onChange={(e) => update(l.key, { taxRateBp: Number(e.target.value) })}>
                   {GST_RATES_BP.map((r) => <option key={r} value={r}>{r / 100}%</option>)}
                 </select>
               </div>

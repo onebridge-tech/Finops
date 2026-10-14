@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { forbidden } from "next/navigation";
 import { can, requireBusiness } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { cashbook } from "@/lib/cashbook";
@@ -16,6 +17,8 @@ const one = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v) 
 export default async function Cashbook({ searchParams }: PageProps<"/cashbook">) {
   const sp = await searchParams;
   const ctx = await requireBusiness("ledger:write");
+  // The cash book lists every customer's payments, so it is not for staff limited to their own customers.
+  if (ctx.assignedOnly || ctx.role === "REP") forbidden();
   const today = todayIST();
   const period = resolvePeriod({ period: one(sp.period) || "month", from: one(sp.from), to: one(sp.to) }, today);
   const branches = ctx.membership.branchId ? [] : await db.branch.findMany({ where: { businessId: ctx.business.id, archivedAt: null }, orderBy: { name: "asc" } });

@@ -119,9 +119,9 @@ export default async function Dashboard() {
         sub={new Date().toLocaleDateString(user.uiLanguage === "en" ? "en-IN" : `${user.uiLanguage}-IN`, { weekday: "long", day: "numeric", month: "long", timeZone: "Asia/Kolkata" })}
       />
       <nav aria-label="Quick actions" className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
-        {can(role, "ledger:write") && <Quick href="/parties" icon="plus" label="Write credit or payment" tone="primary" />}
+        {can(role, "ledger:write") && <Quick href="/parties" icon="plus" label={t("dash.writeEntry")} tone="primary" />}
         {can(role, "invoice:write") && <Quick href="/invoices/new" icon="bill" label={t("dash.newInvoice")} />}
-        {can(role, "reminder:send") && <Quick href="/collections" icon="send" label="Ask for money" />}
+        {can(role, "reminder:send") && <Quick href="/collections" icon="send" label={t("dash.askMoney")} />}
         {can(role, "party:write") && <Quick href="/parties/new" icon="users" label={t("dash.addParty")} />}
       </nav>
       <div className="mb-3 flex justify-end">

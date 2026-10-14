@@ -113,7 +113,7 @@ export function PartyForm({ defaultState, party, owners, branches, defaultBranch
       )}
       <div className="space-y-3 sm:col-span-2">
         <ErrorText>{state.error}</ErrorText>
-        <SubmitButton>{v ? "Save changes" : "Save party"}</SubmitButton>
+        <SubmitButton>{v ? "Save changes" : "Save"}</SubmitButton>
       </div>
     </ActionForm>
   );

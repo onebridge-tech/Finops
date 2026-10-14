@@ -20,7 +20,7 @@ export function NavLinks({ mobile = false, followUpsDue = 0 }: { mobile?: boolea
   const path = usePathname();
   const t = useT();
   return (
-    <ul className={mobile ? "grid grid-cols-6 text-center text-xs font-medium leading-tight" : "flex gap-1"}>
+    <ul className={mobile ? "grid grid-cols-6 text-center text-xs font-medium leading-[1.15]" : "flex gap-1"}>
       {LINKS.map(([href, key, icon]) => {
         // "More" stays highlighted on the screens it leads to.
         const moreRoutes = ["/items", "/stock", "/orders", "/notes", "/quotes", "/price-lists", "/expenses", "/cashbook", "/reports", "/field", "/data", "/settings", "/search"];
@@ -29,7 +29,7 @@ export function NavLinks({ mobile = false, followUpsDue = 0 }: { mobile?: boolea
           <li key={href} className="min-w-0">
             <Link
               href={href}
-              className={`relative block rounded-lg ${mobile ? "min-h-14 truncate px-0.5 pb-2 pt-2" : "px-3.5 py-2 text-base"} ${active ? "font-bold text-brand" : "text-muted hover:text-ink"}`}
+              className={`relative block rounded-lg ${mobile ? "min-h-16 px-0.5 pb-2 pt-2 [overflow-wrap:anywhere]" : "px-3.5 py-2 text-base"} ${active ? "font-bold text-brand" : "text-muted hover:text-ink"}`}
             >
               {mobile && <span className="mx-auto mb-0.5 flex h-7 w-12 items-center justify-center" aria-hidden><Icon name={icon} size={22} /></span>}
               {t(key)}

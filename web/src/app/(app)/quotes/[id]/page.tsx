@@ -56,7 +56,7 @@ export default async function QuotePage({ params }: PageProps<"/quotes/[id]">) {
               {write && open && (
                 <form action={quoteToOrder}>
                   <input type="hidden" name="quoteId" value={quote.id} />
-                  <button className={buttonClass("secondary")}>Create order</button>
+                  <button className={buttonClass("secondary")}>Make an order</button>
                 </form>
               )}
             </div>

@@ -6,11 +6,11 @@ import { useRouter } from "next/navigation";
 export type Command = { href: string; label: string; hint?: string };
 
 const QUICK: Command[] = [
-  { href: "/parties/new", label: "Add a party", hint: "new customer or supplier" },
-  { href: "/invoices/new", label: "New invoice" },
-  { href: "/quotes/new", label: "New quotation" },
+  { href: "/parties/new", label: "Add a customer", hint: "or a supplier" },
+  { href: "/invoices/new", label: "Make a bill" },
+  { href: "/quotes/new", label: "New price quote" },
   { href: "/orders/new", label: "New order" },
-  { href: "/expenses", label: "Add an expense" },
+  { href: "/expenses", label: "Write a shop expense" },
   { href: "/search", label: "Search everything" },
 ];
 
