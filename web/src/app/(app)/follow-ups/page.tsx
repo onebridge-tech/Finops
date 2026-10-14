@@ -50,7 +50,7 @@ export default async function FollowUps({ searchParams }: PageProps<"/follow-ups
         )}
       </nav>
       {rows.length === 0 ? (
-        <EmptyState title={view === "due" ? "Nothing due — all caught up" : "Nothing here"}>Add follow-ups from any party’s page.</EmptyState>
+        <EmptyState icon="phone" title={view === "due" ? "No calls to make today" : "Nothing here"}>Add a call from any customer’s page.</EmptyState>
       ) : (
         <Card className="divide-y divide-line p-0 text-sm">
           {rows.map((f) => {

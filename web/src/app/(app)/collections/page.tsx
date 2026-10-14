@@ -77,7 +77,7 @@ export default async function Collections({ searchParams }: PageProps<"/collecti
 
       <div className="mt-4">
         {rows.length === 0 ? (
-          <EmptyState title="Nothing here">Nobody here yet.</EmptyState>
+          <EmptyState icon="check" title="All caught up">Nobody to ask for money in this view.</EmptyState>
         ) : can(role, "reminder:send") ? (
           <BulkReminderForm
             credits={business.creditBalance}

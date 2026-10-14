@@ -3,7 +3,8 @@ import { can, requireBusiness } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { stockLevels } from "@/lib/reports2";
 import { formatINR } from "@/lib/money";
-import { Card, EmptyState, PageHeader, fmtDate } from "@/components/ui";
+import { Badge, Card, EmptyState, PageHeader, fmtDate } from "@/components/ui";
+import { Icon } from "@/components/icon";
 import { AdjustStockForm } from "./adjust-form";
 
 export const metadata = { title: "Stock" };
@@ -30,22 +31,23 @@ export default async function Stock({ searchParams }: PageProps<"/stock">) {
       <PageHeader title="Stock" sub={`${levels.length} items tracked · stock value ${formatINR(value)}${lowCount ? ` · ${lowCount} low` : ""}`}
         action={<div className="flex gap-3 text-sm"><Link href={lowOnly ? "/stock" : "/stock?low=1"} className="text-brand underline">{lowOnly ? "Show all" : "Low stock only"}</Link><Link href="/reports/stock" className="text-brand underline">Report</Link></div>} />
       {levels.length === 0 ? (
-        <EmptyState title="No items track stock yet">Open an item, tick “Track stock” and set a low-stock level. Your bills then reduce the stock, and supplier orders add to it.</EmptyState>
+        <EmptyState icon="box" title="No items track stock yet">Open an item, tick “Track stock” and set a low-stock level. Your bills then reduce the stock, and supplier orders add to it.</EmptyState>
       ) : (
-        <Card className="overflow-x-auto p-0">
-          <table className="w-full min-w-[560px] text-sm">
-            <thead className="border-b border-line bg-bg/50 text-left text-xs font-medium text-muted"><tr><th className="px-4 py-2">Item</th><th className="px-4 py-2 text-right">On hand</th><th className="px-4 py-2 text-right">Low-stock level</th><th className="px-4 py-2"></th></tr></thead>
-            <tbody className="divide-y divide-line">
-              {rows.map(({ item, level, low }) => (
-                <tr key={item.id} className={selected?.item.id === item.id ? "bg-bg" : ""}>
-                  <td className="px-4 py-2"><Link href={`/stock?item=${item.id}${lowOnly ? "&low=1" : ""}`} className="font-medium hover:underline">{label(item)}</Link>{item.sku && <span className="ml-2 text-xs text-muted">{item.sku}</span>}</td>
-                  <td className={`px-4 py-2 text-right tabular-nums ${low ? "font-semibold text-gave" : ""}`}>{level / 1000} {item.unit}</td>
-                  <td className="px-4 py-2 text-right tabular-nums text-muted">{item.reorderLevelMilli === null ? "—" : item.reorderLevelMilli / 1000}</td>
-                  <td className="px-4 py-2 text-right text-xs">{low && <span className="rounded bg-gave/10 px-2 py-0.5 text-gave">Low</span>}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <Card className="divide-y divide-line p-0 sm:p-0">
+          {rows.length === 0 && <p className="px-4 py-6 text-center text-muted">Nothing is running low.</p>}
+          {rows.map(({ item, level, low }) => (
+            <Link key={item.id} href={`/stock?item=${item.id}${lowOnly ? "&low=1" : ""}`} className={`flex items-center gap-3 px-4 py-3 transition hover:bg-bg ${selected?.item.id === item.id ? "bg-brand-soft" : ""}`}>
+              <span className={`flex size-10 shrink-0 items-center justify-center rounded-lg ${low ? "bg-gave/10 text-gave" : "bg-brand-soft text-brand"}`}><Icon name="box" size={18} /></span>
+              <span className="min-w-0 flex-1">
+                <span className="block truncate font-medium">{label(item)}</span>
+                <span className="text-xs text-muted">{item.reorderLevelMilli === null ? "No low-stock level set" : `Tell me at ${item.reorderLevelMilli / 1000} ${item.unit}`}</span>
+              </span>
+              <span className="flex flex-col items-end gap-1">
+                <span className={`font-semibold tabular-nums ${low ? "text-gave" : ""}`}>{level / 1000} {item.unit}</span>
+                {low && <Badge tone="bad">Low</Badge>}
+              </span>
+            </Link>
+          ))}
         </Card>
       )}
 
