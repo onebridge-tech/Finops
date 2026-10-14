@@ -20,9 +20,9 @@ export function PromiseForm({ partyId, today }: { partyId: string; today: string
       <Field label="Amount (₹)" hint="Optional"><Input name="amount" inputMode="decimal" /></Field>
       <div className="sm:col-span-2"><Field label="Note"><Input name="note" placeholder="Spoke to owner, will send UPI" /></Field></div>
       <div className="flex items-end gap-3 sm:col-span-4">
-        <SubmitButton variant="secondary">Log promise</SubmitButton>
+        <SubmitButton variant="secondary">Note their promise</SubmitButton>
         <ErrorText>{state.error}</ErrorText>
-        <span className="text-xs text-muted">Creates a follow-up for that day and holds automatic reminders until the day after.</span>
+        <span className="text-sm text-muted">Creates a follow-up for that day and holds automatic reminders until the day after.</span>
       </div>
     </ActionForm>
   );

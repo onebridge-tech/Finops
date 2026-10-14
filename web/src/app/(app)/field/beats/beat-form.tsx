@@ -15,12 +15,12 @@ export function BeatForm({ people, parties, beat }: { people: { id: string; name
   const move = (i: number, d: number) => setIds((s) => { const n = [...s]; const j = i + d; if (j < 0 || j >= n.length) return s; [n[i], n[j]] = [n[j]!, n[i]!]; return n; });
   const days = new Set((beat?.weekdays ?? "1,2,3,4,5,6").split(","));
   return (
-    <form action={action} className="space-y-3 text-sm">
+    <form action={action} className="space-y-3 text-base">
       {beat && <input type="hidden" name="id" value={beat.id} />}
       <input type="hidden" name="partyIds" value={ids.join(",")} />
       <div className="grid gap-2 sm:grid-cols-2">
-        <Input name="name" placeholder="Beat name, e.g. Market Road" defaultValue={beat?.name} aria-label="Beat name" />
-        <Select name="userId" defaultValue={beat?.userId} aria-label="Rep">{people.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}</Select>
+        <Input name="name" placeholder="Route name, e.g. Market Road" defaultValue={beat?.name} aria-label="Route name" />
+        <Select name="userId" defaultValue={beat?.userId} aria-label="Salesman">{people.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}</Select>
       </div>
       <fieldset className="flex flex-wrap gap-3"><legend className="sr-only">Weekdays</legend>
         {DAYS.map((d, i) => <label key={d} className="flex items-center gap-1"><input type="checkbox" name="weekdays" value={i} defaultChecked={days.has(String(i))} />{d}</label>)}
@@ -45,7 +45,7 @@ export function BeatForm({ people, parties, beat }: { people: { id: string; name
         <button type="button" className={buttonClass("secondary")} disabled={!pick} onClick={() => { setIds((s) => [...s, pick]); setPick(""); }}>Add</button>
       </div>
       {state?.error && <p role="alert" className="text-gave">{state.error}</p>}
-      {state?.ok && <p role="status" className="text-got">Beat saved.</p>}
+      {state?.ok && <p role="status" className="text-got">Route saved.</p>}
       <button className={buttonClass("primary")} disabled={pending}>{beat ? "Save beat" : "Create beat"}</button>
     </form>
   );

@@ -31,7 +31,7 @@ export function ExpenseForm({ today, categories, vendors, branches }: { today: s
         <Field label="Branch"><Select name="branchId" defaultValue=""><option value="">Default</option>{branches.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}</Select></Field>
       ) : <input type="hidden" name="branchId" value="" />}
       <Field label="Note"><Input name="note" /></Field>
-      <Field label="Receipt photo" hint="Optional"><input name="receipt" type="file" accept="image/png,image/jpeg,image/webp,application/pdf" className="text-sm" /></Field>
+      <Field label="Receipt photo" hint="Optional"><input name="receipt" type="file" accept="image/png,image/jpeg,image/webp,application/pdf" className="text-base" /></Field>
       <div className="flex items-center gap-3 sm:col-span-4"><SubmitButton>Add expense</SubmitButton><ErrorText>{state.error}</ErrorText></div>
     </ActionForm>
   );
@@ -42,9 +42,9 @@ export function VoidExpense({ id }: { id: string }) {
   return (
     <ActionForm dispatch={action} pending={pending} className="flex items-center gap-2">
       <input type="hidden" name="expenseId" value={id} />
-      <input name="reason" required minLength={3} placeholder="Reason" aria-label="Reason for voiding" className="w-28 rounded border border-line bg-card px-2 py-1 text-xs" />
-      <button className="text-xs text-muted underline hover:text-gave" disabled={pending}>Void</button>
-      {state.error && <span className="text-xs text-gave">{state.error}</span>}
+      <input name="reason" required minLength={3} placeholder="Reason" aria-label="Reason for voiding" className="w-28 rounded border border-line bg-card px-2 py-1 text-sm" />
+      <button className="text-sm text-muted underline hover:text-gave" disabled={pending}>Cancel</button>
+      {state.error && <span className="text-sm text-gave">{state.error}</span>}
     </ActionForm>
   );
 }

@@ -5,7 +5,7 @@ import { formatINR } from "@/lib/money";
 import { Card, EmptyState, LinkButton, PageHeader, fmtDate } from "@/components/ui";
 import { invoicePayments } from "@/lib/queries";
 
-export const metadata = { title: "Invoices" };
+export const metadata = { title: "Bills" };
 
 export default async function Invoices() {
   const ctx = await requireBusiness();
@@ -19,25 +19,25 @@ export default async function Invoices() {
   return (
     <>
       <PageHeader
-        title="Invoices"
+        title="Bills"
         action={
           <div className="flex gap-2">
-            <LinkButton href="/quotes" variant="secondary">Quotations</LinkButton>
-            <LinkButton href="/invoices/new">New invoice</LinkButton>
+            <LinkButton href="/quotes" variant="secondary">Price quotes</LinkButton>
+            <LinkButton href="/invoices/new">Make a bill</LinkButton>
           </div>
         }
       />
       {invoices.length === 0 ? (
-        <EmptyState title="No invoices yet">Create a GST invoice and share it on WhatsApp with a pay link.</EmptyState>
+        <EmptyState title="No bills yet">Make a GST bill and send it on WhatsApp with a link to pay.</EmptyState>
       ) : ctx.user.uiMode === "ACCOUNTANT" ? (
         <GstRegister invoices={invoices} />
       ) : (
-        <Card className="divide-y divide-line p-0 text-sm">
+        <Card className="divide-y divide-line p-0 text-base">
           {invoices.map((i) => (
             <Link key={i.id} href={`/invoices/${i.id}`} className="flex items-center justify-between px-4 py-3 hover:bg-bg">
               <span>
                 <span className="block font-medium">{i.number} · {i.party.name}</span>
-                <span className="text-xs text-muted">
+                <span className="text-sm text-muted">
                   {fmtDate(i.date)}{i.dueDate ? ` · due ${fmtDate(i.dueDate)}` : ""}
                   {i.status === "CANCELLED" ? " · cancelled" : i.viewCount > 0 ? ` · viewed ${i.viewCount}×` : ""}
                   {pay.get(i.id) && pay.get(i.id)!.status !== "CANCELLED" && (
@@ -63,11 +63,11 @@ function GstRegister({ invoices }: { invoices: Row[] }) {
   const td = "px-3 py-2 text-right tabular-nums";
   return (
     <Card className="overflow-x-auto p-0">
-      <table className="w-full min-w-[820px] text-sm">
-        <thead className="border-b border-line text-left text-xs uppercase text-muted">
+      <table className="w-full min-w-[820px] text-base">
+        <thead className="border-b border-line text-left text-sm uppercase text-muted">
           <tr>
             <th className="px-3 py-2">Date</th><th className="px-3 py-2">Voucher no.</th><th className="px-3 py-2">Party</th><th className="px-3 py-2">GSTIN</th><th className="px-3 py-2">POS</th>
-            <th className={td}>Taxable</th><th className={td}>CGST</th><th className={td}>SGST</th><th className={td}>IGST</th><th className={td}>Total</th>
+            <th className={td}>Before GST</th><th className={td}>CGST</th><th className={td}>SGST</th><th className={td}>IGST</th><th className={td}>Total</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-line">
@@ -76,7 +76,7 @@ function GstRegister({ invoices }: { invoices: Row[] }) {
               <td className="whitespace-nowrap px-3 py-2">{fmtDate(i.date)}</td>
               <td className="px-3 py-2"><Link href={`/invoices/${i.id}`} className="underline">{i.number}</Link></td>
               <td className="px-3 py-2">{i.party.name}</td>
-              <td className="px-3 py-2 font-mono text-xs">{i.party.gstin ?? "—"}</td>
+              <td className="px-3 py-2 font-mono text-sm">{i.party.gstin ?? "—"}</td>
               <td className="px-3 py-2">{i.placeOfSupply}</td>
               <td className={td}>{formatINR(i.taxablePaise)}</td><td className={td}>{formatINR(i.cgstPaise)}</td>
               <td className={td}>{formatINR(i.sgstPaise)}</td><td className={td}>{formatINR(i.igstPaise)}</td><td className={td}>{formatINR(i.totalPaise)}</td>

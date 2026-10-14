@@ -5,7 +5,7 @@ import { archiveBeat } from "@/app/actions/field";
 import { Card, PageHeader, buttonClass } from "@/components/ui";
 import { BeatForm } from "./beat-form";
 
-export const metadata = { title: "Beats" };
+export const metadata = { title: "Daily routes" };
 const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 export default async function Beats() {
@@ -20,11 +20,11 @@ export default async function Beats() {
   const people = members.map((m) => ({ id: m.userId, name: m.user.name ?? `+${m.user.phone}` }));
   return (
     <>
-      <PageHeader title="Beats" sub="A beat is a route of customers a rep visits on set weekdays." action={<Link href="/field/team" className="text-sm text-brand underline">Team & targets</Link>} />
+      <PageHeader title="Daily routes" sub="A route is the list of customers a salesman visits on certain days." action={<Link href="/field/team" className="text-base text-brand underline">Staff & targets</Link>} />
       <div className="space-y-3">
-        {beats.length === 0 && <Card className="text-sm text-muted">No beats yet. Create one below.</Card>}
+        {beats.length === 0 && <Card className="text-base text-muted">No routes yet. Make one below.</Card>}
         {beats.map((b) => (
-          <Card key={b.id} className="space-y-1 text-sm">
+          <Card key={b.id} className="space-y-1 text-base">
             <div className="flex items-start justify-between gap-3">
               <div>
                 <p className="font-medium">{b.name} <span className="font-normal text-muted">· {who(b.userId)?.name ?? `+${who(b.userId)?.phone}`} · {b.weekdays.split(",").map((d) => DAYS[Number(d)]).join(", ")}</span></p>
@@ -38,7 +38,7 @@ export default async function Beats() {
             </details>
           </Card>
         ))}
-        <h2 className="pt-2 font-semibold">New beat</h2>
+        <h2 className="pt-2 font-semibold">New route</h2>
         <Card><BeatForm people={people} parties={parties} /></Card>
       </div>
     </>

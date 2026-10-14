@@ -22,7 +22,7 @@ export async function NewDocument({ kind, ctx, preselect }: { kind: DocKind; ctx
   if (parties.length === 0) {
     return (
       <EmptyState title={purchase ? "Add a supplier first" : "Add a customer first"}>
-        <LinkButton href="/parties/new" className="mt-3">Add party</LinkButton>
+        <LinkButton href="/parties/new" className="mt-3">Add customer</LinkButton>
       </EmptyState>
     );
   }

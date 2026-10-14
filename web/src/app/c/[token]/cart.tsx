@@ -20,7 +20,7 @@ export function CatalogueCart({ token, products, business }: { token: string; pr
     return (
       <div className="rounded-xl border border-got/40 bg-got/5 p-6 text-center">
         <p className="text-lg font-semibold text-got">Order request sent{state.number && state.number !== "—" ? ` · ${state.number}` : ""}</p>
-        <p className="mt-1 text-sm text-muted">{business} will contact you to confirm. Nothing is charged online.</p>
+        <p className="mt-1 text-base text-muted">{business} will contact you to confirm. Nothing is charged online.</p>
       </div>
     );
   }
@@ -39,8 +39,8 @@ export function CatalogueCart({ token, products, business }: { token: string; pr
                 {p.image ? <img src={p.image} alt="" className="size-16 shrink-0 rounded-lg border border-line object-cover" /> : <span className="size-16 shrink-0 rounded-lg border border-dashed border-line" />}
                 <span className="min-w-0 flex-1">
                   <span className="block font-medium">{p.name}</span>
-                  {p.description && <span className="block text-xs text-muted">{p.description}</span>}
-                  <span className="text-sm tabular-nums">{formatINR(p.price)} <span className="text-xs text-muted">per {p.unit} + {p.gst}% GST</span></span>
+                  {p.description && <span className="block text-sm text-muted">{p.description}</span>}
+                  <span className="text-base tabular-nums">{formatINR(p.price)} <span className="text-sm text-muted">per {p.unit} + {p.gst}% GST</span></span>
                 </span>
                 <span className="no-print">
                   <input inputMode="decimal" aria-label={`Quantity of ${p.name}`} placeholder="Qty" value={qty[p.id] ?? ""} onChange={(e) => setQty((s) => ({ ...s, [p.id]: e.target.value }))} className={`${inputClass} w-20 text-center`} />
@@ -53,7 +53,7 @@ export function CatalogueCart({ token, products, business }: { token: string; pr
 
       <section className="no-print space-y-3 rounded-xl border border-line bg-card p-4">
         <h2 className="font-semibold">Send an order request</h2>
-        {picks.length > 0 ? <p className="text-sm text-muted">{picks.length} item{picks.length === 1 ? "" : "s"} · about {formatINR(total)} including GST</p> : <p className="text-sm text-muted">Enter quantities above.</p>}
+        {picks.length > 0 ? <p className="text-base text-muted">{picks.length} item{picks.length === 1 ? "" : "s"} · about {formatINR(total)} including GST</p> : <p className="text-base text-muted">Enter quantities above.</p>}
         <div className="grid gap-3 sm:grid-cols-2">
           <Input name="name" required placeholder="Your name / shop name" autoComplete="name" />
           <Input name="phone" required inputMode="tel" placeholder="Mobile number" autoComplete="tel" />
@@ -63,7 +63,7 @@ export function CatalogueCart({ token, products, business }: { token: string; pr
         <input name="website" tabIndex={-1} autoComplete="off" aria-hidden className="absolute -left-[9999px] h-0 w-0 opacity-0" />
         <ErrorText>{state.error}</ErrorText>
         <SubmitButton>Send order request</SubmitButton>
-        <p className="text-xs text-muted">This is a request, not a confirmed order or payment. {business} will get back to you.</p>
+        <p className="text-sm text-muted">This is a request, not a confirmed order or payment. {business} will get back to you.</p>
       </section>
     </ActionForm>
   );

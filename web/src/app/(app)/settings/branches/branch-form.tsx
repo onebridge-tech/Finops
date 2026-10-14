@@ -19,10 +19,10 @@ export function BranchForm({ branch }: { branch?: { id: string; name: string; ad
       <Field label="Address"><Input name="address" defaultValue={branch?.address} /></Field>
       <Field label="Phone"><Input name="phone" inputMode="tel" defaultValue={branch?.phone} /></Field>
       <Field label="Branch GSTIN" hint="Optional. Invoices from this branch carry it."><Input name="gstin" maxLength={15} className="uppercase" defaultValue={branch?.gstin} /></Field>
-      <Field label="Invoice series" hint="Optional prefix, e.g. KPY-. Needs its own prefix."><Input name="invoicePrefix" maxLength={10} defaultValue={branch?.invoicePrefix} /></Field>
+      <Field label="Bill number series" hint="Optional prefix, e.g. KPY-. Needs its own prefix."><Input name="invoicePrefix" maxLength={10} defaultValue={branch?.invoicePrefix} /></Field>
       <div className="space-y-2 sm:col-span-3">
         <ErrorText>{state.error}</ErrorText>
-        {state.info && <p className="text-sm text-got">{state.info}</p>}
+        {state.info && <p className="text-base text-got">{state.info}</p>}
         <SubmitButton variant={branch ? "secondary" : "primary"}>{branch ? "Save" : "Add branch"}</SubmitButton>
       </div>
     </ActionForm>

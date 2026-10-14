@@ -5,7 +5,7 @@ import { fileUrl } from "@/lib/files";
 export function Attachments({ files }: { files: Pick<StoredFile, "id" | "name" | "mime">[] }) {
   if (files.length === 0) return null;
   return (
-    <span className="mt-1 flex flex-wrap gap-2 text-xs no-underline">
+    <span className="mt-1 flex flex-wrap gap-2 text-sm no-underline">
       {files.map((f) => {
         const url = fileUrl(f.id)!;
         return f.mime.startsWith("audio/") ? (

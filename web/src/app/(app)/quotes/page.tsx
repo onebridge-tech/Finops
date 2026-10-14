@@ -5,7 +5,7 @@ import { formatINR } from "@/lib/money";
 import { Card, EmptyState, LinkButton, PageHeader, fmtDate } from "@/components/ui";
 import { quoteStatus } from "./status";
 
-export const metadata = { title: "Quotations" };
+export const metadata = { title: "Price quotes" };
 
 export default async function Quotes() {
   const ctx = await requireBusiness();
@@ -17,18 +17,18 @@ export default async function Quotes() {
   });
   return (
     <>
-      <PageHeader title="Quotations" sub="Send a price, get it accepted, turn it into an invoice in one tap." action={<LinkButton href="/quotes/new">New quotation</LinkButton>} />
+      <PageHeader title="Price quotes" sub="Send a price, get a yes, and turn it into a bill in one tap." action={<LinkButton href="/quotes/new">New price quote</LinkButton>} />
       {quotes.length === 0 ? (
-        <EmptyState title="No quotations yet" />
+        <EmptyState title="No price quotes yet" />
       ) : (
-        <Card className="divide-y divide-line p-0 text-sm">
+        <Card className="divide-y divide-line p-0 text-base">
           {quotes.map((q) => {
             const s = quoteStatus(q);
             return (
               <Link key={q.id} href={`/quotes/${q.id}`} className="flex items-center justify-between px-4 py-3 hover:bg-bg">
                 <span>
                   <span className="block font-medium">{q.number} · {q.party.name}</span>
-                  <span className="text-xs text-muted">{fmtDate(q.date)} · <span className={s.tone}>{s.label}</span></span>
+                  <span className="text-sm text-muted">{fmtDate(q.date)} · <span className={s.tone}>{s.label}</span></span>
                 </span>
                 <span className="font-semibold tabular-nums">{formatINR(q.totalPaise)}</span>
               </Link>

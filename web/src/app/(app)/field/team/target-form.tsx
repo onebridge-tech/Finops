@@ -16,8 +16,8 @@ export function TargetForm({ month, members }: { month: string; members: { id: s
         <Input name="value" inputMode="decimal" placeholder="Target (₹ for money)" aria-label="Target" />
         <button className={buttonClass("primary")} disabled={pending}>Set target</button>
       </form>
-      {state?.error && <p role="alert" className="mt-2 text-sm text-gave">{state.error}</p>}
-      {state?.ok && <p role="status" className="mt-2 text-sm text-got">Target saved.</p>}
+      {state?.error && <p role="alert" className="mt-2 text-base text-gave">{state.error}</p>}
+      {state?.ok && <p role="status" className="mt-2 text-base text-got">Target saved.</p>}
     </Card>
   );
 }

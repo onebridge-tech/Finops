@@ -6,7 +6,7 @@ import { translator, type UiKey } from "@/lib/i18n";
 import { ledgerGroup } from "@/lib/accounting";
 import { Balance, Card, EmptyState, Input, LinkButton, PageHeader } from "@/components/ui";
 
-export const metadata = { title: "Parties" };
+export const metadata = { title: "Customers & suppliers" };
 
 const TABS: ["all" | "customers" | "suppliers" | "leads" | "archived", UiKey][] = [
   ["all", "parties.all"], ["customers", "parties.customers"], ["suppliers", "parties.suppliers"], ["leads", "parties.leads"], ["archived", "parties.archived"],

@@ -10,7 +10,7 @@ export function NewListForm() {
   const [state, action, pending] = useActionState(createPriceList, {});
   return (
     <ActionForm dispatch={action} pending={pending} className="flex flex-wrap items-end gap-3">
-      <Field label="New price list"><Input name="name" required placeholder="Dealer / Distributor / Retail" /></Field>
+      <Field label="New special price list"><Input name="name" required placeholder="Dealer / Distributor / Retail" /></Field>
       <SubmitButton>Create</SubmitButton>
       <ErrorText>{state.error}</ErrorText>
     </ActionForm>
@@ -41,7 +41,7 @@ export function FillForm({ listId }: { listId: string }) {
       <Field label="Fill from standard prices, less %" hint="Sets every item; you can change rates after"><Input name="pct" inputMode="decimal" placeholder="10" className="w-28" /></Field>
       <SubmitButton variant="secondary">Fill list</SubmitButton>
       <ErrorText>{state.error}</ErrorText>
-      {state.info && <span className="text-sm text-got">{state.info}</span>}
+      {state.info && <span className="text-base text-got">{state.info}</span>}
     </ActionForm>
   );
 }

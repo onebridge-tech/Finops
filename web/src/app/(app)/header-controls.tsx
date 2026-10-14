@@ -21,7 +21,7 @@ export function BusinessSwitcher({ current, businesses }: { current: string; bus
         }}
       >
         {businesses.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
-        <option value="__new">+ Add another business</option>
+        <option value="__new">+ Add another shop</option>
       </select>
     </form>
   );
@@ -35,7 +35,7 @@ export function BranchSwitcher({ current, branches }: { current: string; branche
         name="branchId"
         defaultValue={current}
         aria-label="Branch"
-        className="max-w-40 rounded-lg border border-line bg-card px-2 py-1 text-sm"
+        className="max-w-40 rounded-lg border border-line bg-card px-2 py-1 text-base"
         onChange={(e) => e.currentTarget.form?.requestSubmit()}
       >
         <option value="">All branches</option>

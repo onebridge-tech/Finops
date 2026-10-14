@@ -36,31 +36,31 @@ export default async function Settings() {
       <PageHeader title="Settings" />
       <div className="grid gap-6 lg:grid-cols-3">
         <Card className="lg:col-span-2">
-          <h2 className="mb-4 font-semibold">Business profile</h2>
+          <h2 className="mb-4 font-semibold">About your shop</h2>
           {owner ? (
             <BusinessForm action={updateBusiness} values={business} submitLabel="Save changes" />
           ) : (
-            <p className="text-sm text-muted">Only the owner or an admin can change these details.</p>
+            <p className="text-base text-muted">Only the owner or an admin can change these details.</p>
           )}
         </Card>
         <Card className="h-fit text-center">
           <h2 className="font-semibold">Counter QR</h2>
-          <p className="mb-3 text-sm text-muted">Print and keep at your counter. Any UPI app can pay.</p>
+          <p className="mb-3 text-base text-muted">Print and keep at your counter. Any UPI app can pay.</p>
           {counterQr ? (
             <>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={counterQr} alt="UPI QR code" width={220} height={220} className="mx-auto rounded bg-white p-2" />
               <p className="mt-2 font-medium">{business.name}</p>
-              <p className="text-sm text-muted">{business.upiId}</p>
+              <p className="text-base text-muted">{business.upiId}</p>
               <LinkButton href="/settings/standee" variant="secondary" className="mt-3">Print standee</LinkButton>
             </>
           ) : (
-            <p className="text-sm text-muted">Add a UPI ID to generate your QR.</p>
+            <p className="text-base text-muted">Add a UPI ID to generate your QR.</p>
           )}
         </Card>
 
         <Card className="lg:col-span-2">
-          <h2 className="mb-4 font-semibold">Invoice & quotation branding</h2>
+          <h2 className="mb-4 font-semibold">Look of your bills and price quotes</h2>
           {owner ? (
             <BrandingForm
               values={{
@@ -70,27 +70,27 @@ export default async function Settings() {
               }}
             />
           ) : (
-            <p className="text-sm text-muted">Only the owner or an admin can change branding.</p>
+            <p className="text-base text-muted">Only the owner or an admin can change branding.</p>
           )}
         </Card>
         <div className="hidden lg:block" />
 
         <Card className="lg:col-span-2">
-          <h2 className="mb-4 font-semibold">Credit control & owner digest</h2>
-          {owner ? <ControlsForm v={{ creditControl: business.creditControl, creditBlockOverdue: business.creditBlockOverdue, digestFrequency: business.digestFrequency, digestChannel: business.digestChannel }} /> : <p className="text-sm text-muted">Only the owner or an admin can change these.</p>}
+          <h2 className="mb-4 font-semibold">Credit limit & daily summary</h2>
+          {owner ? <ControlsForm v={{ creditControl: business.creditControl, creditBlockOverdue: business.creditBlockOverdue, digestFrequency: business.digestFrequency, digestChannel: business.digestChannel }} /> : <p className="text-base text-muted">Only the owner or an admin can change these.</p>}
         </Card>
         <div className="hidden lg:block" />
 
         <Card className="lg:col-span-2">
-          <h2 className="mb-4 font-semibold">Shareable catalogue</h2>
-          {owner ? <CatalogueForm enabled={business.catalogEnabled} url={business.catalogToken ? appUrl("/c/" + business.catalogToken) : null} count={publicItems} /> : <p className="text-sm text-muted">Only the owner or an admin can change this.</p>}
+          <h2 className="mb-4 font-semibold">Share your item list</h2>
+          {owner ? <CatalogueForm enabled={business.catalogEnabled} url={business.catalogToken ? appUrl("/c/" + business.catalogToken) : null} count={publicItems} /> : <p className="text-base text-muted">Only the owner or an admin can change this.</p>}
         </Card>
         <div className="hidden lg:block" />
 
         <Card className="lg:col-span-2">
           <h2 className="mb-1 font-semibold">Messages & reminders</h2>
           {testChannels.length > 0 && (
-            <p className="mb-4 rounded-lg bg-brand/10 px-3 py-2 text-xs">
+            <p className="mb-4 rounded-lg bg-brand/10 px-3 py-2 text-sm">
               Test mode for {testChannels.map((c) => ({ WHATSAPP: "WhatsApp", SMS: "SMS", EMAIL: "email" })[c]).join(", ")}: messages are recorded and marked delivered but not actually sent. Add provider keys to send for real.
             </p>
           )}
@@ -103,34 +103,34 @@ export default async function Settings() {
               }}
             />
           ) : (
-            <p className="text-sm text-muted">Only the owner or an admin can change these settings.</p>
+            <p className="text-base text-muted">Only the owner or an admin can change these settings.</p>
           )}
         </Card>
         <Card className="h-fit space-y-3">
-          <h2 className="font-semibold">Messaging credits</h2>
+          <h2 className="font-semibold">Message credits</h2>
           <p className="text-3xl font-semibold tabular-nums">{business.creditBalance}</p>
-          <p className="text-sm text-muted">1 credit per WhatsApp or SMS message. Email is free.</p>
-          <Link href="/settings/credits" className="text-sm font-medium text-brand underline">Buy credits & see usage</Link>
+          <p className="text-base text-muted">1 credit per WhatsApp or SMS message. Email is free.</p>
+          <Link href="/settings/credits" className="text-base font-medium text-brand underline">Buy credits & see usage</Link>
           {owner && <div className="border-t border-line pt-3"><RunRemindersButton /></div>}
         </Card>
-        <Card className="h-fit space-y-2 text-sm lg:col-start-3">
-          <h2 className="font-semibold">Team & access</h2>
+        <Card className="h-fit space-y-2 text-base lg:col-start-3">
+          <h2 className="font-semibold">Staff & access</h2>
           <ul className="space-y-1">
-            {can(role, "team:manage") && <li><Link href="/settings/team" className="font-medium text-brand underline">Team members & roles</Link></li>}
-            <li><Link href="/settings/branches" className="font-medium text-brand underline">Branches</Link></li>
-            <li><Link href="/settings/security" className="font-medium text-brand underline">Profile, language, app lock & devices</Link></li>
-            {can(role, "reports:view") && <li><Link href="/settings/audit" className="font-medium text-brand underline">Audit trail</Link></li>}
+            {can(role, "team:manage") && <li><Link href="/settings/team" className="font-medium text-brand underline">Your staff and what they can do</Link></li>}
+            <li><Link href="/settings/branches" className="font-medium text-brand underline">Shop branches</Link></li>
+            <li><Link href="/settings/security" className="font-medium text-brand underline">Your name, language, lock & devices</Link></li>
+            {can(role, "reports:view") && <li><Link href="/settings/audit" className="font-medium text-brand underline">Who changed what</Link></li>}
           </ul>
         </Card>
-        <Card className="h-fit space-y-2 text-sm lg:col-start-3">
+        <Card className="h-fit space-y-2 text-base lg:col-start-3">
           <h2 className="font-semibold">Your data</h2>
-          <p className="text-muted">Import parties and items from Excel, export any list, download everything, or back up.</p>
-          <Link href="/data" className="font-medium text-brand underline">Import & export</Link>
+          <p className="text-muted">Bring your customers and items from Excel, download any list, or keep a backup of everything.</p>
+          <Link href="/data" className="font-medium text-brand underline">Excel & backup</Link>
         </Card>
-        <Card className="h-fit space-y-2 text-sm lg:col-start-3">
-          <h2 className="font-semibold">Invite other businesses</h2>
+        <Card className="h-fit space-y-2 text-base lg:col-start-3">
+          <h2 className="font-semibold">Invite other shops</h2>
           <p className="text-muted">Your link is on every statement, invoice and receipt you share. Businesses that join through it: <span className="font-semibold text-ink">{referred}</span></p>
-          <p className="break-all rounded bg-bg px-2 py-1 font-mono text-xs">{invite}</p>
+          <p className="break-all rounded bg-bg px-2 py-1 font-mono text-sm">{invite}</p>
           <CopyLink url={invite} label="Copy invite link" />
         </Card>
       </div>

@@ -6,7 +6,7 @@ import { InviteCta } from "@/components/invite-cta";
 import { CatalogueCart } from "./cart";
 
 // Public catalogue: share the link or print it as a PDF. Buyers pick items and send an order request, no login.
-export const metadata = { title: "Catalogue", robots: { index: false } };
+export const metadata = { title: "Item list to share", robots: { index: false } };
 
 export default async function Catalogue({ params }: PageProps<"/c/[token]">) {
   const { token } = await params;
@@ -25,9 +25,9 @@ export default async function Catalogue({ params }: PageProps<"/c/[token]">) {
         {/* eslint-disable-next-line @next/next/no-img-element */}
         {logo && <img src={logo} alt="" className="h-14 w-auto rounded bg-white object-contain p-1" />}
         <div className="flex-1">
-          <p className="text-xs uppercase tracking-wide text-muted">Catalogue</p>
+          <p className="text-sm uppercase tracking-wide text-muted">Item list to share</p>
           <h1 className="text-2xl font-bold">{b.name}</h1>
-          <p className="text-sm text-muted">{[b.address, b.phone].filter(Boolean).join(" · ")}</p>
+          <p className="text-base text-muted">{[b.address, b.phone].filter(Boolean).join(" · ")}</p>
         </div>
         <span className="no-print"><PrintButton /></span>
       </header>

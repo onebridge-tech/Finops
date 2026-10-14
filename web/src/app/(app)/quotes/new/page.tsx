@@ -1,7 +1,7 @@
 import { requireBusiness } from "@/lib/auth";
 import { NewDocument } from "@/components/new-document";
 
-export const metadata = { title: "New quotation" };
+export const metadata = { title: "New price quote" };
 
 export default async function NewQuote({ searchParams }: PageProps<"/quotes/new">) {
   const ctx = await requireBusiness("invoice:write");

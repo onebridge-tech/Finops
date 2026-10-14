@@ -15,7 +15,7 @@ export function BusinessForm({ action, values = {}, submitLabel }: { action: (s:
   return (
     <ActionForm dispatch={formAction} pending={pending} className="grid gap-4 sm:grid-cols-2">
       <div className="sm:col-span-2">
-        <Field label="Business name">
+        <Field label="Shop name">
           <Input name="name" defaultValue={values.name} required placeholder="Sri Sai Traders" />
         </Field>
       </div>
@@ -40,15 +40,15 @@ export function BusinessForm({ action, values = {}, submitLabel }: { action: (s:
           <Input name="address" defaultValue={values.address ?? ""} placeholder="Shop no., street, city, PIN" />
         </Field>
       </div>
-      <Field label="Business phone"><Input name="phone" defaultValue={values.phone ?? ""} inputMode="tel" /></Field>
+      <Field label="Shop phone"><Input name="phone" defaultValue={values.phone ?? ""} inputMode="tel" /></Field>
       <Field label="Email"><Input name="email" type="email" defaultValue={values.email ?? ""} /></Field>
       <Field label="UPI ID for collections" hint="Customers pay to this ID from reminders, statements and invoices.">
         <Input name="upiId" defaultValue={values.upiId ?? ""} placeholder="yourshop@okicici" />
       </Field>
-      <Field label="Invoice number prefix"><Input name="invoicePrefix" defaultValue={values.invoicePrefix ?? "INV-"} maxLength={10} /></Field>
+      <Field label="Bill number starts with"><Input name="invoicePrefix" defaultValue={values.invoicePrefix ?? "INV-"} maxLength={10} /></Field>
       <div className="space-y-3 sm:col-span-2">
         <ErrorText>{state.error}</ErrorText>
-        {state.ok && <p className="text-sm text-got">Saved.</p>}
+        {state.ok && <p className="text-base text-got">Saved.</p>}
         <SubmitButton>{submitLabel}</SubmitButton>
       </div>
     </ActionForm>

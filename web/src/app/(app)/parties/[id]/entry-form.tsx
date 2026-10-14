@@ -90,7 +90,7 @@ export function EntryForm({ partyId, today, isSupplier, canNotify, notifyDefault
               ))}
             </ul>
           )}
-          {settle === "BILLS" && <p className="text-xs text-muted">Any part of the payment you don’t assign settles the oldest bills first. A part-payment keeps the rest of that bill open.</p>}
+          {settle === "BILLS" && <p className="text-xs text-muted">Anything you don’t assign goes to the oldest bills first. If they pay only part of a bill, the rest stays pending.</p>}
         </fieldset>
       )}
 

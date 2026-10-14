@@ -40,7 +40,7 @@ export function PartyForm({ defaultState, party, owners, branches, defaultBranch
           <option value="CUSTOMER">Customer</option>
           <option value="SUPPLIER">Supplier</option>
           <option value="BOTH">Customer & supplier</option>
-          <option value="LEAD">Lead (prospect)</option>
+          <option value="LEAD">Possible customer</option>
         </Select>
       </Field>
       <Field label="Mobile (for WhatsApp reminders)"><Input name="phone" inputMode="tel" defaultValue={v?.phone ? `+${v.phone}` : ""} placeholder="98480 12345" /></Field>
@@ -56,16 +56,16 @@ export function PartyForm({ defaultState, party, owners, branches, defaultBranch
         </Select>
       </Field>
       <Field label="Email"><Input name="email" type="email" defaultValue={v?.email} /></Field>
-      <Field label="Credit days" hint="Default due date for credit you give.">
+      <Field label="Days to pay" hint="Default due date for credit you give.">
         <Input name="creditDays" inputMode="numeric" placeholder="30" defaultValue={v?.creditDays} />
       </Field>
       <Field label="Credit limit (₹)" hint="Optional. Credit control warns or blocks above this.">
         <Input name="creditLimit" inputMode="decimal" defaultValue={v?.creditLimit} />
       </Field>
       {priceLists.length > 0 && (
-        <Field label="Price list" hint="Rates and quantity slabs fill in on documents for this party">
+        <Field label="Special price list" hint="Rates and quantity slabs fill in on documents for this party">
           <Select name="priceListId" defaultValue={v?.priceListId ?? ""}>
-            <option value="">Standard prices</option>
+            <option value="">Normal prices</option>
             {priceLists.map((l) => <option key={l.id} value={l.id}>{l.name}</option>)}
           </Select>
         </Field>
@@ -77,7 +77,7 @@ export function PartyForm({ defaultState, party, owners, branches, defaultBranch
       </Field>
       <Field label="Source" hint="Walk-in, referral, trade show, website…"><Input name="source" defaultValue={v?.source} /></Field>
       {owners && (
-        <Field label="Assigned to" hint="Field reps see only parties assigned to them">
+        <Field label="Assigned to" hint="Salesmen see only the customers given to them">
           <Select name="ownerId" defaultValue={v?.ownerId ?? ""}>
             <option value="">Nobody in particular</option>
             {owners.map((o) => <option key={o.id} value={o.id}>{o.name}</option>)}
@@ -95,18 +95,18 @@ export function PartyForm({ defaultState, party, owners, branches, defaultBranch
       <div className="sm:col-span-2"><Field label="Address"><Input name="address" defaultValue={v?.address} /></Field></div>
       {!v && (
         <>
-          <Field label="Opening balance (₹)"><Input name="opening" inputMode="decimal" placeholder="0" /></Field>
-          <Field label="Opening balance is">
+          <Field label="Already pending before using this app (₹)"><Input name="opening" inputMode="decimal" placeholder="0" /></Field>
+          <Field label="This amount is">
             <Select name="openingDirection" defaultValue="GAVE">
               <option value="GAVE">They owe me</option>
               <option value="GOT">I owe them</option>
             </Select>
           </Field>
-          <label className="flex items-start gap-2 text-sm sm:col-span-2">
+          <label className="flex items-start gap-2 text-base sm:col-span-2">
             <input type="checkbox" name="consent" className="mt-0.5 size-4 accent-[var(--brand)]" />
             <span>
               This party agreed to receive account messages (reminders, receipts, invoices) on WhatsApp, SMS or email.
-              <span className="block text-xs text-muted">Required before the app can message them. They can stop messages at any time from a link in each message.</span>
+              <span className="block text-sm text-muted">Needed before we can message them. They can stop messages any time from a link in each message.</span>
             </span>
           </label>
         </>

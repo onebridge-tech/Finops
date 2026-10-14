@@ -20,22 +20,22 @@ export function MessagingSettingsForm({ values: v }: Props) {
   const [state, action, pending] = useActionState(updateMessagingSettings, {});
   return (
     <ActionForm dispatch={action} pending={pending} className="space-y-4">
-      <label className="flex items-center gap-2 text-sm font-medium">
+      <label className="flex items-center gap-2 text-base font-medium">
         <input type="checkbox" name="reminderEnabled" defaultChecked={v.reminderEnabled} className={check} />
         Send automatic payment reminders
       </label>
       <RuleFields rule={v} />
-      <p className="text-xs text-muted">Sent between 9 am and 8 pm, at most once a day per party, only to parties who agreed to messages. Reminders stop by themselves once a party has paid or is marked disputed.</p>
-      <label className="flex items-center gap-2 text-sm">
+      <p className="text-sm text-muted">Sent between 9 am and 8 pm, at most once a day per party, only to parties who agreed to messages. Reminders stop by themselves once a party has paid or is marked disputed.</p>
+      <label className="flex items-center gap-2 text-base">
         <input type="checkbox" name="autoReceipt" defaultChecked={v.autoReceipt} className={check} />
         Send a receipt automatically for every payment received
       </label>
-      <label className="flex items-center gap-2 text-sm">
+      <label className="flex items-center gap-2 text-base">
         <input type="checkbox" name="entryConfirm" defaultChecked={v.entryConfirm} className={check} />
         Tick “send this entry to the party” by default on new entries
       </label>
       <ErrorText>{state.error}</ErrorText>
-      {state.info && <p className="text-sm text-got">{state.info}</p>}
+      {state.info && <p className="text-base text-got">{state.info}</p>}
       <SubmitButton>Save messaging settings</SubmitButton>
     </ActionForm>
   );
@@ -45,8 +45,8 @@ export function RunRemindersButton() {
   const [state, action, pending] = useActionState(runRemindersNow, {});
   return (
     <ActionForm dispatch={() => action()} pending={pending} className="space-y-2">
-      <SubmitButton variant="secondary">Run reminders, digest & tasks now</SubmitButton>
-      {state.info && <p className="text-xs text-muted">{state.info}</p>}
+      <SubmitButton variant="secondary">Run reminders and summary now</SubmitButton>
+      {state.info && <p className="text-sm text-muted">{state.info}</p>}
     </ActionForm>
   );
 }

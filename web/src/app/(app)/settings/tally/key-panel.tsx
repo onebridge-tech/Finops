@@ -8,11 +8,11 @@ export function KeyPanel({ hasKey }: { hasKey: boolean }) {
   const [key, setKey] = useState<string | null>(null);
   const [pending, start] = useTransition();
   return (
-    <Card className="space-y-3 text-sm">
+    <Card className="space-y-3 text-base">
       <p>{hasKey ? "A connector key is active. Making a new one stops the old one working." : "No connector key yet."}</p>
       {key && (
         <div className="rounded-lg border border-line bg-bg p-3">
-          <p className="mb-1 text-xs text-muted">Copy this now. It is not shown again.</p>
+          <p className="mb-1 text-sm text-muted">Copy this now. It is not shown again.</p>
           <code className="break-all select-all">{key}</code>
         </div>
       )}

@@ -19,16 +19,16 @@ export function FulfilForm({ kind, orderId, lines }: { kind: "SALES" | "PURCHASE
   return (
     <ActionForm dispatch={action} pending={pending} className="space-y-3">
       <input type="hidden" name="orderId" value={orderId} />
-      <ul className="divide-y divide-line text-sm">
+      <ul className="divide-y divide-line text-base">
         {lines.map((l) => (
           <li key={l.id} className="flex flex-wrap items-center justify-between gap-3 py-2">
             <span>
               {l.description}
-              <span className="block text-xs text-muted">Ordered {l.ordered} {l.unit} · {kind === "SALES" ? "delivered" : "received"} {l.done} · pending {l.pending}</span>
+              <span className="block text-sm text-muted">Ordered {l.ordered} {l.unit} · {kind === "SALES" ? "delivered" : "received"} {l.done} · pending {l.pending}</span>
             </span>
             {l.pending > 0
               ? <Input name={`qty_${l.id}`} inputMode="decimal" placeholder="Qty now" className="w-28" aria-label={`Quantity for ${l.description}`} />
-              : <span className="text-xs text-got">complete</span>}
+              : <span className="text-sm text-got">complete</span>}
           </li>
         ))}
       </ul>
@@ -37,8 +37,8 @@ export function FulfilForm({ kind, orderId, lines }: { kind: "SALES" | "PURCHASE
       <ErrorText>{state.error}</ErrorText>
       <div className="flex items-center gap-3">
         <SubmitButton>{kind === "SALES" ? "Deliver & create invoice" : "Receive goods"}</SubmitButton>
-        <button type="button" className="text-xs text-muted underline" onClick={(e) => fillAll(e.currentTarget.form)}>Fill everything pending</button>
-        {state.ok && <span className="text-sm text-got">Received.</span>}
+        <button type="button" className="text-sm text-muted underline" onClick={(e) => fillAll(e.currentTarget.form)}>Fill everything pending</button>
+        {state.ok && <span className="text-base text-got">Received.</span>}
       </div>
     </ActionForm>
   );

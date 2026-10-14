@@ -24,8 +24,8 @@ export function ItemForm({ item, bases }: { item?: ItemValues; bases: { id: stri
     <ActionForm ref={form} dispatch={action} pending={pending} className="grid gap-3 sm:grid-cols-6">
       {v && <input type="hidden" name="itemId" value={v.id} />}
       <div className="sm:col-span-2"><Field label="Item name"><Input name="name" required defaultValue={v?.name} /></Field></div>
-      <Field label="Sale price (₹, excl. GST)"><Input name="price" inputMode="decimal" required defaultValue={v?.price} /></Field>
-      <Field label="Purchase price (₹)" hint="Optional, for margins"><Input name="purchasePrice" inputMode="decimal" defaultValue={v?.purchasePrice} /></Field>
+      <Field label="Selling price (₹, before GST)"><Input name="price" inputMode="decimal" required defaultValue={v?.price} /></Field>
+      <Field label="Buying price (₹)" hint="Optional. Helps show your profit."><Input name="purchasePrice" inputMode="decimal" defaultValue={v?.purchasePrice} /></Field>
       <Field label="GST rate">
         <Select name="taxRateBp" defaultValue={String(v?.taxRateBp ?? 1800)}>
           {GST_RATES_BP.map((r) => <option key={r} value={r}>{r / 100}%</option>)}
@@ -33,7 +33,7 @@ export function ItemForm({ item, bases }: { item?: ItemValues; bases: { id: stri
       </Field>
       <Field label="Unit"><Input name="unit" defaultValue={v?.unit ?? "pcs"} required /></Field>
       <Field label="HSN/SAC"><Input name="hsn" inputMode="numeric" defaultValue={v?.hsn} /></Field>
-      <Field label="SKU / code"><Input name="sku" defaultValue={v?.sku} /></Field>
+      <Field label="Item code (optional)"><Input name="sku" defaultValue={v?.sku} /></Field>
       <Field label="Variant of" hint="Leave as none for a base product">
         <Select name="parentId" defaultValue={v?.parentId ?? ""}>
           <option value="">None</option>
@@ -43,20 +43,20 @@ export function ItemForm({ item, bases }: { item?: ItemValues; bases: { id: stri
       <Field label="Variant name" hint="e.g. Red / XL"><Input name="variantName" defaultValue={v?.variantName} /></Field>
       <div className="sm:col-span-2"><Field label="Description"><Input name="description" defaultValue={v?.description} /></Field></div>
       <Field label="Category" hint="Used in sales analysis and the catalogue"><Input name="category" defaultValue={v?.category} placeholder="Grains, Furniture…" /></Field>
-      <label className="flex items-center gap-2 self-center text-sm"><input type="checkbox" name="trackStock" defaultChecked={v?.trackStock} className="size-4 accent-[var(--brand)]" /> Track stock</label>
-      <Field label="Reorder at" hint="Alert when stock falls to this"><Input name="reorderLevel" inputMode="decimal" defaultValue={v?.reorderLevel} /></Field>
+      <label className="flex items-center gap-2 self-center text-base"><input type="checkbox" name="trackStock" defaultChecked={v?.trackStock} className="size-4 accent-[var(--brand)]" /> Track stock</label>
+      <Field label="Low-stock level" hint="Alert when stock falls to this"><Input name="reorderLevel" inputMode="decimal" defaultValue={v?.reorderLevel} /></Field>
       {!v && <Field label="Opening stock" hint="If tracking"><Input name="openingStock" inputMode="decimal" /></Field>}
       <div className="sm:col-span-3">
         <Field label="Image" hint="PNG, JPG or WebP, up to 2 MB">
           <div className="flex items-center gap-3">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             {v?.imageUrl && <img src={v.imageUrl} alt="" className="h-12 w-12 rounded border border-line object-cover" />}
-            <input type="file" name="image" accept="image/png,image/jpeg,image/webp" className="text-sm" />
+            <input type="file" name="image" accept="image/png,image/jpeg,image/webp" className="text-base" />
           </div>
-          {v?.imageUrl && <label className="mt-1 flex items-center gap-1 text-xs text-muted"><input type="checkbox" name="removeImage" /> Remove image</label>}
+          {v?.imageUrl && <label className="mt-1 flex items-center gap-1 text-sm text-muted"><input type="checkbox" name="removeImage" /> Remove image</label>}
         </Field>
       </div>
-      <label className="flex items-center gap-2 self-center text-sm sm:col-span-3">
+      <label className="flex items-center gap-2 self-center text-base sm:col-span-3">
         <input type="checkbox" name="isPublic" defaultChecked={v?.isPublic} className="size-4 accent-[var(--brand)]" />
         Show in my shareable catalogue
       </label>

@@ -7,7 +7,7 @@ import { archivePriceList, deletePriceRow } from "@/app/actions/catalog";
 import { Card, PageHeader } from "@/components/ui";
 import { FillForm, RateForm } from "../forms";
 
-export const metadata = { title: "Price list" };
+export const metadata = { title: "Special price list" };
 
 export default async function PriceListPage({ params }: PageProps<"/price-lists/[id]">) {
   const { id } = await params;
@@ -32,10 +32,10 @@ export default async function PriceListPage({ params }: PageProps<"/price-lists/
           <Card className="space-y-3"><h2 className="font-semibold">Fill the whole list</h2><FillForm listId={list.id} /></Card>
         </div>
       )}
-      {rows.length === 0 ? <Card className="text-sm text-muted">No rates yet. Items not on this list use their standard price.</Card> : (
+      {rows.length === 0 ? <Card className="text-base text-muted">No rates yet. Items not on this list use their standard price.</Card> : (
         <Card className="overflow-x-auto p-0">
-          <table className="w-full min-w-[480px] text-sm">
-            <thead className="border-b border-line text-left text-xs uppercase text-muted"><tr><th className="px-4 py-2">Item</th><th className="px-4 py-2 text-right">From qty</th><th className="px-4 py-2 text-right">Rate</th><th className="px-4 py-2 text-right">Standard</th><th className="px-4 py-2"></th></tr></thead>
+          <table className="w-full min-w-[480px] text-base">
+            <thead className="border-b border-line text-left text-sm uppercase text-muted"><tr><th className="px-4 py-2">Item</th><th className="px-4 py-2 text-right">From qty</th><th className="px-4 py-2 text-right">Rate</th><th className="px-4 py-2 text-right">Standard</th><th className="px-4 py-2"></th></tr></thead>
             <tbody className="divide-y divide-line">
               {rows.map((r) => (
                 <tr key={r.id}>
@@ -43,7 +43,7 @@ export default async function PriceListPage({ params }: PageProps<"/price-lists/
                   <td className="px-4 py-2 text-right tabular-nums">{r.minQtyMilli === 0 ? "any" : r.minQtyMilli / 1000 + "+"}</td>
                   <td className="px-4 py-2 text-right font-semibold tabular-nums">{formatINR(r.ratePaise)}</td>
                   <td className="px-4 py-2 text-right tabular-nums text-muted">{formatINR(standard.get(r.itemId) ?? 0)}</td>
-                  <td className="px-4 py-2 text-right">{write && <form action={deletePriceRow}><input type="hidden" name="rowId" value={r.id} /><button className="text-xs text-muted underline hover:text-gave">Remove</button></form>}</td>
+                  <td className="px-4 py-2 text-right">{write && <form action={deletePriceRow}><input type="hidden" name="rowId" value={r.id} /><button className="text-sm text-muted underline hover:text-gave">Remove</button></form>}</td>
                 </tr>
               ))}
             </tbody>
@@ -53,7 +53,7 @@ export default async function PriceListPage({ params }: PageProps<"/price-lists/
       {write && (
         <form action={archivePriceList} className="mt-4">
           <input type="hidden" name="listId" value={list.id} />
-          <button className="text-sm text-muted underline hover:text-gave">Archive this list (parties on it go back to standard prices)</button>
+          <button className="text-base text-muted underline hover:text-gave">Archive this list (parties on it go back to standard prices)</button>
         </form>
       )}
     </>

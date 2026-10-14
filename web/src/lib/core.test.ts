@@ -153,6 +153,6 @@ describe("translations", () => {
     const { translator } = await import("./i18n");
     expect(translator("hi")("nav.home")).toBe("होम");
     expect(translator("ta")("parties.total", { n: 4 })).toBe("மொத்தம் 4");
-    expect(translator("xx")("dash.ofDue", { amount: "₹5" })).toBe("of ₹5 due");
+    expect(translator("xx")("dash.ofDue", { amount: "₹5" })).toBe("of ₹5 total pending");
   });
 });

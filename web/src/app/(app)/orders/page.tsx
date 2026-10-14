@@ -31,10 +31,10 @@ export default async function Orders({ searchParams }: PageProps<"/orders">) {
     <>
       <PageHeader
         title="Orders"
-        sub="What customers have ordered and what you have ordered from suppliers."
-        action={<div className="flex gap-2"><LinkButton href="/orders/new?kind=PURCHASE" variant="secondary">Purchase order</LinkButton><LinkButton href="/orders/new">Sales order</LinkButton></div>}
+        sub="What customers ordered from you, and what you ordered from suppliers."
+        action={<div className="flex gap-2"><LinkButton href="/orders/new?kind=PURCHASE" variant="secondary">Order to supplier</LinkButton><LinkButton href="/orders/new">Customer order</LinkButton></div>}
       />
-      <nav className="mb-4 flex flex-wrap gap-1 text-sm">
+      <nav className="mb-4 flex flex-wrap gap-1 text-base">
         {TABS.map(([t, l]) => (
           <Link key={t} href={`/orders?tab=${t}`} className={`rounded-lg px-3 py-1.5 ${tab === t ? "bg-brand text-brand-ink" : "text-muted hover:bg-card"}`}>
             {l}{t === "requests" && requests > 0 && <span className="ml-1 rounded-full bg-gave px-1.5 text-[10px] font-semibold text-white">{requests}</span>}
@@ -43,12 +43,12 @@ export default async function Orders({ searchParams }: PageProps<"/orders">) {
         <Link href="/reports/orders" className="ml-auto px-3 py-1.5 text-muted underline">Pending-items report</Link>
       </nav>
       {orders.length === 0 ? <EmptyState title="No orders here" /> : (
-        <Card className="divide-y divide-line p-0 text-sm">
+        <Card className="divide-y divide-line p-0 text-base">
           {orders.map((o) => (
             <Link key={o.id} href={`/orders/${o.id}`} className="flex items-center justify-between gap-3 px-4 py-3 hover:bg-bg">
               <span>
                 <span className="block font-medium">{o.number} · {pn.get(o.partyId) ?? "—"}</span>
-                <span className="text-xs text-muted">
+                <span className="text-sm text-muted">
                   {fmtDate(o.date)}{o.expectedDate && ` · expected ${fmtDate(o.expectedDate)}`}
                   {o.source === "CATALOGUE" && " · from catalogue"}{o.source === "VISIT" && " · taken on a visit"} · <span className={TONE[o.status]}>{o.status.toLowerCase()}</span>
                 </span>

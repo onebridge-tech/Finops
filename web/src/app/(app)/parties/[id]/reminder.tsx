@@ -8,7 +8,7 @@ import { buttonClass } from "@/components/ui";
 export function ReminderButton({ partyId, href, text, label = "Send WhatsApp reminder" }: { partyId: string; href: string | null; text: string; label?: string }) {
   const [pending, start] = useTransition();
   if (!href) {
-    return <span className="self-center text-xs text-muted">Add a mobile number to send reminders</span>;
+    return <span className="self-center text-sm text-muted">Add a mobile number to send WhatsApp reminders</span>;
   }
   return (
     <a

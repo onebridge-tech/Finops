@@ -41,12 +41,12 @@ export function CompleteFollowUp({ id }: { id: string }) {
   const [open, setOpen] = useState(false);
   const [state, action, pending] = useActionState(completeFollowUp, {});
   const t = useT();
-  if (!open) return <button type="button" onClick={() => setOpen(true)} className="text-xs font-medium text-brand underline">{t("fu.markDone")}</button>;
+  if (!open) return <button type="button" onClick={() => setOpen(true)} className="text-sm font-medium text-brand underline">{t("fu.markDone")}</button>;
   return (
     <ActionForm dispatch={action} pending={pending} className="mt-2 flex flex-wrap items-end gap-2">
       <input type="hidden" name="followUpId" value={id} />
       <Input name="outcome" placeholder="What happened? e.g. promised to pay Friday" className="min-w-56 flex-1" />
-      <label className="text-xs text-muted">Next follow-up <Input name="nextDate" type="date" className="w-auto" /></label>
+      <label className="text-sm text-muted">Next follow-up <Input name="nextDate" type="date" className="w-auto" /></label>
       <SubmitButton variant="secondary">Save</SubmitButton>
       <ErrorText>{state.error}</ErrorText>
     </ActionForm>

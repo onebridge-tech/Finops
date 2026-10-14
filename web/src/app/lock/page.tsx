@@ -15,10 +15,10 @@ export default async function Lock() {
     <main className="mx-auto flex min-h-screen max-w-xs flex-col justify-center px-4 text-center">
       <p className="text-4xl" aria-hidden>🔒</p>
       <h1 className="mt-2 text-xl font-bold">Locked</h1>
-      <p className="mb-6 text-sm text-muted">{user?.name ?? `+${user?.phone}`}, enter your PIN to continue.</p>
+      <p className="mb-6 text-base text-muted">{user?.name ?? `+${user?.phone}`}, enter your PIN to continue.</p>
       <UnlockForm />
       <form action={logout} className="mt-6">
-        <button className="text-sm text-muted underline">Sign out instead</button>
+        <button className="text-base text-muted underline">Sign out instead</button>
       </form>
     </main>
   );

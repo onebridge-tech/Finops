@@ -59,14 +59,14 @@ export default async function Collections({ searchParams }: PageProps<"/collecti
         {totals.map(([k, v]) => (
           <Link key={k} href={href({ view: "overdue", bucket: bucket === k ? null : k })}>
             <Card className={`hover:bg-bg ${bucket === k && view === "overdue" ? "border-brand" : ""}`}>
-              <p className="text-sm text-muted">{t("collect.daysOverdue", { range: k })}</p>
+              <p className="text-base text-muted">{t("collect.daysOverdue", { range: k })}</p>
               <p className="mt-1 text-xl font-semibold tabular-nums text-gave">{formatINR(v)}</p>
             </Card>
           </Link>
         ))}
       </div>
 
-      <nav className="mt-4 flex flex-wrap gap-1 text-sm">
+      <nav className="mt-4 flex flex-wrap gap-1 text-base">
         {VIEWS.map(([v, label]) => (
           <Link key={v} href={href({ view: v, bucket: v === "overdue" ? bucket : null })}
             className={`rounded-lg px-3 py-1.5 ${view === v ? "bg-brand text-brand-ink" : "text-muted hover:bg-card"}`}>
@@ -77,7 +77,7 @@ export default async function Collections({ searchParams }: PageProps<"/collecti
 
       <div className="mt-4">
         {rows.length === 0 ? (
-          <EmptyState title="Nothing here">No parties match this view.</EmptyState>
+          <EmptyState title="Nothing here">Nobody here yet.</EmptyState>
         ) : can(role, "reminder:send") ? (
           <BulkReminderForm
             credits={business.creditBalance}
@@ -88,7 +88,7 @@ export default async function Collections({ searchParams }: PageProps<"/collecti
             }))}
           />
         ) : (
-          <Card className="divide-y divide-line p-0 text-sm">
+          <Card className="divide-y divide-line p-0 text-base">
             {rows.map((p) => (
               <Link key={p.id} href={`/parties/${p.id}`} className="flex justify-between px-4 py-3 hover:bg-bg">
                 <span>{p.name}</span><span className="tabular-nums text-gave">{formatINR(amountFor(p))}</span>

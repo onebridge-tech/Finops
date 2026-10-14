@@ -4,7 +4,7 @@ import { db } from "@/lib/db";
 import { Card, EmptyState, PageHeader } from "@/components/ui";
 import { NewListForm } from "./forms";
 
-export const metadata = { title: "Price lists" };
+export const metadata = { title: "Special prices" };
 
 export default async function PriceLists() {
   const ctx = await requireBusiness();
@@ -15,14 +15,14 @@ export default async function PriceLists() {
   const used = new Map(parties.map((p) => [p.priceListId, p._count]));
   return (
     <>
-      <PageHeader title="Price lists" sub="Dealer, distributor or party-specific rates, with quantity slabs. The right rate fills in on quotes, orders and invoices." />
+      <PageHeader title="Special prices" sub="A different rate for dealers or regular customers, even by quantity. The right rate fills in by itself on price quotes, orders and bills." />
       {can(ctx.role, "item:write") && <Card className="mb-4"><NewListForm /></Card>}
       {lists.length === 0 ? <EmptyState title="No price lists yet">Create one, add rates, then pick it on a party’s page (Edit).</EmptyState> : (
-        <Card className="divide-y divide-line p-0 text-sm">
+        <Card className="divide-y divide-line p-0 text-base">
           {lists.map((l) => (
             <Link key={l.id} href={`/price-lists/${l.id}`} className="flex items-center justify-between px-4 py-3 hover:bg-bg">
               <span className="font-medium">{l.name}</span>
-              <span className="text-xs text-muted">{l._count.items} rates · {used.get(l.id) ?? 0} parties</span>
+              <span className="text-sm text-muted">{l._count.items} rates · {used.get(l.id) ?? 0} parties</span>
             </Link>
           ))}
         </Card>

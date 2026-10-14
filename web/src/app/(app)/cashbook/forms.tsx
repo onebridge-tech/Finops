@@ -15,9 +15,9 @@ export function CloseDayForm({ today, branchId }: { today: string; branchId: str
       <Field label="Cash counted (₹)"><Input name="counted" inputMode="decimal" required /></Field>
       <div className="sm:col-span-2"><Field label="Note"><Input name="note" placeholder="Optional, e.g. ₹200 short, change given" /></Field></div>
       <div className="flex items-center gap-3 sm:col-span-4">
-        <SubmitButton>Close the day</SubmitButton>
+        <SubmitButton>Close today</SubmitButton>
         <ErrorText>{state.error}</ErrorText>
-        {state.info && <span className="text-sm">{state.info}</span>}
+        {state.info && <span className="text-base">{state.info}</span>}
       </div>
     </ActionForm>
   );
@@ -31,7 +31,7 @@ export function AdjustmentForm({ today }: { today: string }) {
     <ActionForm ref={form} dispatch={action} pending={pending} className="grid gap-3 sm:grid-cols-5">
       <Field label="Date"><Input name="date" type="date" defaultValue={today} max={today} required /></Field>
       <Field label="Direction">
-        <Select name="direction" defaultValue="OUT"><option value="OUT">Cash out (drawings, deposit)</option><option value="IN">Cash in (float, top-up)</option></Select>
+        <Select name="direction" defaultValue="OUT"><option value="OUT">Money taken out of the drawer</option><option value="IN">Money put into the drawer</option></Select>
       </Field>
       <Field label="Amount (₹)"><Input name="amount" inputMode="decimal" required /></Field>
       <div className="sm:col-span-2"><Field label="What for"><Input name="note" required placeholder="Deposited to bank / owner drawings" /></Field></div>
@@ -47,7 +47,7 @@ export function OpeningCashForm({ value }: { value: string }) {
       <Field label="Cash in hand when you started using the app (₹)"><Input name="opening" inputMode="decimal" defaultValue={value} /></Field>
       <SubmitButton variant="secondary">Save</SubmitButton>
       <ErrorText>{state.error}</ErrorText>
-      {state.info && <span className="text-sm text-got">{state.info}</span>}
+      {state.info && <span className="text-base text-got">{state.info}</span>}
     </ActionForm>
   );
 }

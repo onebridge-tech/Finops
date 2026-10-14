@@ -15,7 +15,7 @@ export function AdjustStockForm({ items, selected }: { items: { id: string; name
       <Field label="Item"><Select name="itemId" defaultValue={selected || items[0]?.id}>{items.map((i) => <option key={i.id} value={i.id}>{i.name}</option>)}</Select></Field>
       <Field label="Change" hint="+10 adds, -2 removes"><Input name="qty" inputMode="decimal" required /></Field>
       <div className="sm:col-span-2"><Field label="Why"><Input name="note" required placeholder="Physical count / damaged / found" /></Field></div>
-      <div className="flex items-center gap-3 sm:col-span-4"><SubmitButton variant="secondary">Record adjustment</SubmitButton><ErrorText>{state.error}</ErrorText>{state.info && <span className="text-sm text-got">{state.info}</span>}</div>
+      <div className="flex items-center gap-3 sm:col-span-4"><SubmitButton variant="secondary">Record adjustment</SubmitButton><ErrorText>{state.error}</ErrorText>{state.info && <span className="text-base text-got">{state.info}</span>}</div>
     </ActionForm>
   );
 }

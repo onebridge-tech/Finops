@@ -45,7 +45,7 @@ export default async function InvoicePage({ params }: PageProps<"/invoices/[id]"
             <div className="flex flex-wrap gap-2">
               <CopyLink url={url} />
               <PrintButton />
-              {can(role, "invoice:write") && !cancelled && <Link href={`/notes/new?invoice=${invoice.id}`} className={buttonClass("secondary")}>Credit note</Link>}
+              {can(role, "invoice:write") && !cancelled && <Link href={`/notes/new?invoice=${invoice.id}`} className={buttonClass("secondary")}>Return note</Link>}
               {wa && !cancelled && <a href={wa} target="_blank" rel="noopener noreferrer" className={buttonClass("primary")}>Share on WhatsApp</a>}
             </div>
           }
@@ -53,7 +53,7 @@ export default async function InvoicePage({ params }: PageProps<"/invoices/[id]"
         {!cancelled && (
           <Card className="mb-4 flex flex-wrap items-center justify-between gap-3">
             {can(role, "reminder:send") && (
-              <div className="flex flex-wrap items-center gap-2 text-sm">
+              <div className="flex flex-wrap items-center gap-2 text-base">
                 <span className="text-muted">Send from the app:</span>
                 <SendDocumentForm kind="INVOICE" id={invoice.id} blocked={{ WHATSAPP: blockedReason(p, "WHATSAPP"), SMS: blockedReason(p, "SMS"), EMAIL: blockedReason(p, "EMAIL") }} />
               </div>
@@ -62,7 +62,7 @@ export default async function InvoicePage({ params }: PageProps<"/invoices/[id]"
           </Card>
         )}
         {cancelled && (
-          <Card className="mb-4 text-sm text-muted">
+          <Card className="mb-4 text-base text-muted">
             Cancelled {fmtDate(invoice.cancelledAt)}: {invoice.cancelReason}. {formatINR(invoice.totalPaise)} was reversed in the customer’s ledger.
           </Card>
         )}

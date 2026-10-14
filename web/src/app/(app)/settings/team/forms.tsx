@@ -25,16 +25,16 @@ function AccessFields({ branches, canAddOwner, member }: { branches: Branch[]; c
           {branches.map((b) => <option key={b.id} value={b.id}>{b.name} only</option>)}
         </Select>
       </Field>
-      <Field label="Parties" hint={role === "REP" ? "Field reps always see only their assigned parties" : undefined}>
+      <Field label="Customers & suppliers" hint={role === "REP" ? "Field reps always see only their assigned parties" : undefined}>
         {role === "REP" ? (
           <>
             <input type="hidden" name="partyScope" value="ASSIGNED" />
-            <Select disabled value="ASSIGNED"><option value="ASSIGNED">Only parties assigned to them</option></Select>
+            <Select disabled value="ASSIGNED"><option value="ASSIGNED">Only the customers given to them</option></Select>
           </>
         ) : (
           <Select name="partyScope" defaultValue={member?.partyScope ?? "ALL"}>
-            <option value="ALL">All parties</option>
-            <option value="ASSIGNED">Only parties assigned to them</option>
+            <option value="ALL">Everyone</option>
+            <option value="ASSIGNED">Only the customers given to them</option>
           </Select>
         )}
       </Field>
@@ -58,8 +58,8 @@ export function InviteForm({ branches, canAddOwner }: { branches: Branch[]; canA
       <AccessFields branches={branches} canAddOwner={canAddOwner} />
       <div className="space-y-2 sm:col-span-3">
         <ErrorText>{state.error}</ErrorText>
-        {state.info && <p className="text-sm text-got">{state.info}</p>}
-        <SubmitButton>Add to team</SubmitButton>
+        {state.info && <p className="text-base text-got">{state.info}</p>}
+        <SubmitButton>Add to staff</SubmitButton>
       </div>
     </ActionForm>
   );
@@ -73,7 +73,7 @@ export function MemberForm({ branches, canAddOwner, member }: { branches: Branch
       <AccessFields branches={branches} canAddOwner={canAddOwner} member={member} />
       <div className="space-y-2 sm:col-span-4">
         <ErrorText>{state.error}</ErrorText>
-        {state.info && <p className="text-sm text-got">{state.info}</p>}
+        {state.info && <p className="text-base text-got">{state.info}</p>}
         <SubmitButton variant="secondary">Save access</SubmitButton>
       </div>
     </ActionForm>

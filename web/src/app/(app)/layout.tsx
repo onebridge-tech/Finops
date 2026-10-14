@@ -38,15 +38,15 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
               <Link href="/dashboard" className="flex items-center gap-2 pr-1 font-bold" aria-label={`${BRAND.NAME} home`}><Logo /><span className="hidden text-lg sm:inline">{BRAND.NAME}</span></Link>
               <BusinessSwitcher current={business.id} businesses={memberships.map((m) => m.business)} />
               {tiedBranch ? (
-                <span className="rounded-lg border border-line px-2 py-1 text-sm text-muted">{tiedBranch.name}</span>
+                <span className="rounded-lg border border-line px-2 py-1 text-base text-muted">{tiedBranch.name}</span>
               ) : (
                 branches.length > 0 && <BranchSwitcher current={branchId ?? ""} branches={branches} />
               )}
             </div>
             <nav className="hidden md:block"><NavLinks followUpsDue={followUpsDue} /></nav>
-            <div className="flex items-center gap-2 text-sm text-muted">
+            <div className="flex items-center gap-2 text-base text-muted">
               <form action="/search" role="search" className="hidden lg:block">
-                <input name="q" placeholder={`${t("nav.search")}…`} aria-label={t("nav.search")} className="w-40 rounded-lg border border-line bg-bg px-2.5 py-1 text-sm outline-none focus:w-56 focus:border-brand" />
+                <input name="q" placeholder={`${t("nav.search")}…`} aria-label={t("nav.search")} className="w-40 rounded-lg border border-line bg-bg px-2.5 py-1 text-base outline-none focus:w-56 focus:border-brand" />
               </form>
               <Link href="/search" aria-label={t("nav.search")} className="rounded-lg px-1.5 py-1 hover:bg-bg lg:hidden">🔍</Link>
               <Link href="/settings/security" className="hidden hover:text-ink sm:inline">

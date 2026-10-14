@@ -33,7 +33,7 @@ export function BrandingForm({ values: v }: { values: Values }) {
           <textarea name="docTerms" rows={3} defaultValue={v.docTerms ?? ""} className={inputClass} placeholder="Goods once sold will not be taken back. Interest at 18% p.a. after due date." />
         </Field>
       </div>
-      <Field label="Quotation number prefix"><Input name="quotePrefix" defaultValue={v.quotePrefix} maxLength={10} /></Field>
+      <Field label="Price quote number starts with"><Input name="quotePrefix" defaultValue={v.quotePrefix} maxLength={10} /></Field>
       <div />
       <Field label="Bank name"><Input name="bankName" defaultValue={v.bankName ?? ""} /></Field>
       <Field label="Account holder name"><Input name="bankAccountName" defaultValue={v.bankAccountName ?? ""} /></Field>
@@ -41,7 +41,7 @@ export function BrandingForm({ values: v }: { values: Values }) {
       <Field label="IFSC"><Input name="bankIfsc" defaultValue={v.bankIfsc ?? ""} className="uppercase" maxLength={11} /></Field>
       <div className="space-y-3 sm:col-span-2">
         <ErrorText>{state.error}</ErrorText>
-        {state.ok && <p className="text-sm text-got">Saved. New and existing documents use this branding.</p>}
+        {state.ok && <p className="text-base text-got">Saved. New and existing documents use this branding.</p>}
         <SubmitButton>Save branding</SubmitButton>
       </div>
     </ActionForm>
@@ -54,10 +54,10 @@ function ImageField({ name, label, hint, current }: { name: string; label: strin
       <div className="flex items-center gap-3">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         {current && <img src={current} alt="" className="h-12 w-auto rounded border border-line bg-white object-contain p-1" />}
-        <input type="file" name={name} accept="image/png,image/jpeg,image/webp" className="text-sm" />
+        <input type="file" name={name} accept="image/png,image/jpeg,image/webp" className="text-base" />
       </div>
       {current && (
-        <label className="mt-1 flex items-center gap-1 text-xs text-muted">
+        <label className="mt-1 flex items-center gap-1 text-sm text-muted">
           <input type="checkbox" name={`remove_${name}`} /> Remove
         </label>
       )}

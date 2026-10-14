@@ -8,7 +8,7 @@ import { liveVisits, teamProgress, attendanceRows, METRIC_LABEL, isMoney } from 
 import { Card, PageHeader } from "@/components/ui";
 import { TargetForm } from "./target-form";
 
-export const metadata = { title: "Team & targets" };
+export const metadata = { title: "Staff & targets" };
 
 const time = (d: Date) => d.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", timeZone: "Asia/Kolkata" });
 
@@ -26,32 +26,32 @@ export default async function Team() {
   const names = members.map((m) => ({ id: m.userId, name: m.user.name ?? `+${m.user.phone}` }));
   return (
     <>
-      <PageHeader title="Team & targets" sub={`Live view for ${fmtDate(new Date())}`} action={<Link href="/field/beats" className="text-sm text-brand underline">Beats</Link>} />
+      <PageHeader title="Staff & targets" sub={`Live view for ${fmtDate(new Date())}`} action={<Link href="/field/beats" className="text-base text-brand underline">Daily routes</Link>} />
       <section className="mb-6">
         <h2 className="mb-2 font-semibold">Attendance today</h2>
-        <Card className="divide-y divide-line p-0 text-sm">
+        <Card className="divide-y divide-line p-0 text-base">
           {att.length === 0 && <p className="px-4 py-3 text-muted">Nobody has started their day yet.</p>}
           {att.map((a) => <div key={a.rep} className="flex justify-between px-4 py-2"><span>{a.rep}</span><span className="text-muted">{time(a.at)} · {a.source === "DAYSTART" ? "started day" : "first visit"}{a.hasPhoto && " · selfie"}</span></div>)}
         </Card>
-        <p className="mt-1 text-xs"><Link className="text-brand underline" href="/reports/attendance">Attendance report and payroll export</Link> · <Link className="text-brand underline" href="/reports/missed">Missed visits</Link></p>
+        <p className="mt-1 text-sm"><Link className="text-brand underline" href="/reports/attendance">Attendance report and payroll export</Link> · <Link className="text-brand underline" href="/reports/missed">Missed visits</Link></p>
       </section>
       <section className="mb-6">
         <h2 className="mb-2 font-semibold">Visits today</h2>
-        <Card className="divide-y divide-line p-0 text-sm">
+        <Card className="divide-y divide-line p-0 text-base">
           {live.length === 0 && <p className="px-4 py-3 text-muted">No visits yet today.</p>}
           {live.map((v) => (
             <div key={v.id} className="flex flex-wrap justify-between gap-2 px-4 py-2">
-              <span>{v.rep} → {v.party}<span className="block text-xs text-muted">{time(v.at)}{v.out ? ` – ${time(v.out)}` : " · still there"}{v.outcome && ` · ${v.outcome}`}</span></span>
-              {v.distanceM !== null && <span className={`text-xs ${v.distanceM > 200 ? "font-semibold text-gave" : "text-muted"}`}>{v.distanceM > 200 ? "⚠ " : ""}{v.distanceM} m from the customer’s saved location</span>}
+              <span>{v.rep} → {v.party}<span className="block text-sm text-muted">{time(v.at)}{v.out ? ` – ${time(v.out)}` : " · still there"}{v.outcome && ` · ${v.outcome}`}</span></span>
+              {v.distanceM !== null && <span className={`text-sm ${v.distanceM > 200 ? "font-semibold text-gave" : "text-muted"}`}>{v.distanceM > 200 ? "⚠ " : ""}{v.distanceM} m from the customer’s saved location</span>}
             </div>
           ))}
         </Card>
       </section>
       <section className="mb-6">
         <h2 className="mb-2 font-semibold">Targets — {month}</h2>
-        <Card className="mb-3 overflow-x-auto p-0 text-sm">
+        <Card className="mb-3 overflow-x-auto p-0 text-base">
           <table className="w-full">
-            <thead className="text-left text-xs uppercase text-muted"><tr><th className="px-4 py-2">Rep</th><th>Measure</th><th className="text-right">So far</th><th className="text-right">Should be by today</th><th className="px-4 text-right">Month target</th></tr></thead>
+            <thead className="text-left text-sm uppercase text-muted"><tr><th className="px-4 py-2">Salesman</th><th>Measure</th><th className="text-right">So far</th><th className="text-right">Should be done by today</th><th className="px-4 text-right">Month target</th></tr></thead>
             <tbody className="divide-y divide-line">
               {progress.filter((p) => p.target !== null || p.actual > 0).map((p) => {
                 const behind = p.expected !== null && p.actual < p.expected;

@@ -145,11 +145,11 @@ export function FieldApp({ data, businessId, userId }: { data: FieldDay; busines
 
   return (
     <div className="space-y-4">
-      <Card className="flex flex-wrap items-center justify-between gap-3 text-sm">
+      <Card className="flex flex-wrap items-center justify-between gap-3 text-base">
         <span>
           <span className="font-medium">{dayStarted ? `Day started ${time(dayStarted)}` : "Day not started"}</span>
-          <span className="ml-3 text-xs">{online ? <span className="text-got">● online</span> : <span className="text-gave">● offline — saved on this phone</span>}</span>
-          {queue.length > 0 && <span className="ml-3 rounded-full bg-gave px-2 py-0.5 text-xs font-semibold text-white">{queue.length} waiting to upload</span>}
+          <span className="ml-3 text-sm">{online ? <span className="text-got">● online</span> : <span className="text-gave">● offline — saved on this phone</span>}</span>
+          {queue.length > 0 && <span className="ml-3 rounded-full bg-gave px-2 py-0.5 text-sm font-semibold text-white">{queue.length} waiting to upload</span>}
         </span>
         <span className="flex items-center gap-2">
           {queue.length > 0 && <button className={buttonClass("secondary")} onClick={() => flush(queue)} disabled={!online}>Upload now</button>}
@@ -157,11 +157,11 @@ export function FieldApp({ data, businessId, userId }: { data: FieldDay; busines
           {dayStarted && online && <SelfieButton />}
         </span>
       </Card>
-      {msg && <p role="status" className="rounded-lg bg-gave/10 px-3 py-2 text-sm text-gave">{msg}</p>}
+      {msg && <p role="status" className="rounded-lg bg-gave/10 px-3 py-2 text-base text-gave">{msg}</p>}
 
       {openVisit && (
         <Card className="space-y-3 border-brand/50">
-          <p className="text-xs uppercase text-muted">At a customer since {time(openVisit.since)}</p>
+          <p className="text-sm uppercase text-muted">At a customer since {time(openVisit.since)}</p>
           <h2 className="text-lg font-semibold">{openVisit.partyName}</h2>
           <div className="flex flex-wrap gap-2">
             <button className={buttonClass(panel === "order" ? "primary" : "secondary")} onClick={() => setPanel(panel === "order" ? null : "order")}>Take order</button>
@@ -177,9 +177,9 @@ export function FieldApp({ data, businessId, userId }: { data: FieldDay; busines
       {!openVisit && (
         <>
           <section>
-            <h2 className="mb-2 font-semibold">Today’s plan</h2>
-            {plan.length === 0 ? <Card className="text-sm text-muted">No beat is planned for today. You can still check in at any customer below.</Card> : (
-              <Card className="divide-y divide-line p-0 text-sm">
+            <h2 className="mb-2 font-semibold">Today’s route</h2>
+            {plan.length === 0 ? <Card className="text-base text-muted">No route is planned for today. You can still check in at any customer below.</Card> : (
+              <Card className="divide-y divide-line p-0 text-base">
                 {plan.map((p, i) => {
                   const party = partyOf(p.partyId)!;
                   const at = visitedAt(p.partyId);
@@ -187,9 +187,9 @@ export function FieldApp({ data, businessId, userId }: { data: FieldDay; busines
                     <div key={p.partyId} className="flex items-center justify-between gap-3 px-4 py-3">
                       <span>
                         <span className="font-medium">{i + 1}. {party.name}</span>
-                        <span className="block text-xs text-muted">{p.beat}{party.address && ` · ${party.address}`}{party.balance > 0 && ` · owes ${formatINR(party.balance)}`}</span>
+                        <span className="block text-sm text-muted">{p.beat}{party.address && ` · ${party.address}`}{party.balance > 0 && ` · owes ${formatINR(party.balance)}`}</span>
                       </span>
-                      {at ? <span className="text-xs text-got">✓ visited {time(at)}</span> : <button className={buttonClass("primary")} disabled={busy} onClick={() => checkIn(p.partyId)}>Check in</button>}
+                      {at ? <span className="text-sm text-got">✓ visited {time(at)}</span> : <button className={buttonClass("primary")} disabled={busy} onClick={() => checkIn(p.partyId)}>Check in</button>}
                     </div>
                   );
                 })}
@@ -199,10 +199,10 @@ export function FieldApp({ data, businessId, userId }: { data: FieldDay; busines
           <section>
             <h2 className="mb-2 font-semibold">Any customer</h2>
             <Input placeholder="Search by name or phone" value={search} onChange={(e) => setSearch(e.target.value)} className="mb-2" />
-            <Card className="divide-y divide-line p-0 text-sm">
+            <Card className="divide-y divide-line p-0 text-base">
               {filtered.map((p) => (
                 <div key={p.id} className="flex items-center justify-between gap-3 px-4 py-2">
-                  <span>{p.name}<span className="block text-xs text-muted">{p.phone ? `+${p.phone}` : "no phone"}{p.balance > 0 && ` · owes ${formatINR(p.balance)}`}</span></span>
+                  <span>{p.name}<span className="block text-sm text-muted">{p.phone ? `+${p.phone}` : "no phone"}{p.balance > 0 && ` · owes ${formatINR(p.balance)}`}</span></span>
                   <button className={buttonClass("secondary")} disabled={busy} onClick={() => checkIn(p.id)}>Check in</button>
                 </div>
               ))}
@@ -215,11 +215,11 @@ export function FieldApp({ data, businessId, userId }: { data: FieldDay; busines
       {data.todayVisits.length > 0 && (
         <section>
           <h2 className="mb-2 font-semibold">Today’s visits</h2>
-          <Card className="divide-y divide-line p-0 text-sm">
+          <Card className="divide-y divide-line p-0 text-base">
             {data.todayVisits.map((v) => (
               <div key={v.id} className="flex justify-between gap-3 px-4 py-2">
-                <span>{v.partyName}<span className="block text-xs text-muted">{time(v.at)}{v.out && ` – ${time(v.out)}`}{v.outcome && ` · ${v.outcome}`}</span></span>
-                {v.distanceM !== null && <span className={`text-xs ${v.distanceM > 200 ? "text-gave" : "text-muted"}`}>{v.distanceM} m from saved location</span>}
+                <span>{v.partyName}<span className="block text-sm text-muted">{time(v.at)}{v.out && ` – ${time(v.out)}`}{v.outcome && ` · ${v.outcome}`}</span></span>
+                {v.distanceM !== null && <span className={`text-sm ${v.distanceM > 200 ? "text-gave" : "text-muted"}`}>{v.distanceM} m from saved location</span>}
               </div>
             ))}
           </Card>
@@ -241,17 +241,17 @@ function OrderPanel({ data, partyId, onDone }: { data: FieldDay; partyId: string
   return (
     <div className="space-y-2">
       <Input placeholder="Find an item" value={filter} onChange={(e) => setFilter(e.target.value)} />
-      <ul className="max-h-72 divide-y divide-line overflow-auto rounded-lg border border-line text-sm">
+      <ul className="max-h-72 divide-y divide-line overflow-auto rounded-lg border border-line text-base">
         {shown.map((i) => (
           <li key={i.id} className="flex items-center justify-between gap-3 px-3 py-2">
-            <span>{i.name}<span className="block text-xs text-muted">{formatINR(priceFor(rows, i.id, Math.round((Number(qty[i.id]) || 1) * 1000), i.ratePaise))} / {i.unit}</span></span>
+            <span>{i.name}<span className="block text-sm text-muted">{formatINR(priceFor(rows, i.id, Math.round((Number(qty[i.id]) || 1) * 1000), i.ratePaise))} / {i.unit}</span></span>
             <Input inputMode="decimal" placeholder="Qty" className="w-20" aria-label={`Quantity of ${i.name}`} value={qty[i.id] ?? ""} onChange={(e) => setQty((s) => ({ ...s, [i.id]: e.target.value }))} />
           </li>
         ))}
       </ul>
       <Input placeholder="Note (optional)" value={note} onChange={(e) => setNote(e.target.value)} />
       <div className="flex items-center justify-between">
-        <span className="text-sm text-muted">{picks.length} item{picks.length === 1 ? "" : "s"} · about {formatINR(total)} with GST</span>
+        <span className="text-base text-muted">{picks.length} item{picks.length === 1 ? "" : "s"} · about {formatINR(total)} with GST</span>
         <button className={buttonClass("primary")} disabled={picks.length === 0} onClick={() => onDone(picks.map(({ i, q }) => ({ itemId: i.id, qty: q })), note)}>Save order</button>
       </div>
     </div>
@@ -288,7 +288,7 @@ function CheckoutPanel({ busy, onDone }: { busy: boolean; onDone: (note: string,
 function SelfieButton() {
   const [state, setState] = useState<string | null>(null);
   return (
-    <label className="cursor-pointer text-xs text-muted underline">
+    <label className="cursor-pointer text-sm text-muted underline">
       {state ?? "Add selfie"}
       <input type="file" accept="image/*" capture="user" className="sr-only" onChange={async (e) => {
         const f = e.currentTarget.files?.[0];

@@ -4,7 +4,7 @@ import { db } from "@/lib/db";
 import { formatINR } from "@/lib/money";
 import { Card, EmptyState, LinkButton, PageHeader, fmtDate } from "@/components/ui";
 
-export const metadata = { title: "Credit & debit notes" };
+export const metadata = { title: "Returns & corrections" };
 
 export default async function Notes() {
   const ctx = await requireBusiness();
@@ -17,17 +17,17 @@ export default async function Notes() {
   return (
     <>
       <PageHeader
-        title="Credit & debit notes"
-        sub="A credit note reduces what a customer owes (returns, discounts); a debit note adds to it."
-        action={<div className="flex gap-2"><LinkButton href="/notes/new?kind=DEBIT" variant="secondary">Debit note</LinkButton><LinkButton href="/notes/new">Credit note</LinkButton></div>}
+        title="Returns & corrections"
+        sub="A return note lowers what a customer owes (goods sent back, a discount). An extra charge note adds to it."
+        action={<div className="flex gap-2"><LinkButton href="/notes/new?kind=DEBIT" variant="secondary">Extra charge note</LinkButton><LinkButton href="/notes/new">Return note</LinkButton></div>}
       />
-      {notes.length === 0 ? <EmptyState title="No notes yet">Raise a credit note from an invoice page when goods come back.</EmptyState> : (
-        <Card className="divide-y divide-line p-0 text-sm">
+      {notes.length === 0 ? <EmptyState title="No returns yet">When goods come back, open the bill and tap “Return note”.</EmptyState> : (
+        <Card className="divide-y divide-line p-0 text-base">
           {notes.map((n) => (
             <Link key={n.id} href={`/notes/${n.id}`} className="flex items-center justify-between gap-3 px-4 py-3 hover:bg-bg">
               <span>
                 <span className="block font-medium">{n.number} · {pn.get(n.partyId) ?? "—"}</span>
-                <span className="text-xs text-muted">{fmtDate(n.date)} · {n.kind === "CREDIT" ? "credit note" : "debit note"} · {n.reason}</span>
+                <span className="text-sm text-muted">{fmtDate(n.date)} · {n.kind === "CREDIT" ? "credit note" : "debit note"} · {n.reason}</span>
               </span>
               <span className={`font-semibold tabular-nums ${n.kind === "CREDIT" ? "text-got" : "text-gave"}`}>{n.kind === "CREDIT" ? "−" : "+"}{formatINR(n.totalPaise)}</span>
             </Link>
