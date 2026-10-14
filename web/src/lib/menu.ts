@@ -14,7 +14,7 @@ export const MENU: MenuItem[] = [
   { href: "/cashbook", icon: "wallet", label: "Cash in the drawer", about: "Today’s cash in and out, and closing the day", group: "Money", permission: "ledger:write" },
   { href: "/payments", icon: "card", label: "Money paid online", about: "Payments customers made from your link", group: "Money", permission: "reports:view" },
   { href: "/payments", icon: "card", label: "Money paid online", about: "Payments customers made from your link", group: "Money", permission: "reports:view" },
-  { href: "/shared", icon: "handshake", label: "Match accounts", about: "Check that your hisaab and your customer’s hisaab agree", group: "Money", permission: "ledger:write" },
+  { href: "/shared", icon: "handshake", label: "Match accounts", about: "Check that your account and your customer’s account agree", group: "Money", permission: "ledger:write" },
   { href: "/reports", icon: "chart", label: "Reports", about: "Who owes most, daily book, best sellers", group: "Money", permission: "reports:view" },
   { href: "/field", icon: "walk", label: "Salesmen on the road", about: "Visits, daily routes, targets, attendance", group: "Field" },
   { href: "/data", icon: "download", label: "Excel & backup", about: "Bring in your old list, or download everything", group: "Business", permission: "reports:view" },

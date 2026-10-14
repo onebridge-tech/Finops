@@ -75,7 +75,7 @@ export default async function Cashbook({ searchParams }: PageProps<"/cashbook">)
 
       {manage && (
         <div className="mt-6 grid gap-6 lg:grid-cols-2">
-          <Card className="space-y-3"><h2 className="font-semibold">Close today</h2><p className="text-sm text-muted">Count the cash in the drawer and type it here. If it doesn’t match your hisaab, we note the difference.</p><CloseDayForm today={today} branchId={branchId ?? ""} /></Card>
+          <Card className="space-y-3"><h2 className="font-semibold">Close today</h2><p className="text-sm text-muted">Count the cash in the drawer and type it here. If it doesn’t match your records, we note the difference.</p><CloseDayForm today={today} branchId={branchId ?? ""} /></Card>
           <Card className="space-y-3"><h2 className="font-semibold">Other cash movements</h2><AdjustmentForm today={today} /></Card>
         </div>
       )}
