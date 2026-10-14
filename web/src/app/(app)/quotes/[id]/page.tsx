@@ -64,11 +64,11 @@ export default async function QuotePage({ params }: PageProps<"/quotes/[id]">) {
         />
         <Card className="mb-4 flex flex-wrap items-center justify-between gap-3">
           {quote.status === "CONVERTED" && quote.convertedInvoiceId ? (
-            <p className="text-base">Billed as <Link href={`/invoices/${quote.convertedInvoiceId}`} className="font-medium underline">this invoice</Link>.</p>
+            <p className="text-sm">Billed as <Link href={`/invoices/${quote.convertedInvoiceId}`} className="font-medium underline">this invoice</Link>.</p>
           ) : (
             <>
               {can(role, "reminder:send") && quote.status === "OPEN" && (
-                <div className="flex flex-wrap items-center gap-2 text-base">
+                <div className="flex flex-wrap items-center gap-2 text-sm">
                   <span className="text-muted">Send from the app:</span>
                   <SendDocumentForm kind="QUOTE" id={quote.id} blocked={{ WHATSAPP: blockedReason(p, "WHATSAPP"), SMS: blockedReason(p, "SMS"), EMAIL: blockedReason(p, "EMAIL") }} />
                 </div>
@@ -94,7 +94,7 @@ function StatusButton({ quoteId, status, children }: { quoteId: string; status: 
     <form action={setQuoteStatus}>
       <input type="hidden" name="quoteId" value={quoteId} />
       <input type="hidden" name="status" value={status} />
-      <button className="text-base text-muted underline hover:text-ink">{children}</button>
+      <button className="text-sm text-muted underline hover:text-ink">{children}</button>
     </form>
   );
 }

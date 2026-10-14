@@ -19,7 +19,7 @@ export function ControlsForm({ v }: { v: V }) {
           <option value="BLOCK">Stop it (the owner can still allow it)</option>
         </Select>
       </Field>
-      <label className="flex items-center gap-2 self-end pb-2 text-base">
+      <label className="flex items-center gap-2 self-end pb-2 text-sm">
         <input type="checkbox" name="creditBlockOverdue" defaultChecked={v.creditBlockOverdue} className="size-4 accent-[var(--brand)]" />
         Also act when the party already has overdue bills
       </label>
@@ -33,7 +33,7 @@ export function ControlsForm({ v }: { v: V }) {
       </Field>
       <div className="space-y-2 sm:col-span-2">
         <ErrorText>{state.error}</ErrorText>
-        {state.ok && <p className="text-base text-got">Saved.</p>}
+        {state.ok && <p className="text-sm text-got">Saved.</p>}
         <SubmitButton>Save controls</SubmitButton>
       </div>
     </ActionForm>

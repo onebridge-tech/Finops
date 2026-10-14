@@ -15,7 +15,7 @@ export function BeatForm({ people, parties, beat }: { people: { id: string; name
   const move = (i: number, d: number) => setIds((s) => { const n = [...s]; const j = i + d; if (j < 0 || j >= n.length) return s; [n[i], n[j]] = [n[j]!, n[i]!]; return n; });
   const days = new Set((beat?.weekdays ?? "1,2,3,4,5,6").split(","));
   return (
-    <form action={action} className="space-y-3 text-base">
+    <form action={action} className="space-y-3 text-sm">
       {beat && <input type="hidden" name="id" value={beat.id} />}
       <input type="hidden" name="partyIds" value={ids.join(",")} />
       <div className="grid gap-2 sm:grid-cols-2">

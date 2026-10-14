@@ -14,19 +14,19 @@ export default async function More() {
   return (
     <>
       <PageHeader title="Everything else" sub="Tap what you need." />
-      <div className="space-y-6">
+      <div className="space-y-8">
         {GROUPS.map((g) => {
           const items = MENU.filter((m) => m.group === g && (!m.permission || can(role, m.permission)));
           if (items.length === 0) return null;
           return (
             <section key={g}>
-              <h2 className="mb-2 text-lg font-bold">{GROUP_NAME[g]}</h2>
+              <h2 className="mb-2.5 text-xs font-semibold uppercase tracking-wider text-muted">{GROUP_NAME[g]}</h2>
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                 {items.map((m) => (
                   <Link key={m.href} href={m.href}>
-                    <Card className="flex h-full items-start gap-3 hover:bg-bg">
-                      <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-brand/10 text-brand">{isIconName(m.icon) && <Icon name={m.icon} />}</span>
-                      <span><span className="block text-lg font-semibold">{m.label}</span><span className="text-base text-muted">{m.about}</span></span>
+                    <Card className="flex h-full items-start gap-3 p-4 transition hover:border-brand/40 hover:shadow-md sm:p-4">
+                      <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-brand-soft text-brand">{isIconName(m.icon) && <Icon name={m.icon} />}</span>
+                      <span><span className="block font-semibold">{m.label}</span><span className="text-[13px] leading-snug text-muted">{m.about}</span></span>
                     </Card>
                   </Link>
                 ))}

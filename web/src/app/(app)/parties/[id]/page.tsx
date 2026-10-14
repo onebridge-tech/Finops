@@ -13,7 +13,7 @@ import { describeRule, effectiveRule } from "@/lib/reminder-rule";
 import { PAYMENT_MODE_LABEL, type PaymentMode } from "@/lib/format";
 import { reverseEntry } from "@/app/actions/ledger";
 import { setDisputed, updateConsent } from "@/app/actions/messaging";
-import { Balance, Card, PageHeader, buttonClass, fmtDate, todayIST } from "@/components/ui";
+import { Avatar, Balance, Card, PageHeader, buttonClass, fmtDate, todayIST } from "@/components/ui";
 import { EntryForm } from "./entry-form";
 import { ReminderButton, CopyLink } from "./reminder";
 import { PartyReminderForm, SendMessageForm } from "./messaging";
@@ -73,11 +73,12 @@ export default async function PartyPage({ params }: PageProps<"/parties/[id]">) 
   const rule = effectiveRule(business, party);
   const t = translator(ctx.user.uiLanguage);
   const accountant = ctx.user.uiMode === "ACCOUNTANT";
-  const btn = "rounded-lg border border-line bg-card px-3.5 py-2 text-base font-medium hover:bg-bg";
+  const btn = buttonClass("secondary");
 
   return (
     <>
       <PageHeader
+        leading={<Avatar name={party.name} size={44} />}
         title={party.name}
         sub={[accountant ? ledgerGroup(party.type, balance) : party.type === "LEAD" ? t("type.LEAD") : null, party.phone && `+${party.phone}`, party.gstin, party.creditDays && `${party.creditDays} days credit`].filter(Boolean).join(" · ") || undefined}
         action={
@@ -99,25 +100,25 @@ export default async function PartyPage({ params }: PageProps<"/parties/[id]">) 
       />
 
       {party.disputedAt && (
-        <Card className="mb-4 border-gave/40 bg-gave/5 text-base">
+        <Card className="mb-4 border-gave/40 bg-gave/5 text-sm">
           Marked as disputed on {fmtDate(party.disputedAt)}. Automatic reminders are paused.
         </Card>
       )}
 
       <div className={"grid gap-3 " + (party.creditLimitPaise !== null ? "sm:grid-cols-3" : "sm:grid-cols-2")}>
         <Card>
-          <p className="text-base text-muted">{t("party.balance")}</p>
-          <Balance paise={balance} className="mt-1 block text-2xl" t={t} accountant={accountant} />
+          <p className="text-[13px] font-medium text-muted">{t("party.balance")}</p>
+          <Balance paise={balance} className="mt-2 block text-2xl" t={t} accountant={accountant} />
         </Card>
         <Card>
-          <p className="text-base text-muted">{t("party.overdue")}</p>
-          <p className={`mt-1 text-2xl font-semibold tabular-nums ${overdue > 0 ? "text-gave" : "text-muted"}`}>{formatINR(overdue)}</p>
+          <p className="text-[13px] font-medium text-muted">{t("party.overdue")}</p>
+          <p className={`mt-2 text-2xl font-semibold tabular-nums ${overdue > 0 ? "text-gave" : "text-muted"}`}>{formatINR(overdue)}</p>
         </Card>
         {party.creditLimitPaise !== null && (
           <Card>
-            <p className="text-base text-muted">Credit limit</p>
-            <p className="mt-1 text-2xl font-semibold tabular-nums">{formatINR(party.creditLimitPaise)}</p>
-            <p className={"text-sm " + (balance > Number(party.creditLimitPaise) ? "font-medium text-gave" : "text-muted")}>
+            <p className="text-[13px] font-medium text-muted">Credit limit</p>
+            <p className="mt-2 text-2xl font-semibold tabular-nums">{formatINR(party.creditLimitPaise)}</p>
+            <p className={"text-xs " + (balance > Number(party.creditLimitPaise) ? "font-medium text-gave" : "text-muted")}>
               {balance > Number(party.creditLimitPaise) ? "Over by " + formatINR(balance - Number(party.creditLimitPaise)) : formatINR(Number(party.creditLimitPaise) - Math.max(balance, 0)) + " available"}
             </p>
           </Card>
@@ -126,6 +127,7 @@ export default async function PartyPage({ params }: PageProps<"/parties/[id]">) 
 
       {can(role, "ledger:write") && party.type !== "LEAD" && (
         <Card className="mt-4">
+          <h2 className="mb-3 text-base font-semibold tracking-tight">Write an entry</h2>
           <EntryForm
             partyId={party.id}
             today={todayIST()}
@@ -138,13 +140,13 @@ export default async function PartyPage({ params }: PageProps<"/parties/[id]">) 
         </Card>
       )}
 
-      <h2 className="mb-2 mt-6 font-semibold">{accountant ? "Ledger" : t("party.entries")}</h2>
+      <h2 className="mb-3 mt-8 text-base font-semibold tracking-tight">{accountant ? "Ledger" : t("party.entries")}</h2>
       {rows.length === 0 ? (
-        <Card className="text-base text-muted">{t("party.noEntries")}</Card>
+        <Card className="text-sm text-muted">{t("party.noEntries")}</Card>
       ) : (
-        <Card className="overflow-x-auto p-0">
-          <table className="w-full min-w-[560px] text-base">
-            <thead className="border-b border-line text-left text-sm uppercase text-muted">
+        <Card className="overflow-x-auto p-0 sm:p-0">
+          <table className="w-full min-w-[560px] text-sm">
+            <thead className="border-b border-line bg-bg/50 text-left text-xs font-medium text-muted">
               <tr>
                 <th className="px-4 py-2 font-medium">{t("col.date")}</th>
                 {accountant && <th className="px-4 py-2 font-medium">Voucher</th>}
@@ -160,20 +162,20 @@ export default async function PartyPage({ params }: PageProps<"/parties/[id]">) 
                 const cancelled = struck.has(e.id);
                 const receipt = receiptByEntry.get(e.id);
                 return (
-                  <tr key={e.id} className={cancelled ? "text-muted line-through" : ""}>
+                  <tr key={e.id} className={`align-top transition hover:bg-bg/60 ${cancelled ? "text-muted line-through" : ""}`}>
                     <td className="whitespace-nowrap px-4 py-2">{fmtDate(e.date)}</td>
-                    {accountant && <td className="whitespace-nowrap px-4 py-2 text-sm">{voucherType(e, party.type)}{receipt ? ` · ${receipt.number}` : ""}</td>}
+                    {accountant && <td className="whitespace-nowrap px-4 py-2 text-xs">{voucherType(e, party.type)}{receipt ? ` · ${receipt.number}` : ""}</td>}
                     <td className="px-4 py-2">
                       {e.note ?? "—"}
-                      {e.dueDate && e.direction === "GAVE" && !cancelled && <span className="block text-sm text-muted no-underline">Due {fmtDate(e.dueDate)}</span>}
+                      {e.dueDate && e.direction === "GAVE" && !cancelled && <span className="block text-xs text-muted no-underline">Due {fmtDate(e.dueDate)}</span>}
                       {e.direction === "GAVE" && !cancelled && e.source !== "REVERSAL" && (
-                        <span className={"block text-sm no-underline " + (openById.has(e.id) ? (openById.get(e.id)! < Number(e.amountPaise) ? "text-gave" : "text-muted") : "text-got")}>
+                        <span className={"block text-xs no-underline " + (openById.has(e.id) ? (openById.get(e.id)! < Number(e.amountPaise) ? "text-gave" : "text-muted") : "text-got")}>
                           {openById.has(e.id) ? (openById.get(e.id)! < Number(e.amountPaise) ? "Part-paid · " + formatINR(openById.get(e.id)!) + " open" : "Unpaid") : "Paid"}
                         </span>
                       )}
                       <Attachments files={filesByEntry.get(e.id) ?? []} />
                       {e.paymentMode && (
-                        <span className="block text-sm text-muted">
+                        <span className="block text-xs text-muted">
                           {PAYMENT_MODE_LABEL[e.paymentMode as PaymentMode] ?? e.paymentMode}
                           {receipt && <> · <a href={`/r/${receipt.shareToken}`} target="_blank" className="underline">Receipt {receipt.number}</a></>}
                         </span>
@@ -187,7 +189,7 @@ export default async function PartyPage({ params }: PageProps<"/parties/[id]">) 
                       {!cancelled && (e.source === "MANUAL" || e.source === "OPENING") && can(role, "ledger:reverse") && (
                         <form action={reverseEntry}>
                           <input type="hidden" name="entryId" value={e.id} />
-                          <button className="text-sm text-muted hover:text-gave" title="Undo this entry">{t("entry.reverse")}</button>
+                          <button className="text-xs text-muted hover:text-gave" title="Undo this entry">{t("entry.reverse")}</button>
                         </form>
                       )}
                     </td>
@@ -202,8 +204,8 @@ export default async function PartyPage({ params }: PageProps<"/parties/[id]">) 
       <div className="mt-6 grid gap-6 lg:grid-cols-2">
         {balance > 0 && can(role, "party:write") && (
           <section className="space-y-3 lg:col-span-2">
-            <h2 className="font-semibold">Promises to pay</h2>
-            <Card className="space-y-3 text-base">
+            <h2 className="text-base font-semibold tracking-tight">Promises to pay</h2>
+            <Card className="space-y-3 text-sm">
               <PromiseForm partyId={party.id} today={todayIST()} />
               {promises.length > 0 && (
                 <ul className="divide-y divide-line border-t border-line">
@@ -217,7 +219,7 @@ export default async function PartyPage({ params }: PageProps<"/parties/[id]">) 
                           {p.amountPaise !== null && " · " + formatINR(p.amountPaise)}
                           {p.note && <span className="text-muted"> · {p.note}</span>}
                         </span>
-                        <span className={"text-sm font-medium " + (st === "KEPT" ? "text-got" : st === "BROKEN" ? "text-gave" : "text-muted")}>
+                        <span className={"text-xs font-medium " + (st === "KEPT" ? "text-got" : st === "BROKEN" ? "text-gave" : "text-muted")}>
                           {st === "KEPT" ? "Kept" : st === "BROKEN" ? "Not kept" : "Waiting"}
                         </span>
                       </li>
@@ -229,8 +231,8 @@ export default async function PartyPage({ params }: PageProps<"/parties/[id]">) 
           </section>
         )}
         <section className="space-y-3 lg:col-span-2">
-          <h2 className="font-semibold">{t("party.followUps")}</h2>
-          <Card className="space-y-3 text-base">
+          <h2 className="text-base font-semibold tracking-tight">{t("party.followUps")}</h2>
+          <Card className="space-y-3 text-sm">
             {can(role, "party:write") && <AddFollowUpForm partyId={party.id} today={todayIST()} team={team} />}
             {followUps.length > 0 && (
               <ul className="divide-y divide-line border-t border-line">
@@ -240,12 +242,12 @@ export default async function PartyPage({ params }: PageProps<"/parties/[id]">) 
                     <li key={f.id} className="py-2">
                       <p className="flex flex-wrap justify-between gap-2">
                         <span className={f.doneAt ? "text-muted line-through" : ""}>{f.note}</span>
-                        <span className={`text-sm ${late ? "font-medium text-gave" : "text-muted"}`}>
+                        <span className={`text-xs ${late ? "font-medium text-gave" : "text-muted"}`}>
                           {f.doneAt ? `done ${fmtDate(f.doneAt)}` : `${late ? "overdue · " : ""}${fmtDate(f.dueAt)}`}
                           {teamName.get(f.assignedToId) && ` · ${teamName.get(f.assignedToId)}`}
                         </span>
                       </p>
-                      {f.outcome && <p className="text-sm text-muted">Outcome: {f.outcome}</p>}
+                      {f.outcome && <p className="text-xs text-muted">Outcome: {f.outcome}</p>}
                       {!f.doneAt && can(role, "party:write") && <CompleteFollowUp id={f.id} />}
                     </li>
                   );
@@ -255,15 +257,15 @@ export default async function PartyPage({ params }: PageProps<"/parties/[id]">) 
           </Card>
         </section>
         <section className="space-y-3">
-          <h2 className="font-semibold">{t("party.messages")}</h2>
-          <Card className="space-y-3 text-base">
+          <h2 className="text-base font-semibold tracking-tight">{t("party.messages")}</h2>
+          <Card className="space-y-3 text-sm">
             <ConsentStatus partyId={party.id} consentAt={party.consentAt} optedOut={optedOut as string[]} editable={can(role, "party:write")} />
             {can(role, "reminder:send") && (
               <SendMessageForm partyId={party.id} blocked={blocked} canRemind={balance > 0} />
             )}
           </Card>
           {can(role, "party:write") && (
-            <Card className="space-y-3 text-base">
+            <Card className="space-y-3 text-sm">
               <PartyReminderForm
                 partyId={party.id}
                 businessRule={describeRule(effectiveRule(business, { ...party, reminderMode: "DEFAULT" }))}
@@ -275,11 +277,11 @@ export default async function PartyPage({ params }: PageProps<"/parties/[id]">) 
                   channel: party.reminderChannel ?? business.reminderChannel,
                 }}
               />
-              <p className="text-sm text-muted">Now: {describeRule(rule)}{party.lastAutoReminderAt && ` · last sent ${fmtDate(party.lastAutoReminderAt)}`}</p>
+              <p className="text-xs text-muted">Now: {describeRule(rule)}{party.lastAutoReminderAt && ` · last sent ${fmtDate(party.lastAutoReminderAt)}`}</p>
               <form action={setDisputed}>
                 <input type="hidden" name="partyId" value={party.id} />
                 <input type="hidden" name="disputed" value={party.disputedAt ? "0" : "1"} />
-                <button className="text-sm text-muted underline hover:text-ink">
+                <button className="text-xs text-muted underline hover:text-ink">
                   {party.disputedAt ? "Dispute resolved — resume reminders" : "Mark as disputed (pause reminders)"}
                 </button>
               </form>
@@ -288,8 +290,8 @@ export default async function PartyPage({ params }: PageProps<"/parties/[id]">) 
         </section>
         <section className="space-y-6">
           <div>
-            <h2 className="mb-2 font-semibold">{t("party.invoices")}</h2>
-            <Card className="divide-y divide-line p-0 text-base">
+            <h2 className="mb-3 text-base font-semibold tracking-tight">{t("party.invoices")}</h2>
+            <Card className="divide-y divide-line p-0 text-sm">
               {invoices.length === 0 && <p className="px-4 py-3 text-muted">No bills.</p>}
               {invoices.map((i) => (
                 <Link key={i.id} href={`/invoices/${i.id}`} className="flex justify-between px-4 py-3 hover:bg-bg">
@@ -300,12 +302,12 @@ export default async function PartyPage({ params }: PageProps<"/parties/[id]">) 
             </Card>
           </div>
           <div>
-            <h2 className="mb-2 font-semibold">{t("party.history")}</h2>
-            <Card className="divide-y divide-line p-0 text-base">
+            <h2 className="mb-3 text-base font-semibold tracking-tight">{t("party.history")}</h2>
+            <Card className="divide-y divide-line p-0 text-sm">
               {messages.length === 0 && <p className="px-4 py-3 text-muted">None yet.</p>}
               {messages.map((m) => (
                 <div key={m.id} className="px-4 py-3">
-                  <p className="flex flex-wrap justify-between gap-2 text-sm">
+                  <p className="flex flex-wrap justify-between gap-2 text-xs">
                     <span className="text-muted">{fmtDate(m.createdAt)} · {CHANNEL_NAME[m.channel] ?? m.channel} · {m.kind.toLowerCase().replace("_", " ")}{m.trigger !== "MANUAL" && ` · ${m.trigger.toLowerCase()}`}{m.provider === "test" && " · test mode"}</span>
                     <span className={STATUS_TONE[m.status] ?? "text-muted"}>{m.status.toLowerCase()}{m.error && `: ${m.error}`}</span>
                   </p>
@@ -344,7 +346,7 @@ function ConsentButton({ partyId, action, children }: { partyId: string; action:
       <input type="hidden" name="partyId" value={partyId} />
       <input type="hidden" name="action" value={action} />
       <input type="hidden" name="channel" value="ALL" />
-      <button className="text-sm underline hover:text-ink">{children}</button>
+      <button className="text-xs underline hover:text-ink">{children}</button>
     </form>
   );
 }

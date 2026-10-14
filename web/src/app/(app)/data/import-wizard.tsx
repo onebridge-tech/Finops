@@ -39,13 +39,13 @@ export function ImportWizard({ kind }: { kind: ImportKind }) {
       <Card className="space-y-3">
         <ActionForm dispatch={(f) => { setLocal(null); previewAction(f); }} pending={previewPending} className="flex flex-wrap items-center gap-3">
           <input type="hidden" name="kind" value={kind} />
-          <input type="file" name="file" accept=".xlsx,.csv,.txt" required className="text-base" />
+          <input type="file" name="file" accept=".xlsx,.csv,.txt" required className="text-sm" />
           <SubmitButton variant="secondary">Read file</SubmitButton>
           {kind === "parties" && contacts && (
             <button type="button" onClick={pickContacts} className={buttonClass("secondary")}>Pick from phone contacts</button>
           )}
         </ActionForm>
-        <p className="text-sm text-muted">
+        <p className="text-xs text-muted">
           Excel (.xlsx) or CSV with a header row, up to 5,000 rows. {kind === "parties"
             ? "Columns like Name, Mobile, GSTIN, State, Type, Credit days, Opening balance and Dr/Cr are recognised — Tally and Khatabook exports work as they are. A Dr balance (or a plain positive amount) means the party owes you."
             : "Columns like Item name, Sale price, Purchase price, GST %, HSN, Unit and SKU are recognised."}
@@ -74,13 +74,13 @@ function MapAndImport({ kind, table }: { kind: ImportKind; table: Table }) {
 
   if (result.imported !== undefined) {
     return (
-      <Card className="space-y-3 text-base">
-        <p className="text-base font-semibold text-got">Imported {result.imported} {kind === "items" ? "items" : "parties"}.</p>
+      <Card className="space-y-3 text-sm">
+        <p className="text-sm font-semibold text-got">Imported {result.imported} {kind === "items" ? "items" : "parties"}.</p>
         {(result.skipped?.length ?? 0) > 0 && (
           <>
             <p>{result.skipped!.length} rows were not imported:</p>
             <div className="max-h-64 overflow-auto rounded-lg border border-line">
-              <table className="w-full text-sm">
+              <table className="w-full text-xs">
                 <thead className="sticky top-0 bg-card text-left text-muted"><tr><th className="px-3 py-1">Row</th><th className="px-3 py-1">Name</th><th className="px-3 py-1">Reason</th></tr></thead>
                 <tbody className="divide-y divide-line">
                   {result.skipped!.map((s) => <tr key={s.row}><td className="px-3 py-1">{s.row}</td><td className="px-3 py-1">{s.name}</td><td className="px-3 py-1 text-gave">{s.reason}</td></tr>)}
@@ -103,7 +103,7 @@ function MapAndImport({ kind, table }: { kind: ImportKind; table: Table }) {
         <h3 className="font-semibold">Match your columns · {table.rows.length} rows</h3>
         <div className="grid gap-3 sm:grid-cols-3">
           {fields.map((f) => (
-            <label key={f.key} className="space-y-1 text-base">
+            <label key={f.key} className="space-y-1 text-sm">
               <span className="font-medium">{f.label}{f.required && " *"}</span>
               <Select
                 value={mapping[f.key] ?? ""}
@@ -122,7 +122,7 @@ function MapAndImport({ kind, table }: { kind: ImportKind; table: Table }) {
         </div>
       </Card>
       <Card className="overflow-x-auto p-0">
-        <table className="w-full min-w-[640px] text-sm">
+        <table className="w-full min-w-[640px] text-xs">
           <thead className="border-b border-line text-left text-muted">
             <tr>{fields.filter((f) => mapping[f.key] !== undefined).map((f) => <th key={f.key} className="px-3 py-2 font-medium">{f.label}</th>)}</tr>
           </thead>
@@ -132,11 +132,11 @@ function MapAndImport({ kind, table }: { kind: ImportKind; table: Table }) {
             ))}
           </tbody>
         </table>
-        {table.rows.length > sample.length && <p className="px-3 py-2 text-sm text-muted">Showing the first {sample.length} of {table.rows.length} rows.</p>}
+        {table.rows.length > sample.length && <p className="px-3 py-2 text-xs text-muted">Showing the first {sample.length} of {table.rows.length} rows.</p>}
       </Card>
       <ErrorText>{result.error}</ErrorText>
       <SubmitButton>Import {table.rows.length} rows</SubmitButton>
-      <p className="text-sm text-muted">Rows with problems, and parties or items that already exist, are skipped and listed so you can fix them.</p>
+      <p className="text-xs text-muted">Rows with problems, and parties or items that already exist, are skipped and listed so you can fix them.</p>
     </ActionForm>
   );
 }

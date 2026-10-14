@@ -22,12 +22,12 @@ export default async function Notes() {
         action={<div className="flex gap-2"><LinkButton href="/notes/new?kind=DEBIT" variant="secondary">Extra charge note</LinkButton><LinkButton href="/notes/new">Return note</LinkButton></div>}
       />
       {notes.length === 0 ? <EmptyState title="No returns yet">When goods come back, open the bill and tap “Return note”.</EmptyState> : (
-        <Card className="divide-y divide-line p-0 text-base">
+        <Card className="divide-y divide-line p-0 text-sm">
           {notes.map((n) => (
             <Link key={n.id} href={`/notes/${n.id}`} className="flex items-center justify-between gap-3 px-4 py-3 hover:bg-bg">
               <span>
                 <span className="block font-medium">{n.number} · {pn.get(n.partyId) ?? "—"}</span>
-                <span className="text-sm text-muted">{fmtDate(n.date)} · {n.kind === "CREDIT" ? "credit note" : "debit note"} · {n.reason}</span>
+                <span className="text-xs text-muted">{fmtDate(n.date)} · {n.kind === "CREDIT" ? "credit note" : "debit note"} · {n.reason}</span>
               </span>
               <span className={`font-semibold tabular-nums ${n.kind === "CREDIT" ? "text-got" : "text-gave"}`}>{n.kind === "CREDIT" ? "−" : "+"}{formatINR(n.totalPaise)}</span>
             </Link>

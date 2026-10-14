@@ -17,7 +17,7 @@ export function CloseDayForm({ today, branchId }: { today: string; branchId: str
       <div className="flex items-center gap-3 sm:col-span-4">
         <SubmitButton>Close today</SubmitButton>
         <ErrorText>{state.error}</ErrorText>
-        {state.info && <span className="text-base">{state.info}</span>}
+        {state.info && <span className="text-sm">{state.info}</span>}
       </div>
     </ActionForm>
   );
@@ -47,7 +47,7 @@ export function OpeningCashForm({ value }: { value: string }) {
       <Field label="Cash in hand when you started using the app (₹)"><Input name="opening" inputMode="decimal" defaultValue={value} /></Field>
       <SubmitButton variant="secondary">Save</SubmitButton>
       <ErrorText>{state.error}</ErrorText>
-      {state.info && <span className="text-base text-got">{state.info}</span>}
+      {state.info && <span className="text-sm text-got">{state.info}</span>}
     </ActionForm>
   );
 }

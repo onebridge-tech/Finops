@@ -21,7 +21,7 @@ export default async function NewNote({ searchParams }: PageProps<"/notes/new">)
       <>
         <PageHeader title="New return note" sub="Pick the bill that the return or discount is for." />
         {recent.length === 0 ? <EmptyState title="No bills yet" /> : (
-          <Card className="divide-y divide-line p-0 text-base">
+          <Card className="divide-y divide-line p-0 text-sm">
             {recent.map((i) => <a key={i.id} href={`/notes/new?invoice=${i.id}`} className="flex justify-between px-4 py-3 hover:bg-bg"><span>{i.number} · {i.party.name}</span><span className="tabular-nums">{formatINR(i.totalPaise)}</span></a>)}
           </Card>
         )}

@@ -10,7 +10,7 @@ export function PayButton({ kind, token, label, color }: { kind: "invoice" | "pa
       <input type="hidden" name="kind" value={kind} />
       <input type="hidden" name="token" value={token} />
       <button disabled={pending} className="rounded-lg px-4 py-2 font-semibold text-white disabled:opacity-60" style={{ background: color }}>{pending ? "Please wait…" : label}</button>
-      {state.error && <p role="alert" className="mt-1 text-base text-gave">{state.error}</p>}
+      {state.error && <p role="alert" className="mt-1 text-sm text-gave">{state.error}</p>}
     </form>
   );
 }

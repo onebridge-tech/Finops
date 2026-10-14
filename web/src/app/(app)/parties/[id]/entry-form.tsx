@@ -49,9 +49,9 @@ export function EntryForm({ partyId, today, isSupplier, canNotify, notifyDefault
             key={d}
             type="button"
             onClick={() => setDirection(d)}
-            aria-pressed={direction === d} className={`flex min-h-14 items-center justify-center gap-2 rounded-2xl border-2 px-3 py-3 text-base font-bold ${direction === d ? (d === "GAVE" ? "border-gave bg-gave/10 text-gave" : "border-got bg-got/10 text-got") : "border-line text-muted"}`}
+            aria-pressed={direction === d} className={`flex min-h-11 items-center justify-center gap-2 rounded-xl border px-3 py-2 text-sm font-semibold transition ${direction === d ? (d === "GAVE" ? "border-gave bg-gave/10 text-gave" : "border-got bg-got/10 text-got") : "border-line text-muted"}`}
           >
-            <Icon name={d === "GAVE" ? "arrowUp" : "arrowDown"} size={20} />{accountant ? (d === "GAVE" ? "Debit (Dr) — party owes more" : "Credit (Cr) — payment / goods in") : t(d === "GAVE" ? "entry.gave" : "entry.got")}
+            <Icon name={d === "GAVE" ? "arrowUp" : "arrowDown"} size={18} />{accountant ? (d === "GAVE" ? "Debit (Dr) — party owes more" : "Credit (Cr) — payment / goods in") : t(d === "GAVE" ? "entry.gave" : "entry.got")}
           </button>
         ))}
       </div>
@@ -72,7 +72,7 @@ export function EntryForm({ partyId, today, isSupplier, canNotify, notifyDefault
       </div>
 
       {direction === "GOT" && openBills.length > 0 && (
-        <fieldset className="space-y-2 rounded-xl border border-line p-3 text-base">
+        <fieldset className="space-y-2 rounded-xl border border-line p-3 text-sm">
           <legend className="px-1 text-sm text-muted">Which bills is this for?</legend>
           <label className="mr-4 inline-flex items-center gap-2">
             <input type="radio" name="settle" value="AUTO" checked={settle === "AUTO"} onChange={() => setSettle("AUTO")} className="accent-[var(--brand)]" /> Oldest bills first (easiest)
@@ -99,7 +99,7 @@ export function EntryForm({ partyId, today, isSupplier, canNotify, notifyDefault
         receiptGoesOut ? (
           <p className="text-sm text-muted">{t("entry.receipt")}</p>
         ) : (
-          <label className="flex items-center gap-2 text-base">
+          <label className="flex items-center gap-2 text-sm">
             <input type="checkbox" name="notify" defaultChecked={notifyDefault} className="size-4 accent-[var(--brand)]" />
             {t("entry.notify")}
           </label>

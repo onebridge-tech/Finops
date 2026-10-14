@@ -43,7 +43,7 @@ export function ItemForm({ item, bases }: { item?: ItemValues; bases: { id: stri
       <Field label="Variant name" hint="e.g. Red / XL"><Input name="variantName" defaultValue={v?.variantName} /></Field>
       <div className="sm:col-span-2"><Field label="Description"><Input name="description" defaultValue={v?.description} /></Field></div>
       <Field label="Category" hint="Used in sales analysis and the catalogue"><Input name="category" defaultValue={v?.category} placeholder="Grains, Furniture…" /></Field>
-      <label className="flex items-center gap-2 self-center text-base"><input type="checkbox" name="trackStock" defaultChecked={v?.trackStock} className="size-4 accent-[var(--brand)]" /> Track stock</label>
+      <label className="flex items-center gap-2 self-center text-sm"><input type="checkbox" name="trackStock" defaultChecked={v?.trackStock} className="size-4 accent-[var(--brand)]" /> Track stock</label>
       <Field label="Low-stock level" hint="Alert when stock falls to this"><Input name="reorderLevel" inputMode="decimal" defaultValue={v?.reorderLevel} /></Field>
       {!v && <Field label="Opening stock" hint="If tracking"><Input name="openingStock" inputMode="decimal" /></Field>}
       <div className="sm:col-span-3">
@@ -51,12 +51,12 @@ export function ItemForm({ item, bases }: { item?: ItemValues; bases: { id: stri
           <div className="flex items-center gap-3">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             {v?.imageUrl && <img src={v.imageUrl} alt="" className="h-12 w-12 rounded border border-line object-cover" />}
-            <input type="file" name="image" accept="image/png,image/jpeg,image/webp" className="text-base" />
+            <input type="file" name="image" accept="image/png,image/jpeg,image/webp" className="text-sm" />
           </div>
-          {v?.imageUrl && <label className="mt-1 flex items-center gap-1 text-sm text-muted"><input type="checkbox" name="removeImage" /> Remove image</label>}
+          {v?.imageUrl && <label className="mt-1 flex items-center gap-1 text-xs text-muted"><input type="checkbox" name="removeImage" /> Remove image</label>}
         </Field>
       </div>
-      <label className="flex items-center gap-2 self-center text-base sm:col-span-3">
+      <label className="flex items-center gap-2 self-center text-sm sm:col-span-3">
         <input type="checkbox" name="isPublic" defaultChecked={v?.isPublic} className="size-4 accent-[var(--brand)]" />
         Show in my shareable catalogue
       </label>

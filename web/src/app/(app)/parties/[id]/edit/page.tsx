@@ -31,7 +31,7 @@ export default async function EditParty({ params }: PageProps<"/parties/[id]/edi
       <form action={archiveParty} className="mt-4">
         <input type="hidden" name="partyId" value={party.id} />
         <input type="hidden" name="archive" value={party.archivedAt ? "0" : "1"} />
-        <button className="text-base text-muted underline hover:text-gave">
+        <button className="text-sm text-muted underline hover:text-gave">
           {party.archivedAt ? "Restore this party" : "Archive this party (hides it from lists and stops reminders; the ledger is kept)"}
         </button>
       </form>

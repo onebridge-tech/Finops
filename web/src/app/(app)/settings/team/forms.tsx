@@ -58,7 +58,7 @@ export function InviteForm({ branches, canAddOwner }: { branches: Branch[]; canA
       <AccessFields branches={branches} canAddOwner={canAddOwner} />
       <div className="space-y-2 sm:col-span-3">
         <ErrorText>{state.error}</ErrorText>
-        {state.info && <p className="text-base text-got">{state.info}</p>}
+        {state.info && <p className="text-sm text-got">{state.info}</p>}
         <SubmitButton>Add to staff</SubmitButton>
       </div>
     </ActionForm>
@@ -73,7 +73,7 @@ export function MemberForm({ branches, canAddOwner, member }: { branches: Branch
       <AccessFields branches={branches} canAddOwner={canAddOwner} member={member} />
       <div className="space-y-2 sm:col-span-4">
         <ErrorText>{state.error}</ErrorText>
-        {state.info && <p className="text-base text-got">{state.info}</p>}
+        {state.info && <p className="text-sm text-got">{state.info}</p>}
         <SubmitButton variant="secondary">Save access</SubmitButton>
       </div>
     </ActionForm>

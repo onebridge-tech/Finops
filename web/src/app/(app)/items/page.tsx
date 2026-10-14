@@ -26,15 +26,15 @@ export default async function Items({ searchParams }: PageProps<"/items">) {
       <PageHeader
         title="Items"
         sub="What you sell. Used on your bills and price quotes."
-        action={<Link href={archived ? "/items" : "/items?archived=1"} className="text-base text-muted underline">{archived ? "Back to active items" : "Archived items"}</Link>}
+        action={<Link href={archived ? "/items" : "/items?archived=1"} className="text-sm text-muted underline">{archived ? "Back to active items" : "Archived items"}</Link>}
       />
       {write && !archived && <Card className="mb-4"><ItemForm bases={bases} /></Card>}
       {ordered.length === 0 ? (
         <EmptyState title={archived ? "No archived items" : "No items yet"} />
       ) : (
         <Card className="overflow-x-auto p-0">
-          <table className="w-full min-w-[720px] text-base">
-            <thead className="border-b border-line text-left text-sm uppercase text-muted">
+          <table className="w-full min-w-[720px] text-sm">
+            <thead className="border-b border-line bg-bg/50 text-left text-xs font-medium text-muted">
               <tr>
                 <th className="px-4 py-2">Item</th><th className="px-4 py-2">HSN/SAC</th><th className="px-4 py-2">Unit</th>
                 <th className="px-4 py-2 text-right">Sale price</th><th className="px-4 py-2 text-right">Margin</th><th className="px-4 py-2 text-right">GST</th>
@@ -53,7 +53,7 @@ export default async function Items({ searchParams }: PageProps<"/items">) {
                         {img ? <img src={img} alt="" className="size-9 rounded border border-line object-cover" /> : <span className="size-9 rounded border border-dashed border-line" />}
                         <span>
                           <span className="font-medium">{i.parentId ? i.variantName : i.name}</span>
-                          <span className="block text-sm text-muted">{[i.sku, i.isPublic && "in catalogue"].filter(Boolean).join(" · ")}</span>
+                          <span className="block text-xs text-muted">{[i.sku, i.isPublic && "in catalogue"].filter(Boolean).join(" · ")}</span>
                         </span>
                       </span>
                     </td>
@@ -64,7 +64,7 @@ export default async function Items({ searchParams }: PageProps<"/items">) {
                     <td className="px-4 py-2 text-right">{i.taxRateBp / 100}%</td>
                     <td className="whitespace-nowrap px-4 py-2 text-right">
                       {write && (
-                        <span className="flex justify-end gap-3 text-sm">
+                        <span className="flex justify-end gap-3 text-xs">
                           {!archived && <Link href={`/items/${i.id}`} className="text-muted underline hover:text-ink">Edit</Link>}
                           <form action={archiveItem}>
                             <input type="hidden" name="itemId" value={i.id} />

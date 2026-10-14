@@ -15,7 +15,7 @@ export function NameForm({ name }: { name: string }) {
       <div className="flex-1"><Field label="Shown to your team and on activity"><Input name="name" defaultValue={name} required /></Field></div>
       <SubmitButton variant="secondary">Save</SubmitButton>
       <ErrorText>{state.error}</ErrorText>
-      {state.info && <p className="w-full text-base text-got">{state.info}</p>}
+      {state.info && <p className="w-full text-sm text-got">{state.info}</p>}
     </ActionForm>
   );
 }
@@ -39,14 +39,14 @@ export function PinForm({ hasPin, lockAfterMin }: { hasPin: boolean; lockAfterMi
         </Field>
         <div className="space-y-2 sm:col-span-3">
           <ErrorText>{state.error}</ErrorText>
-          {state.ok && <p className="text-base text-got">Saved.</p>}
+          {state.ok && <p className="text-sm text-got">Saved.</p>}
           <SubmitButton>{hasPin ? "Change PIN" : "Turn on app lock"}</SubmitButton>
         </div>
       </ActionForm>
       {hasPin && (
         <ActionForm dispatch={action} pending={pending}>
           <input type="hidden" name="remove" value="1" />
-          <button className="text-sm text-muted underline hover:text-gave">Turn off app lock</button>
+          <button className="text-xs text-muted underline hover:text-gave">Turn off app lock</button>
         </ActionForm>
       )}
     </div>
@@ -70,7 +70,7 @@ export function PreferencesForm({ lang, mode }: { lang: string; mode: string }) 
       </Field>
       <div className="space-y-2 sm:col-span-2">
         <ErrorText>{state.error}</ErrorText>
-        {state.info && <p className="text-base text-got">{state.info}</p>}
+        {state.info && <p className="text-sm text-got">{state.info}</p>}
         <SubmitButton variant="secondary">Save preferences</SubmitButton>
       </div>
     </ActionForm>

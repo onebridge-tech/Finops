@@ -37,7 +37,7 @@ export function SendMessageForm({ partyId, blocked, canRemind }: { partyId: stri
         </Field>
       </div>
       <ErrorText>{state.error}</ErrorText>
-      {state.info && <p className="text-base text-got">{state.info}</p>}
+      {state.info && <p className="text-sm text-got">{state.info}</p>}
       <SubmitButton variant="secondary">Send now</SubmitButton>
     </ActionForm>
   );
@@ -60,7 +60,7 @@ export function PartyReminderForm({ partyId, rule, businessRule }: { partyId: st
       </Field>
       {mode === "CUSTOM" && <RuleFields rule={rule} />}
       <ErrorText>{state.error}</ErrorText>
-      {state.info && <p className="text-base text-got">{state.info}</p>}
+      {state.info && <p className="text-sm text-got">{state.info}</p>}
       <SubmitButton variant="secondary">Save</SubmitButton>
     </ActionForm>
   );

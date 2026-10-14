@@ -7,8 +7,8 @@ export default function manifest(): MetadataRoute.Manifest {
     short_name: BRAND.NAME,
     start_url: "/dashboard",
     display: "standalone",
-    background_color: "#faf5ec",
-    theme_color: "#b45309",
+    background_color: "#f5f6fa",
+    theme_color: "#4f46e5",
     icons: [{ src: "/favicon.ico", sizes: "any", type: "image/x-icon" }],
   };
 }

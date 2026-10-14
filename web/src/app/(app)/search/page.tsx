@@ -26,19 +26,19 @@ export default async function SearchPage({ searchParams }: PageProps<"/search">)
         {type && <input type="hidden" name="type" value={type} />}
       </form>
       {q && (
-        <nav className="mb-4 flex flex-wrap gap-1 text-base">
-          <Link href={href()} className={`rounded-lg px-3 py-1.5 ${!type ? "bg-brand text-brand-ink" : "text-muted hover:bg-card"}`}>All</Link>
+        <nav className="mb-5 flex w-fit max-w-full flex-wrap gap-1 rounded-lg bg-line/50 p-1">
+          <Link href={href()} className={`rounded-md px-3 py-1.5 text-sm font-medium transition ${!type ? "bg-card text-ink shadow-sm" : "text-muted hover:text-ink"}`}>All</Link>
           {SEARCH_TYPES.map((t) => (
-            <Link key={t} href={href(t)} className={`rounded-lg px-3 py-1.5 ${type === t ? "bg-brand text-brand-ink" : "text-muted hover:bg-card"}`}>
+            <Link key={t} href={href(t)} className={`rounded-md px-3 py-1.5 text-sm font-medium transition ${type === t ? "bg-card text-ink shadow-sm" : "text-muted hover:text-ink"}`}>
               {LABEL[t]}{r && !type && r[t].length > 0 && ` (${r[t].length}${r[t].length === 8 ? "+" : ""})`}
             </Link>
           ))}
         </nav>
       )}
       {!r ? (
-        <p className="text-base text-muted">Type at least 2 characters.</p>
+        <p className="text-sm text-muted">Type at least 2 characters.</p>
       ) : total === 0 ? (
-        <Card className="text-base text-muted">Nothing found for “{q}”.</Card>
+        <Card className="text-sm text-muted">Nothing found for “{q}”.</Card>
       ) : (
         <div className="space-y-6">
           <Group title="Customers & suppliers" items={r.parties.map((p) => <Row key={p.id} href={`/parties/${p.id}`} main={p.name} sub={[p.phone && `+${p.phone}`, p.gstin, p.type.toLowerCase()].filter(Boolean).join(" · ")} />)} />
@@ -57,8 +57,8 @@ function Group({ title, items }: { title: string; items: ReactNode[] }) {
   if (items.length === 0) return null;
   return (
     <section>
-      <h2 className="mb-2 text-base font-semibold text-muted">{title}</h2>
-      <Card className="divide-y divide-line p-0 text-base">{items}</Card>
+      <h2 className="mb-2 text-sm font-semibold text-muted">{title}</h2>
+      <Card className="divide-y divide-line p-0 text-sm">{items}</Card>
     </section>
   );
 }
@@ -68,7 +68,7 @@ function Row({ href, main, sub, amount }: { href: string; main: string; sub?: st
     <Link href={href} className="flex items-center justify-between gap-3 px-4 py-2.5 hover:bg-bg">
       <span className="min-w-0">
         <span className="block truncate font-medium">{main}</span>
-        {sub && <span className="text-sm text-muted">{sub}</span>}
+        {sub && <span className="text-xs text-muted">{sub}</span>}
       </span>
       {amount && <span className="shrink-0 tabular-nums">{amount}</span>}
     </Link>

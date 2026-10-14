@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { lockNow, switchBranch, switchBusiness } from "@/app/actions/auth";
+import { Icon } from "@/components/icon";
 
 /** Business picker (LG-12). The last option goes to onboarding to add another business. */
 export function BusinessSwitcher({ current, businesses }: { current: string; businesses: { id: string; name: string }[] }) {
@@ -14,7 +15,7 @@ export function BusinessSwitcher({ current, businesses }: { current: string; bus
         name="businessId"
         defaultValue={current}
         aria-label="Business"
-        className="max-w-48 truncate rounded-lg bg-transparent py-1 font-semibold outline-none hover:bg-bg"
+        className="w-full max-w-full cursor-pointer truncate rounded-lg border border-line bg-card px-2.5 py-2 text-sm font-semibold shadow-sm outline-none hover:bg-bg focus-visible:border-brand"
         onChange={(e) => {
           if (e.currentTarget.value === "__new") router.push("/onboarding?new=1");
           else e.currentTarget.form?.requestSubmit();
@@ -35,7 +36,7 @@ export function BranchSwitcher({ current, branches }: { current: string; branche
         name="branchId"
         defaultValue={current}
         aria-label="Branch"
-        className="max-w-40 rounded-lg border border-line bg-card px-2 py-1 text-base"
+        className="max-w-40 cursor-pointer rounded-lg border border-line bg-card px-2.5 py-1.5 text-sm shadow-sm outline-none focus-visible:border-brand"
         onChange={(e) => e.currentTarget.form?.requestSubmit()}
       >
         <option value="">All branches</option>
@@ -73,7 +74,7 @@ export function IdleLock({ minutes }: { minutes: number }) {
 export function LockButton() {
   return (
     <form action={lockNow}>
-      <button title="Lock the app" aria-label="Lock the app" className="rounded-lg px-1.5 py-1 hover:bg-bg">🔒</button>
+      <button title="Lock the app" aria-label="Lock the app" className="flex size-9 items-center justify-center rounded-lg text-muted hover:bg-bg hover:text-ink"><Icon name="lock" size={18} /></button>
     </form>
   );
 }

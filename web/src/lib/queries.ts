@@ -1,7 +1,7 @@
 import "server-only";
 import type { Prisma } from "@prisma/client";
 import { db } from "./db";
-import { ageing, balanceOf, openByEntry, openDues, overdueAmount } from "./ledger";
+import { istDay, ageing, balanceOf, openByEntry, openDues, overdueAmount } from "./ledger";
 import { docWhere, partyWhere, type Ctx } from "./auth";
 
 /** Bill-wise allocations for a business, grouped by party (CP-10). */
@@ -76,6 +76,21 @@ export async function dashboard(ctx: Ctx) {
   const sum = (rows: typeof today) => rows.reduce((s, t) => s + Number(t.amountPaise), 0);
   const collected = today.filter((t) => t.direction === "GOT" && t.paymentMode);
 
+  const weekStart = new Date(`${istDay(new Date(Date.now() - 6 * 86400_000))}T00:00:00+05:30`);
+  const weekRows = await db.ledgerEntry.findMany({
+    where: { ...entryWhere(ctx, ids), createdAt: { gte: weekStart }, source: { notIn: ["REVERSAL", "OPENING"] }, reversedBy: null },
+    select: { direction: true, amountPaise: true, paymentMode: true, createdAt: true },
+  });
+  const week = Array.from({ length: 7 }, (_, i) => {
+    const day = istDay(new Date(Date.now() - (6 - i) * 86400_000));
+    const rows = weekRows.filter((r) => istDay(r.createdAt) === day);
+    return {
+      day,
+      got: rows.filter((r) => r.direction === "GOT" && r.paymentMode).reduce((s, r) => s + Number(r.amountPaise), 0),
+      gave: rows.filter((r) => r.direction === "GAVE").reduce((s, r) => s + Number(r.amountPaise), 0),
+    };
+  });
+
   // Who did what today (IR-01 rep activity).
   const byUser = Map.groupBy(today, (t) => t.createdById);
   const members = await db.membership.findMany({ where: { businessId: ctx.business.id, userId: { in: [...byUser.keys()] } }, include: { user: true } });
@@ -112,6 +127,7 @@ export async function dashboard(ctx: Ctx) {
     overdueTotal: overdue.reduce((s, p) => s + p.overdue, 0),
     overdue: overdue.slice(0, 10),
     partyCount: parties.length,
+    week,
     todayGave: sum(today.filter((t) => t.direction === "GAVE")),
     todayGot: sum(collected),
     cashToday: sum(collected.filter((t) => t.paymentMode === "CASH")),

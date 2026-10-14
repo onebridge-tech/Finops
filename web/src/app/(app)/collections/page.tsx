@@ -59,17 +59,17 @@ export default async function Collections({ searchParams }: PageProps<"/collecti
         {totals.map(([k, v]) => (
           <Link key={k} href={href({ view: "overdue", bucket: bucket === k ? null : k })}>
             <Card className={`hover:bg-bg ${bucket === k && view === "overdue" ? "border-brand" : ""}`}>
-              <p className="text-base text-muted">{t("collect.daysOverdue", { range: k })}</p>
+              <p className="text-sm text-muted">{t("collect.daysOverdue", { range: k })}</p>
               <p className="mt-1 text-xl font-semibold tabular-nums text-gave">{formatINR(v)}</p>
             </Card>
           </Link>
         ))}
       </div>
 
-      <nav className="mt-4 flex flex-wrap gap-1 text-base">
+      <nav className="mt-5 flex w-fit max-w-full flex-wrap gap-1 rounded-lg bg-line/50 p-1">
         {VIEWS.map(([v, label]) => (
           <Link key={v} href={href({ view: v, bucket: v === "overdue" ? bucket : null })}
-            className={`rounded-lg px-3 py-1.5 ${view === v ? "bg-brand text-brand-ink" : "text-muted hover:bg-card"}`}>
+            className={`rounded-md px-3 py-1.5 text-sm font-medium transition ${view === v ? "bg-card text-ink shadow-sm" : "text-muted hover:text-ink"}`}>
             {t(label)}
           </Link>
         ))}
@@ -88,7 +88,7 @@ export default async function Collections({ searchParams }: PageProps<"/collecti
             }))}
           />
         ) : (
-          <Card className="divide-y divide-line p-0 text-base">
+          <Card className="divide-y divide-line p-0 text-sm">
             {rows.map((p) => (
               <Link key={p.id} href={`/parties/${p.id}`} className="flex justify-between px-4 py-3 hover:bg-bg">
                 <span>{p.name}</span><span className="tabular-nums text-gave">{formatINR(amountFor(p))}</span>

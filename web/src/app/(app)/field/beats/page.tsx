@@ -20,11 +20,11 @@ export default async function Beats() {
   const people = members.map((m) => ({ id: m.userId, name: m.user.name ?? `+${m.user.phone}` }));
   return (
     <>
-      <PageHeader title="Daily routes" sub="A route is the list of customers a salesman visits on certain days." action={<Link href="/field/team" className="text-base text-brand underline">Staff & targets</Link>} />
+      <PageHeader title="Daily routes" sub="A route is the list of customers a salesman visits on certain days." action={<Link href="/field/team" className="text-sm text-brand underline">Staff & targets</Link>} />
       <div className="space-y-3">
-        {beats.length === 0 && <Card className="text-base text-muted">No routes yet. Make one below.</Card>}
+        {beats.length === 0 && <Card className="text-sm text-muted">No routes yet. Make one below.</Card>}
         {beats.map((b) => (
-          <Card key={b.id} className="space-y-1 text-base">
+          <Card key={b.id} className="space-y-1 text-sm">
             <div className="flex items-start justify-between gap-3">
               <div>
                 <p className="font-medium">{b.name} <span className="font-normal text-muted">· {who(b.userId)?.name ?? `+${who(b.userId)?.phone}`} · {b.weekdays.split(",").map((d) => DAYS[Number(d)]).join(", ")}</span></p>

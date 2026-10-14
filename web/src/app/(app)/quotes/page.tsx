@@ -21,14 +21,14 @@ export default async function Quotes() {
       {quotes.length === 0 ? (
         <EmptyState title="No price quotes yet" />
       ) : (
-        <Card className="divide-y divide-line p-0 text-base">
+        <Card className="divide-y divide-line p-0 text-sm">
           {quotes.map((q) => {
             const s = quoteStatus(q);
             return (
               <Link key={q.id} href={`/quotes/${q.id}`} className="flex items-center justify-between px-4 py-3 hover:bg-bg">
                 <span>
                   <span className="block font-medium">{q.number} · {q.party.name}</span>
-                  <span className="text-sm text-muted">{fmtDate(q.date)} · <span className={s.tone}>{s.label}</span></span>
+                  <span className="text-xs text-muted">{fmtDate(q.date)} · <span className={s.tone}>{s.label}</span></span>
                 </span>
                 <span className="font-semibold tabular-nums">{formatINR(q.totalPaise)}</span>
               </Link>

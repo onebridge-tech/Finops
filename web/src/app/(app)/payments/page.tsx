@@ -20,10 +20,10 @@ export default async function Payments() {
   return (
     <>
       <PageHeader title="Money paid online" sub={mode === "test" ? "Test mode: customers see a fake pay button and no money moves." : mode ? `Live through ${mode}.` : "Online payment is switched off (no gateway keys set)."} />
-      <Card className="mb-4 text-base">Received online: <span className="font-semibold text-got">{formatINR(paid.reduce((s, r) => s + Number(r.amountPaise), 0))}</span> in {paid.length} payment{paid.length === 1 ? "" : "s"}. Each one is already in the customer’s ledger with a receipt, and the invoice is marked paid.</Card>
-      <Card className="overflow-x-auto p-0 text-base">
+      <Card className="mb-4 text-sm">Received online: <span className="font-semibold text-got">{formatINR(paid.reduce((s, r) => s + Number(r.amountPaise), 0))}</span> in {paid.length} payment{paid.length === 1 ? "" : "s"}. Each one is already in the customer’s ledger with a receipt, and the invoice is marked paid.</Card>
+      <Card className="overflow-x-auto p-0 text-sm">
         <table className="w-full">
-          <thead className="text-left text-sm uppercase text-muted"><tr><th className="px-4 py-2">Date</th><th>Customer</th><th>For</th><th className="text-right">Amount</th><th>Status</th><th className="px-4">Gateway ref</th></tr></thead>
+          <thead className="text-left text-xs text-muted"><tr><th className="px-4 py-2">Date</th><th>Customer</th><th>For</th><th className="text-right">Amount</th><th>Status</th><th className="px-4">Gateway ref</th></tr></thead>
           <tbody className="divide-y divide-line">
             {rows.length === 0 && <tr><td colSpan={6} className="px-4 py-3 text-muted">Nobody has paid online yet. Customers see “Pay online” on your bill and account links.</td></tr>}
             {rows.map((r) => (
@@ -33,7 +33,7 @@ export default async function Payments() {
                 <td>{r.invoiceId ? (inv.get(r.invoiceId) ?? "Invoice") : "Balance"}</td>
                 <td className="text-right tabular-nums">{formatINR(Number(r.amountPaise))}</td>
                 <td className={r.status === "PAID" ? "text-got" : r.status === "FAILED" ? "text-gave" : "text-muted"}>{r.status === "CREATED" ? "Waiting" : r.status === "PAID" ? "Paid" : "Not completed"}{r.provider === "test" && " (test)"}</td>
-                <td className="px-4 text-sm text-muted">{r.providerPaymentId ?? r.providerOrderId}</td>
+                <td className="px-4 text-xs text-muted">{r.providerPaymentId ?? r.providerOrderId}</td>
               </tr>
             ))}
           </tbody>

@@ -48,7 +48,7 @@ export function BusinessForm({ action, values = {}, submitLabel }: { action: (s:
       <Field label="Bill number starts with"><Input name="invoicePrefix" defaultValue={values.invoicePrefix ?? "INV-"} maxLength={10} /></Field>
       <div className="space-y-3 sm:col-span-2">
         <ErrorText>{state.error}</ErrorText>
-        {state.ok && <p className="text-base text-got">Saved.</p>}
+        {state.ok && <p className="text-sm text-got">Saved.</p>}
         <SubmitButton>{submitLabel}</SubmitButton>
       </div>
     </ActionForm>

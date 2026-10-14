@@ -53,7 +53,7 @@ export default async function InvoicePage({ params }: PageProps<"/invoices/[id]"
         {!cancelled && (
           <Card className="mb-4 flex flex-wrap items-center justify-between gap-3">
             {can(role, "reminder:send") && (
-              <div className="flex flex-wrap items-center gap-2 text-base">
+              <div className="flex flex-wrap items-center gap-2 text-sm">
                 <span className="text-muted">Send from the app:</span>
                 <SendDocumentForm kind="INVOICE" id={invoice.id} blocked={{ WHATSAPP: blockedReason(p, "WHATSAPP"), SMS: blockedReason(p, "SMS"), EMAIL: blockedReason(p, "EMAIL") }} />
               </div>
@@ -62,7 +62,7 @@ export default async function InvoicePage({ params }: PageProps<"/invoices/[id]"
           </Card>
         )}
         {cancelled && (
-          <Card className="mb-4 text-base text-muted">
+          <Card className="mb-4 text-sm text-muted">
             Cancelled {fmtDate(invoice.cancelledAt)}: {invoice.cancelReason}. {formatINR(invoice.totalPaise)} was reversed in the customer’s ledger.
           </Card>
         )}

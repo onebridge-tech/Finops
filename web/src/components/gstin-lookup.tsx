@@ -38,10 +38,10 @@ export function GstinLookupButton() {
   return (
     <>
       <button type="button" onClick={run} disabled={pending}
-        className="shrink-0 rounded-lg border border-line bg-card px-3 py-2 text-base font-medium hover:bg-bg disabled:opacity-50">
+        className="shrink-0 rounded-lg border border-line bg-card px-3 py-2 text-sm font-medium hover:bg-bg disabled:opacity-50">
         {pending ? "Fetching…" : "Fetch details"}
       </button>
-      {note && <span className={`block basis-full text-sm ${note.tone === "error" ? "text-gave" : "text-muted"}`}>{note.text}</span>}
+      {note && <span className={`block basis-full text-xs ${note.tone === "error" ? "text-gave" : "text-muted"}`}>{note.text}</span>}
     </>
   );
 }

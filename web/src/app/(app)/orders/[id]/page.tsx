@@ -44,7 +44,7 @@ export default async function OrderPage({ params }: PageProps<"/orders/[id]">) {
           }
         />
         {order.status === "REQUEST" && (
-          <Card className="mb-4 border-brand/40 bg-brand/5 text-base">
+          <Card className="mb-4 border-brand/40 bg-brand/5 text-sm">
             This order was placed from your catalogue and is waiting for you to accept it. {party.type === "LEAD" && "The buyer is saved as a lead."}
           </Card>
         )}
@@ -52,7 +52,7 @@ export default async function OrderPage({ params }: PageProps<"/orders/[id]">) {
         {open && (
           <Card className="mb-4 space-y-3">
             <h2 className="font-semibold">{sales ? "Deliver" : "Receive goods"}</h2>
-            <p className="text-sm text-muted">
+            <p className="text-xs text-muted">
               {sales ? "Enter what you are delivering now. An invoice is created for those quantities; the rest stays pending." : "Enter what arrived. Stock goes up and the supplier’s account is credited for that value."}
             </p>
             {write || can(ctx.role, "stock:write") ? (
@@ -61,18 +61,18 @@ export default async function OrderPage({ params }: PageProps<"/orders/[id]">) {
                 orderId={order.id}
                 lines={order.lines.map((l) => ({ id: l.id, description: l.description, unit: l.unit, ordered: l.qtyMilli / 1000, done: l.fulfilledMilli / 1000, pending: pendingMilli(l) / 1000 }))}
               />
-            ) : <p className="text-base text-muted">You can view this order but not fulfil it.</p>}
+            ) : <p className="text-sm text-muted">You can view this order but not fulfil it.</p>}
             {write && (
               <form action={setOrderStatus} className="border-t border-line pt-3">
                 <input type="hidden" name="orderId" value={order.id} />
                 <input type="hidden" name="status" value="CANCELLED" />
-                <button className="text-sm text-muted underline hover:text-gave">Cancel the rest of this order</button>
+                <button className="text-xs text-muted underline hover:text-gave">Cancel the rest of this order</button>
               </form>
             )}
           </Card>
         )}
         {invoices.length > 0 && (
-          <Card className="mb-4 text-base">
+          <Card className="mb-4 text-sm">
             <p className="mb-1 font-semibold">Bills made from this order</p>
             {invoices.map((i) => <Link key={i.id} href={`/invoices/${i.id}`} className="mr-4 underline">{i.number} · {fmtDate(i.date)} · {formatINR(i.totalPaise)}</Link>)}
           </Card>

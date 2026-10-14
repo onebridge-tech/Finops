@@ -34,21 +34,21 @@ export default async function Orders({ searchParams }: PageProps<"/orders">) {
         sub="What customers ordered from you, and what you ordered from suppliers."
         action={<div className="flex gap-2"><LinkButton href="/orders/new?kind=PURCHASE" variant="secondary">Order to supplier</LinkButton><LinkButton href="/orders/new">Customer order</LinkButton></div>}
       />
-      <nav className="mb-4 flex flex-wrap gap-1 text-base">
+      <nav className="mb-5 flex w-fit max-w-full flex-wrap gap-1 rounded-lg bg-line/50 p-1">
         {TABS.map(([t, l]) => (
-          <Link key={t} href={`/orders?tab=${t}`} className={`rounded-lg px-3 py-1.5 ${tab === t ? "bg-brand text-brand-ink" : "text-muted hover:bg-card"}`}>
+          <Link key={t} href={`/orders?tab=${t}`} className={`rounded-md px-3 py-1.5 text-sm font-medium transition ${tab === t ? "bg-card text-ink shadow-sm" : "text-muted hover:text-ink"}`}>
             {l}{t === "requests" && requests > 0 && <span className="ml-1 rounded-full bg-gave px-1.5 text-[10px] font-semibold text-white">{requests}</span>}
           </Link>
         ))}
         <Link href="/reports/orders" className="ml-auto px-3 py-1.5 text-muted underline">Pending-items report</Link>
       </nav>
       {orders.length === 0 ? <EmptyState title="No orders here" /> : (
-        <Card className="divide-y divide-line p-0 text-base">
+        <Card className="divide-y divide-line p-0 text-sm">
           {orders.map((o) => (
             <Link key={o.id} href={`/orders/${o.id}`} className="flex items-center justify-between gap-3 px-4 py-3 hover:bg-bg">
               <span>
                 <span className="block font-medium">{o.number} · {pn.get(o.partyId) ?? "—"}</span>
-                <span className="text-sm text-muted">
+                <span className="text-xs text-muted">
                   {fmtDate(o.date)}{o.expectedDate && ` · expected ${fmtDate(o.expectedDate)}`}
                   {o.source === "CATALOGUE" && " · from catalogue"}{o.source === "VISIT" && " · taken on a visit"} · <span className={TONE[o.status]}>{o.status.toLowerCase()}</span>
                 </span>

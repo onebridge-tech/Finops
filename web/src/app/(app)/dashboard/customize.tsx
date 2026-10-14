@@ -5,6 +5,7 @@ import { ActionForm } from "@/components/action-form";
 import { saveDashboardTiles } from "@/app/actions/team";
 import { SubmitButton } from "@/components/submit-button";
 import { TILES, type TileId } from "@/lib/tiles";
+import { Icon } from "@/components/icon";
 
 /** Choose and order dashboard tiles. Unticked tiles keep their place at the bottom. */
 export function CustomizeTiles({ current, available, label }: { current: TileId[]; available: TileId[]; label: string }) {
@@ -20,9 +21,9 @@ export function CustomizeTiles({ current, available, label }: { current: TileId[
   });
 
   return (
-    <details className="text-base">
-      <summary className="cursor-pointer text-muted underline">{label}</summary>
-      <ActionForm dispatch={action} pending={pending} className="mt-2 w-72 space-y-2 rounded-xl border border-line bg-card p-3 shadow-lg">
+    <details className="relative text-sm">
+      <summary className="inline-flex cursor-pointer list-none items-center gap-1.5 rounded-lg border border-line bg-card px-2.5 py-1.5 text-xs font-medium text-muted shadow-sm hover:text-ink"><Icon name="sliders" size={14} />{label}</summary>
+      <ActionForm dispatch={action} pending={pending} className="absolute right-0 z-10 mt-2 w-72 space-y-3 rounded-xl border border-line bg-card p-3 shadow-[var(--shadow-lg)]">
         <ul className="space-y-1">
           {order.map((id, i) => (
             <li key={id} className="flex items-center gap-2">
@@ -37,8 +38,8 @@ export function CustomizeTiles({ current, available, label }: { current: TileId[
         </ul>
         <div className="flex items-center gap-3">
           <SubmitButton>Save</SubmitButton>
-          <button name="reset" value="1" className="text-sm text-muted underline">Reset to default</button>
-          {state.info && <span className="text-sm text-got">{state.info}</span>}
+          <button name="reset" value="1" className="text-xs text-muted underline">Reset to default</button>
+          {state.info && <span className="text-xs text-got">{state.info}</span>}
         </div>
       </ActionForm>
     </details>

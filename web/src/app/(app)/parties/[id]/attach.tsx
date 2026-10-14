@@ -11,12 +11,12 @@ export function AttachToEntry({ entryId }: { entryId: string }) {
   return (
     <ActionForm ref={form} dispatch={action} pending={pending} className="inline">
       <input type="hidden" name="entryId" value={entryId} />
-      <label className="cursor-pointer text-sm text-muted underline hover:text-ink" title="Attach a bill photo, PDF or voice note">
+      <label className="cursor-pointer text-xs text-muted underline hover:text-ink" title="Attach a bill photo, PDF or voice note">
         {pending ? "Uploading…" : "Attach"}
         <input type="file" name="files" accept="image/png,image/jpeg,image/webp,application/pdf,audio/*" className="sr-only"
           onChange={() => form.current?.requestSubmit()} />
       </label>
-      {state.error && <span className="block text-sm text-gave">{state.error}</span>}
+      {state.error && <span className="block text-xs text-gave">{state.error}</span>}
     </ActionForm>
   );
 }

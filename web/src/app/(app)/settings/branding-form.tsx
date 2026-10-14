@@ -41,7 +41,7 @@ export function BrandingForm({ values: v }: { values: Values }) {
       <Field label="IFSC"><Input name="bankIfsc" defaultValue={v.bankIfsc ?? ""} className="uppercase" maxLength={11} /></Field>
       <div className="space-y-3 sm:col-span-2">
         <ErrorText>{state.error}</ErrorText>
-        {state.ok && <p className="text-base text-got">Saved. New and existing documents use this branding.</p>}
+        {state.ok && <p className="text-sm text-got">Saved. New and existing documents use this branding.</p>}
         <SubmitButton>Save branding</SubmitButton>
       </div>
     </ActionForm>
@@ -54,10 +54,10 @@ function ImageField({ name, label, hint, current }: { name: string; label: strin
       <div className="flex items-center gap-3">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         {current && <img src={current} alt="" className="h-12 w-auto rounded border border-line bg-white object-contain p-1" />}
-        <input type="file" name={name} accept="image/png,image/jpeg,image/webp" className="text-base" />
+        <input type="file" name={name} accept="image/png,image/jpeg,image/webp" className="text-sm" />
       </div>
       {current && (
-        <label className="mt-1 flex items-center gap-1 text-sm text-muted">
+        <label className="mt-1 flex items-center gap-1 text-xs text-muted">
           <input type="checkbox" name={`remove_${name}`} /> Remove
         </label>
       )}

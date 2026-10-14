@@ -91,7 +91,7 @@ export async function DocumentView({ doc, business: b, party, payAmountPaise }: 
 
       <div className="overflow-x-auto">
         <table className="mt-4 w-full min-w-[560px]">
-          <thead className="text-left text-xs uppercase text-muted" style={modern ? { background: "color-mix(in srgb, var(--doc-brand) 10%, transparent)" } : undefined}>
+          <thead className="text-left text-xs text-muted" style={modern ? { background: "color-mix(in srgb, var(--doc-brand) 10%, transparent)" } : undefined}>
             <tr className="border-b border-line">
               <th className="p-2">#</th><th className="p-2">Description</th><th className="p-2">HSN/SAC</th>
               <th className="p-2 text-right">Qty</th><th className="p-2 text-right">Rate</th>{hasDiscount && <th className="p-2 text-right">Disc</th>}<th className="p-2 text-right">Taxable</th>

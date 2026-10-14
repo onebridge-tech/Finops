@@ -23,7 +23,7 @@ export function BulkReminderForm({ rows, credits }: { rows: Row[]; credits: numb
   return (
     <ActionForm dispatch={action} pending={pending} className="space-y-3">
       <Card className="flex flex-wrap items-end justify-between gap-3">
-        <label className="space-y-1 text-base">
+        <label className="space-y-1 text-sm">
           <span className="font-medium">Send reminders by</span>
           <Select name="channel" value={channel} onChange={(e) => setChannel(e.target.value as Ch)} className="w-40">
             <option value="WHATSAPP">WhatsApp</option>
@@ -31,18 +31,18 @@ export function BulkReminderForm({ rows, credits }: { rows: Row[]; credits: numb
             <option value="EMAIL">Email</option>
           </Select>
         </label>
-        <div className="text-right text-base">
+        <div className="text-right text-sm">
           <p>{selected.length} selected · <span className={cost > credits ? "text-gave" : ""}>{cost} credit{cost === 1 ? "" : "s"}</span> of {credits} available</p>
-          {cost > credits && <Link href="/settings/credits" className="text-sm text-brand underline">Buy credits</Link>}
+          {cost > credits && <Link href="/settings/credits" className="text-xs text-brand underline">Buy credits</Link>}
         </div>
         <SubmitButton>Send {selected.length || ""} reminder{selected.length === 1 ? "" : "s"}</SubmitButton>
       </Card>
       <ErrorText>{state.error}</ErrorText>
-      {state.info && <p className="text-base text-got">{state.info}</p>}
+      {state.info && <p className="text-sm text-got">{state.info}</p>}
 
       <Card className="overflow-x-auto p-0">
-        <table className="w-full min-w-[520px] text-base">
-          <thead className="border-b border-line text-left text-sm uppercase text-muted">
+        <table className="w-full min-w-[520px] text-sm">
+          <thead className="border-b border-line bg-bg/50 text-left text-xs font-medium text-muted">
             <tr>
               <th className="w-10 px-4 py-2">
                 <input type="checkbox" aria-label="Select all" className="size-4 accent-[var(--brand)]"
@@ -64,7 +64,7 @@ export function BulkReminderForm({ rows, credits }: { rows: Row[]; credits: numb
                   </td>
                   <td className="px-2 py-2">
                     <Link href={`/parties/${r.id}`} className="font-medium hover:underline">{r.name}</Link>
-                    <span className="block text-sm text-muted">{why ?? (r.nextDue ? `Next due ${r.nextDue}` : "")}</span>
+                    <span className="block text-xs text-muted">{why ?? (r.nextDue ? `Next due ${r.nextDue}` : "")}</span>
                   </td>
                   <td className="px-4 py-2 text-right tabular-nums text-gave">{r.amount}</td>
                   <td className="px-4 py-2 text-right tabular-nums">{r.balance}</td>

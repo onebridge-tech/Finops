@@ -38,9 +38,9 @@ export default async function FollowUps({ searchParams }: PageProps<"/follow-ups
   return (
     <>
       <PageHeader title={t("fu.title")} sub="Calls and visits to make: money to ask for, and people who may become customers." />
-      <nav className="mb-4 flex flex-wrap items-center gap-1 text-base">
+      <nav className="mb-5 flex w-fit max-w-full flex-wrap items-center gap-1 rounded-lg bg-line/50 p-1">
         {VIEWS.map(([v, label]) => (
-          <Link key={v} href={href({ view: v })} className={`rounded-lg px-3 py-1.5 ${view === v ? "bg-brand text-brand-ink" : "text-muted hover:bg-card"}`}>{t(label)}</Link>
+          <Link key={v} href={href({ view: v })} className={`rounded-md px-3 py-1.5 text-sm font-medium transition ${view === v ? "bg-card text-ink shadow-sm" : "text-muted hover:text-ink"}`}>{t(label)}</Link>
         ))}
         {!ctx.assignedOnly && (
           <span className="ml-auto flex gap-1">
@@ -52,7 +52,7 @@ export default async function FollowUps({ searchParams }: PageProps<"/follow-ups
       {rows.length === 0 ? (
         <EmptyState title={view === "due" ? "Nothing due — all caught up" : "Nothing here"}>Add follow-ups from any party’s page.</EmptyState>
       ) : (
-        <Card className="divide-y divide-line p-0 text-base">
+        <Card className="divide-y divide-line p-0 text-sm">
           {rows.map((f) => {
             const late = !f.doneAt ? -daysBetween(now, f.dueAt) : 0;
             return (
@@ -60,16 +60,16 @@ export default async function FollowUps({ searchParams }: PageProps<"/follow-ups
                 <p className="flex flex-wrap justify-between gap-2">
                   <span>
                     <Link href={`/parties/${f.party.id}`} className="font-medium hover:underline">{f.party.name}</Link>
-                    {f.party.type === "LEAD" && <span className="ml-2 rounded bg-brand/10 px-1.5 text-sm text-brand">{t("type.LEAD")}</span>}
+                    {f.party.type === "LEAD" && <span className="ml-2 rounded bg-brand/10 px-1.5 text-xs text-brand">{t("type.LEAD")}</span>}
                     <span className="block">{f.note}</span>
                   </span>
-                  <span className={`text-sm ${late > 0 ? "font-medium text-gave" : "text-muted"}`}>
+                  <span className={`text-xs ${late > 0 ? "font-medium text-gave" : "text-muted"}`}>
                     {f.doneAt ? `done ${fmtDate(f.doneAt)}` : late > 0 ? `${late} day${late === 1 ? "" : "s"} overdue` : fmtDate(f.dueAt)}
                     {!mine && ` · ${team.get(f.assignedToId) ?? "former member"}`}
                     {f.party.phone && !f.doneAt && <> · <a href={`tel:+${f.party.phone}`} className="text-brand underline">{t("fu.call")}</a></>}
                   </span>
                 </p>
-                {f.outcome && <p className="text-sm text-muted">Outcome: {f.outcome}</p>}
+                {f.outcome && <p className="text-xs text-muted">Outcome: {f.outcome}</p>}
                 {!f.doneAt && <CompleteFollowUp id={f.id} />}
               </div>
             );

@@ -15,12 +15,12 @@ export default async function Reports() {
           <Link key={k} href={`/reports/${k}`}>
             <Card className="h-full hover:bg-bg">
               <p className="font-semibold">{REPORT_TITLES[k].name}</p>
-              <p className="mt-1 text-base text-muted">{REPORT_TITLES[k].about}</p>
+              <p className="mt-1 text-sm text-muted">{REPORT_TITLES[k].about}</p>
             </Card>
           </Link>
         ))}
-        <Link href="/cashbook"><Card className="h-full hover:bg-bg"><p className="font-semibold">Cash in the drawer</p><p className="mt-1 text-base text-muted">Daily cash in and out, with day close</p></Card></Link>
-        <Link href="/settings/audit"><Card className="h-full hover:bg-bg"><p className="font-semibold">Who changed what</p><p className="mt-1 text-base text-muted">Who changed what, tamper-checked</p></Card></Link>
+        <Link href="/cashbook"><Card className="h-full hover:bg-bg"><p className="font-semibold">Cash in the drawer</p><p className="mt-1 text-sm text-muted">Daily cash in and out, with day close</p></Card></Link>
+        <Link href="/settings/audit"><Card className="h-full hover:bg-bg"><p className="font-semibold">Who changed what</p><p className="mt-1 text-sm text-muted">Who changed what, tamper-checked</p></Card></Link>
       </div>
     </>
   );

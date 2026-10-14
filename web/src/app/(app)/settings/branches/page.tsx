@@ -18,21 +18,21 @@ export default async function Branches() {
       <PageHeader title="Shop branches" sub="Shops, godowns or offices. Each bill and entry shows which branch made it. A staff member can be limited to one branch." />
       {edit && <Card className="mb-6"><h2 className="mb-3 font-semibold">Add a branch</h2><BranchForm /></Card>}
       {branches.length === 0 ? (
-        <Card className="text-base text-muted">No branches yet. With one location you don’t need any.</Card>
+        <Card className="text-sm text-muted">No branches yet. With one location you don’t need any.</Card>
       ) : (
         <Card className="divide-y divide-line p-0">
           {branches.map((b) => (
             <details key={b.id} className="px-4 py-3">
               <summary className="flex cursor-pointer list-none justify-between gap-2">
                 <span className={b.archivedAt ? "text-muted line-through" : "font-medium"}>{b.name}</span>
-                <span className="text-sm text-muted">{count.get(b.id) ?? 0} staff tied to it{b.archivedAt && " · archived"}</span>
+                <span className="text-xs text-muted">{count.get(b.id) ?? 0} staff tied to it{b.archivedAt && " · archived"}</span>
               </summary>
               {edit && (
                 <div className="mt-3 space-y-3 border-t border-line pt-3">
                   {!b.archivedAt && <BranchForm branch={{ id: b.id, name: b.name, address: b.address ?? "", phone: b.phone ?? "", gstin: b.gstin ?? "", invoicePrefix: b.invoicePrefix ?? "" }} />}
                   <form action={archiveBranch}>
                     <input type="hidden" name="branchId" value={b.id} />
-                    <button className="text-sm text-muted underline hover:text-ink">{b.archivedAt ? "Restore branch" : "Archive branch"}</button>
+                    <button className="text-xs text-muted underline hover:text-ink">{b.archivedAt ? "Restore branch" : "Archive branch"}</button>
                   </form>
                 </div>
               )}

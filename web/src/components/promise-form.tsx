@@ -22,7 +22,7 @@ export function PromiseForm({ partyId, today }: { partyId: string; today: string
       <div className="flex items-end gap-3 sm:col-span-4">
         <SubmitButton variant="secondary">Note their promise</SubmitButton>
         <ErrorText>{state.error}</ErrorText>
-        <span className="text-sm text-muted">Creates a follow-up for that day and holds automatic reminders until the day after.</span>
+        <span className="text-xs text-muted">Creates a follow-up for that day and holds automatic reminders until the day after.</span>
       </div>
     </ActionForm>
   );

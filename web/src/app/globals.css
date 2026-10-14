@@ -1,15 +1,20 @@
 @import "tailwindcss";
 
+/* One palette for the whole app. Indigo is the brand; green and red are reserved for money. */
 :root {
-  --bg: #faf5ec; /* warm paper */
+  --bg: #f5f6fa;
   --card: #ffffff;
-  --ink: #1c1917;
-  --muted: #57534e;
-  --line: #e4d9c6;
-  --brand: #b45309; /* chai */
+  --ink: #0f172a;
+  --muted: #5b6678;
+  --line: #e4e7ee;
+  --brand: #4f46e5;
   --brand-ink: #ffffff;
-  --gave: #b91c1c; /* money still to come in from customers (red) */
-  --got: #15803d; /* money received (green) */
+  --brand-soft: #eef0ff;
+  --gave: #d92d20; /* money still to come in (red) */
+  --got: #067647; /* money received (green) */
+  --warn: #b54708;
+  --shadow: 0 1px 2px rgb(16 24 40 / 0.04), 0 1px 3px rgb(16 24 40 / 0.06);
+  --shadow-lg: 0 12px 32px rgb(16 24 40 / 0.12);
 }
 
 @theme inline {
@@ -20,36 +25,49 @@
   --color-line: var(--line);
   --color-brand: var(--brand);
   --color-brand-ink: var(--brand-ink);
+  --color-brand-soft: var(--brand-soft);
   --color-gave: var(--gave);
   --color-got: var(--got);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-warn: var(--warn);
+  --font-sans: var(--font-inter), var(--font-telugu), system-ui, sans-serif;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #17120d;
-    --card: #211a13;
-    --ink: #f5efe6;
-    --muted: #b8ab9a;
-    --line: #3a2f23;
-    --brand: #f59e0b;
-    --brand-ink: #1c1100;
-    --gave: #f87171;
-    --got: #4ade80;
+    --bg: #0b1020;
+    --card: #121a2e;
+    --ink: #e8ecf6;
+    --muted: #97a3ba;
+    --line: #243049;
+    --brand: #8b93ff;
+    --brand-ink: #0b1020;
+    --brand-soft: #1c2447;
+    --gave: #f97066;
+    --got: #32d583;
+    --warn: #fdb022;
+    --shadow: 0 1px 2px rgb(0 0 0 / 0.3);
+    --shadow-lg: 0 12px 32px rgb(0 0 0 / 0.5);
   }
 }
 
-/* A little larger than the browser default so everything is easy to read at arm's length. */
-html { font-size: 106.25%; }
-
-:focus-visible { outline: 3px solid var(--brand); outline-offset: 2px; }
+html { scroll-behavior: smooth; }
 
 body {
   background: var(--bg);
   color: var(--ink);
-  font-family: var(--font-sans), system-ui, sans-serif;
+  font-family: var(--font-sans);
+  font-size: 0.875rem; /* 14px, the size most business apps use for body text */
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  font-feature-settings: "cv11", "ss01";
 }
+
+/* Keep figures aligned in columns of money. */
+.tabular-nums, table { font-variant-numeric: tabular-nums; }
+
+:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+
+::selection { background: var(--brand-soft); }
 
 @media print {
   .no-print { display: none !important; }

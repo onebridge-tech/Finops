@@ -10,8 +10,8 @@ export function BackupButton() {
   return (
     <ActionForm dispatch={() => action()} pending={pending} className="space-y-2">
       <SubmitButton variant="secondary">Save a backup now</SubmitButton>
-      {state.info && <p className="text-sm text-got">{state.info}</p>}
-      {state.error && <p className="text-sm text-gave">{state.error}</p>}
+      {state.info && <p className="text-xs text-got">{state.info}</p>}
+      {state.error && <p className="text-xs text-gave">{state.error}</p>}
     </ActionForm>
   );
 }

@@ -33,15 +33,15 @@ export default async function Credits() {
       <div className="grid gap-6 lg:grid-cols-3">
         <Card className="space-y-3 lg:col-span-1">
           <h2 className="font-semibold">Buy credits</h2>
-          {can(role, "settings:write") ? <BuyCredits packs={CREDIT_PACKS.map((p) => ({ ...p }))} /> : <p className="text-base text-muted">Ask the owner to buy credits.</p>}
+          {can(role, "settings:write") ? <BuyCredits packs={CREDIT_PACKS.map((p) => ({ ...p }))} /> : <p className="text-sm text-muted">Ask the owner to buy credits.</p>}
         </Card>
         <Card className="lg:col-span-2">
           <h2 className="mb-3 font-semibold">Usage in the last 30 days</h2>
           {usage.length === 0 ? (
-            <p className="text-base text-muted">No paid messages yet.</p>
+            <p className="text-sm text-muted">No paid messages yet.</p>
           ) : (
-            <table className="w-full text-base">
-              <thead className="text-left text-sm uppercase text-muted">
+            <table className="w-full text-sm">
+              <thead className="text-left text-xs text-muted">
                 <tr><th className="py-1 font-medium">Sent by</th><th className="py-1 font-medium">Channel</th><th className="py-1 text-right font-medium">Messages</th><th className="py-1 text-right font-medium">Credits</th></tr>
               </thead>
               <tbody className="divide-y divide-line">
@@ -60,16 +60,16 @@ export default async function Credits() {
       </div>
 
       <h2 className="mb-2 mt-6 font-semibold">History</h2>
-      <Card className="divide-y divide-line p-0 text-base">
+      <Card className="divide-y divide-line p-0 text-sm">
         {txns.map((t) => (
           <div key={t.id} className="flex justify-between gap-3 px-4 py-2">
             <span>
               {REASON[t.reason] ?? t.reason}
-              <span className="block text-sm text-muted">{fmtDate(t.createdAt)}{t.note && ` · ${t.note}`}</span>
+              <span className="block text-xs text-muted">{fmtDate(t.createdAt)}{t.note && ` · ${t.note}`}</span>
             </span>
             <span className="text-right tabular-nums">
               <span className={t.delta > 0 ? "text-got" : ""}>{t.delta > 0 ? `+${t.delta}` : t.delta}</span>
-              <span className="block text-sm text-muted">bal {t.balanceAfter}</span>
+              <span className="block text-xs text-muted">bal {t.balanceAfter}</span>
             </span>
           </div>
         ))}

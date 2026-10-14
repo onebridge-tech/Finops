@@ -2,42 +2,68 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useT } from "@/components/i18n-provider";
-import type { UiKey } from "@/lib/i18n";
 import { Icon, type IconName } from "@/components/icon";
 
-// Icons keep the phone nav readable in every language, even when labels are truncated.
-const LINKS: [string, UiKey, IconName][] = [
-  ["/dashboard", "nav.home", "home"],
-  ["/parties", "nav.parties", "users"],
-  ["/invoices", "nav.invoices", "bill"],
-  ["/collections", "nav.collect", "rupee"],
-  ["/follow-ups", "nav.followups", "phone"],
-  ["/more", "nav.more", "grid"],
-];
+export type NavItem = { href: string; label: string; icon: IconName; badge?: number };
+export type NavGroup = { title?: string; items: NavItem[] };
 
-export function NavLinks({ mobile = false, followUpsDue = 0 }: { mobile?: boolean; followUpsDue?: number }) {
+/** The item whose address is the longest match for the current page, so "Settings" is not lit up on the Tally page. */
+function useActive(all: NavItem[]) {
   const path = usePathname();
-  const t = useT();
+  let best = "";
+  for (const i of all) if ((path === i.href || path.startsWith(i.href + "/")) && i.href.length > best.length) best = i.href;
+  return best;
+}
+
+/** Left menu on a computer. */
+export function SideNav({ groups }: { groups: NavGroup[] }) {
+  const active = useActive(groups.flatMap((g) => g.items));
   return (
-    <ul className={mobile ? "grid grid-cols-6 text-center text-[11px] font-medium leading-[1.15]" : "flex gap-1"}>
-      {LINKS.map(([href, key, icon]) => {
-        // "More" stays highlighted on the screens it leads to.
-        const moreRoutes = ["/items", "/stock", "/orders", "/notes", "/quotes", "/price-lists", "/expenses", "/cashbook", "/reports", "/field", "/data", "/settings", "/search"];
-        const active = href === "/more" ? path === "/more" || moreRoutes.some((r) => path === r || path.startsWith(r + "/")) : path === href || path.startsWith(href + "/");
+    <nav aria-label="Sections" className="flex-1 space-y-5 overflow-y-auto px-3 py-2">
+      {groups.map((g, n) => (
+        <div key={n}>
+          {g.title && <p className="mb-1 px-2.5 text-[11px] font-semibold uppercase tracking-wider text-muted/80">{g.title}</p>}
+          <ul className="space-y-0.5">
+            {g.items.map((i) => {
+              const on = active === i.href;
+              return (
+                <li key={i.href}>
+                  <Link
+                    href={i.href}
+                    aria-current={on ? "page" : undefined}
+                    className={`group flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm font-medium transition ${on ? "bg-brand-soft text-brand" : "text-muted hover:bg-bg hover:text-ink"}`}
+                  >
+                    <Icon name={i.icon} size={18} className={on ? "" : "opacity-80 group-hover:opacity-100"} />
+                    <span className="flex-1 truncate">{i.label}</span>
+                    {!!i.badge && <span className="rounded-full bg-gave px-1.5 text-[11px] font-semibold leading-5 text-white" aria-label={`${i.badge} due`}>{i.badge}</span>}
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      ))}
+    </nav>
+  );
+}
+
+/** Bottom bar on a phone. */
+export function BottomNav({ items, moreLabel, morePaths }: { items: NavItem[]; moreLabel: string; morePaths: string[] }) {
+  const all: NavItem[] = [...items, { href: "/more", label: moreLabel, icon: "grid" }];
+  const path = usePathname();
+  const active = useActive(all);
+  // "More" is lit on every screen that is reached through it.
+  const inMore = path === "/more" || (!items.some((i) => path === i.href || path.startsWith(i.href + "/")) && morePaths.some((p) => path === p || path.startsWith(p + "/")));
+  return (
+    <ul className="grid grid-cols-6 px-1 pb-[max(0.25rem,env(safe-area-inset-bottom))] pt-1">
+      {all.map((i) => {
+        const on = i.href === "/more" ? inMore : active === i.href;
         return (
-          <li key={href} className="min-w-0">
-            <Link
-              href={href}
-              className={`relative block rounded-lg ${mobile ? "min-h-16 px-0.5 pb-2 pt-2" : "px-3.5 py-2 text-base"} ${active ? "font-bold text-brand" : "text-muted hover:text-ink"}`}
-            >
-              {mobile && <span className="mx-auto mb-0.5 flex h-7 w-12 items-center justify-center" aria-hidden><Icon name={icon} size={22} /></span>}
-              {t(key)}
-              {href === "/follow-ups" && followUpsDue > 0 && (
-                <span className={`ml-1 rounded-full bg-gave px-1.5 text-[10px] font-semibold text-white ${mobile ? "absolute right-0 top-1" : ""}`} aria-label={`${followUpsDue} due`}>
-                  {followUpsDue}
-                </span>
-              )}
+          <li key={i.href} className="min-w-0">
+            <Link href={i.href} aria-current={on ? "page" : undefined} className={`relative flex flex-col items-center gap-0.5 rounded-lg px-0.5 py-1 text-[11px] font-medium leading-tight ${on ? "text-brand" : "text-muted"}`}>
+              <span className={`flex h-7 w-12 items-center justify-center rounded-full transition ${on ? "bg-brand-soft" : ""}`}><Icon name={i.icon} size={20} /></span>
+              <span className="max-w-full truncate">{i.label}</span>
+              {!!i.badge && <span className="absolute right-2 top-0 rounded-full bg-gave px-1.5 text-[10px] font-semibold leading-4 text-white" aria-label={`${i.badge} due`}>{i.badge}</span>}
             </Link>
           </li>
         );

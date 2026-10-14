@@ -57,7 +57,7 @@ export function AttachmentInput() {
   };
 
   return (
-    <div className="flex flex-wrap items-center gap-2 text-base">
+    <div className="flex flex-wrap items-center gap-2 text-sm">
       <label className="cursor-pointer rounded-lg border border-line px-3 py-1.5 hover:bg-bg">
         {t("entry.attach")}
         <input
@@ -73,12 +73,12 @@ export function AttachmentInput() {
         {recording ? `■ ${t("entry.stop")}` : `🎙 ${t("entry.voice")}`}
       </button>
       {files.map((f, i) => (
-        <span key={`${f.name}-${i}`} className="flex items-center gap-1 rounded bg-bg px-2 py-0.5 text-sm">
+        <span key={`${f.name}-${i}`} className="flex items-center gap-1 rounded bg-bg px-2 py-0.5 text-xs">
           {f.name}
           <button type="button" aria-label={`Remove ${f.name}`} onClick={() => sync(files.filter((_, j) => j !== i))} className="text-muted hover:text-gave">×</button>
         </span>
       ))}
-      {error && <span className="text-sm text-gave">{error}</span>}
+      {error && <span className="text-xs text-gave">{error}</span>}
     </div>
   );
 }

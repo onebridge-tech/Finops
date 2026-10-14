@@ -84,7 +84,7 @@ export default async function Statement({ params, searchParams }: PageProps<"/s/
       </form>
 
       <table className="mt-4 w-full rounded-xl border border-line bg-card text-sm">
-        <thead className="border-b border-line text-left text-xs uppercase text-muted">
+        <thead className="border-b border-line bg-bg/50 text-left text-xs font-medium text-muted">
           <tr><th className="px-3 py-2">Date</th><th className="px-3 py-2">Details</th><th className="px-3 py-2 text-right">Debit</th><th className="px-3 py-2 text-right">Credit</th><th className="px-3 py-2 text-right">Balance</th></tr>
         </thead>
         <tbody className="divide-y divide-line">

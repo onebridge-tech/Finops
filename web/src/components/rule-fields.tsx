@@ -14,7 +14,7 @@ export function RuleFields({ rule }: { rule: Rule }) {
       <Field label="Then every N days while overdue" hint="Leave empty to skip">
         <Input name="everyDaysAfter" inputMode="numeric" defaultValue={rule.everyDaysAfter ?? ""} />
       </Field>
-      <label className="flex items-center gap-2 text-base">
+      <label className="flex items-center gap-2 text-sm">
         <input type="checkbox" name="onDue" defaultChecked={rule.onDue} className="size-4 accent-[var(--brand)]" />
         On the due date
       </label>

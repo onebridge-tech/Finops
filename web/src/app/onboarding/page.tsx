@@ -12,9 +12,9 @@ export default async function Onboarding() {
   const existing = await db.membership.count({ where: { userId: user.id } });
   return (
     <main className="mx-auto max-w-2xl px-4 py-10">
-      {existing > 0 && <Link href="/dashboard" className="text-base text-muted underline">← Back</Link>}
+      {existing > 0 && <Link href="/dashboard" className="text-sm text-muted underline">← Back</Link>}
       <h1 className="text-2xl font-bold">{existing > 0 ? "Add another business" : "Set up your business"}</h1>
-      <p className="mb-6 mt-1 text-base text-muted">This appears on your statements, invoices and reminders. You can change it later.</p>
+      <p className="mb-6 mt-1 text-sm text-muted">This appears on your statements, invoices and reminders. You can change it later.</p>
       <Card><BusinessForm action={createBusiness} submitLabel="Create business" /></Card>
     </main>
   );

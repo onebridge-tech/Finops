@@ -1,10 +1,11 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Inter, Noto_Sans_Telugu } from "next/font/google";
 import "./globals.css";
 import { BRAND } from "@/lib/brand";
 
-const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
-const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
+const inter = Inter({ variable: "--font-inter", subsets: ["latin"], display: "swap" });
+// Telugu letters are not in Inter; this keeps them crisp instead of falling back to a system font.
+const telugu = Noto_Sans_Telugu({ variable: "--font-telugu", subsets: ["telugu"], display: "swap" });
 
 export const metadata: Metadata = {
   title: { default: `${BRAND.NAME} — ${BRAND.TAGLINE}`, template: `%s · ${BRAND.NAME}` },
@@ -12,11 +13,11 @@ export const metadata: Metadata = {
   manifest: "/manifest.webmanifest",
 };
 
-export const viewport: Viewport = { themeColor: "#b45309", width: "device-width", initialScale: 1 };
+export const viewport: Viewport = { themeColor: "#4f46e5", width: "device-width", initialScale: 1 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}>
+    <html lang="en" className={`${inter.variable} ${telugu.variable} h-full antialiased`}>
       <body className="min-h-full">{children}</body>
     </html>
   );

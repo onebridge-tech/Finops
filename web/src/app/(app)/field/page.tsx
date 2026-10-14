@@ -15,7 +15,7 @@ export default async function Field() {
         title="Salesmen on the road"
         sub="Check in at customers, take orders and collect money. Works without a signal. It uploads when you are back online."
         action={can(ctx.role, "field:manage") && (
-          <div className="flex gap-3 text-base"><Link href="/field/team" className="text-brand underline">Staff & targets</Link><Link href="/field/beats" className="text-brand underline">Daily routes</Link></div>
+          <div className="flex gap-3 text-sm"><Link href="/field/team" className="text-brand underline">Staff & targets</Link><Link href="/field/beats" className="text-brand underline">Daily routes</Link></div>
         )}
       />
       <FieldApp data={data} businessId={ctx.business.id} userId={ctx.user.id} />

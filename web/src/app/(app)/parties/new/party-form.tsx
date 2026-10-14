@@ -102,11 +102,11 @@ export function PartyForm({ defaultState, party, owners, branches, defaultBranch
               <option value="GOT">I owe them</option>
             </Select>
           </Field>
-          <label className="flex items-start gap-2 text-base sm:col-span-2">
+          <label className="flex items-start gap-2 text-sm sm:col-span-2">
             <input type="checkbox" name="consent" className="mt-0.5 size-4 accent-[var(--brand)]" />
             <span>
               This party agreed to receive account messages (reminders, receipts, invoices) on WhatsApp, SMS or email.
-              <span className="block text-sm text-muted">Needed before we can message them. They can stop messages any time from a link in each message.</span>
+              <span className="block text-xs text-muted">Needed before we can message them. They can stop messages any time from a link in each message.</span>
             </span>
           </label>
         </>

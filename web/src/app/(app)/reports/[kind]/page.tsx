@@ -31,15 +31,15 @@ export default async function ReportPage({ params, searchParams }: PageProps<"/r
         sub={meta.needsPeriod ? `${period.label}` : meta.about}
         action={
           <div className="no-print flex flex-wrap gap-2">
-            <a href={`/reports/${k}/export?${qs}&format=xlsx`} className="rounded-lg border border-line bg-card px-3.5 py-2 text-base font-medium hover:bg-bg">Excel</a>
-            <a href={`/reports/${k}/export?${qs}&format=csv`} className="rounded-lg border border-line bg-card px-3.5 py-2 text-base font-medium hover:bg-bg">CSV</a>
+            <a href={`/reports/${k}/export?${qs}&format=xlsx`} className="rounded-lg border border-line bg-card px-3.5 py-2 text-sm font-medium hover:bg-bg">Excel</a>
+            <a href={`/reports/${k}/export?${qs}&format=csv`} className="rounded-lg border border-line bg-card px-3.5 py-2 text-sm font-medium hover:bg-bg">CSV</a>
             <PrintButton />
           </div>
         }
       />
-      <Link href="/reports" className="no-print mb-3 inline-block text-base text-muted underline">← All reports</Link>
+      <Link href="/reports" className="no-print mb-3 inline-block text-sm text-muted underline">← All reports</Link>
 
-      <form className="no-print mb-4 flex flex-wrap items-end gap-3 text-base">
+      <form className="no-print mb-4 flex flex-wrap items-end gap-3 text-sm">
         {meta.needsPeriod && (
           <>
             <Field label="Period">
@@ -75,9 +75,9 @@ export default async function ReportPage({ params, searchParams }: PageProps<"/r
         <button className="rounded-lg bg-brand px-4 py-2 font-medium text-brand-ink">Show</button>
       </form>
 
-      {result.note && <p className="mb-3 text-base text-muted">{result.note}</p>}
+      {result.note && <p className="mb-3 text-sm text-muted">{result.note}</p>}
       <ReportTable result={result} />
-      <Card className="hidden print:block print:border-0 print:p-0 text-sm text-muted">Generated {new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })}</Card>
+      <Card className="hidden print:block print:border-0 print:p-0 text-xs text-muted">Generated {new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })}</Card>
     </>
   );
 }
