@@ -42,9 +42,9 @@ export default async function Parties({ searchParams }: PageProps<"/parties">) {
         <Input name="q" defaultValue={q} placeholder={t("parties.search")} />
         {tab !== "all" && <input type="hidden" name="type" value={tab} />}
       </form>
-      <nav className="mb-4 flex flex-wrap gap-1 text-sm">
+      <nav className="mb-4 flex flex-wrap gap-2">
         {TABS.map(([x, key]) => (
-          <Link key={x} href={href(x)} className={`rounded-lg px-3 py-1.5 ${tab === x ? "bg-brand text-brand-ink" : "text-muted hover:bg-card"}`}>{t(key)}</Link>
+          <Link key={x} href={href(x)} className={`min-h-11 rounded-full px-4 py-2 text-base font-medium ${tab === x ? "bg-brand text-brand-ink" : "border border-line bg-card text-muted hover:text-ink"}`}>{t(key)}</Link>
         ))}
       </nav>
       {parties.length === 0 ? (
@@ -54,10 +54,10 @@ export default async function Parties({ searchParams }: PageProps<"/parties">) {
       ) : (
         <Card className="divide-y divide-line p-0">
           {parties.map((p) => (
-            <Link key={p.id} href={`/parties/${p.id}`} className="flex items-center justify-between gap-3 px-4 py-3 hover:bg-bg">
+            <Link key={p.id} href={`/parties/${p.id}`} className="flex min-h-16 items-center justify-between gap-3 px-4 py-3 hover:bg-bg">
               <span className="min-w-0">
-                <span className="block truncate font-medium">{p.name}</span>
-                <span className="text-xs text-muted">
+                <span className="block truncate text-lg font-semibold">{p.name}</span>
+                <span className="text-sm text-muted">
                   {accountant ? ledgerGroup(p.type, p.balance) : t(`type.${p.type}` as UiKey)}
                   {p.phone ? ` · +${p.phone}` : ""}{accountant && p.gstin ? ` · ${p.gstin}` : ""}
                 </span>

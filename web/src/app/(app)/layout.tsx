@@ -9,6 +9,8 @@ import { can } from "@/lib/auth";
 import { CommandPalette } from "@/components/command-palette";
 import { OfflineRegister } from "@/components/offline-register";
 import { SignOutButton } from "@/components/sign-out-button";
+import { Logo } from "@/components/icon";
+import { BRAND } from "@/lib/brand";
 import { NavLinks } from "./nav-links";
 import { BranchSwitcher, BusinessSwitcher, IdleLock, LockButton } from "./header-controls";
 
@@ -26,13 +28,14 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
 
   return (
     <I18nProvider lang={user.uiLanguage} mode={user.uiMode}>
-      <div className="min-h-screen pb-20 md:pb-0" lang={user.uiLanguage}>
+      <div className="min-h-screen pb-24 md:pb-0" lang={user.uiLanguage}>
         <OfflineRegister />
         <CommandPalette screens={MENU.filter((m) => !m.permission || can(role, m.permission)).map((m) => ({ href: m.href, label: m.label, hint: m.about }))} />
         {user.pinHash && <IdleLock minutes={user.lockAfterMin} />}
         <header className="no-print border-b border-line bg-card">
           <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-2">
             <div className="flex min-w-0 items-center gap-2">
+              <Link href="/dashboard" className="flex items-center gap-2 pr-1 font-bold" aria-label={`${BRAND.NAME} home`}><Logo /><span className="hidden text-lg sm:inline">{BRAND.NAME}</span></Link>
               <BusinessSwitcher current={business.id} businesses={memberships.map((m) => m.business)} />
               {tiedBranch ? (
                 <span className="rounded-lg border border-line px-2 py-1 text-sm text-muted">{tiedBranch.name}</span>
@@ -54,8 +57,8 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
             </div>
           </div>
         </header>
-        <main className="mx-auto max-w-6xl px-4 py-6">{children}</main>
-        <nav className="no-print fixed inset-x-0 bottom-0 border-t border-line bg-card md:hidden"><NavLinks mobile followUpsDue={followUpsDue} /></nav>
+        <main className="mx-auto max-w-5xl px-4 py-6 sm:py-8">{children}</main>
+        <nav className="no-print fixed inset-x-0 bottom-0 z-40 border-t border-line bg-card md:hidden"><NavLinks mobile followUpsDue={followUpsDue} /></nav>
       </div>
     </I18nProvider>
   );

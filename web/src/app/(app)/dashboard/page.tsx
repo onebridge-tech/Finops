@@ -6,7 +6,8 @@ import { formatINR } from "@/lib/money";
 import { translator } from "@/lib/i18n";
 import { drCr } from "@/lib/accounting";
 import { parseTiles, TILES, type TileId } from "@/lib/tiles";
-import { Card, EmptyState, LinkButton, PageHeader, fmtDate } from "@/components/ui";
+import { Card, EmptyState, PageHeader, fmtDate } from "@/components/ui";
+import { Icon, type IconName } from "@/components/icon";
 import { CustomizeTiles } from "./customize";
 
 export const metadata = { title: "Home" };
@@ -43,17 +44,17 @@ export default async function Dashboard() {
   const lists: Partial<Record<TileId, ReactNode>> = {
     topOverdue: (
       <section>
-        <h2 className="mb-2 font-semibold">{t("dash.topOverdue")}</h2>
+        <h2 className="mb-2 text-xl font-bold">{t("dash.topOverdue")}</h2>
         {d.overdue.length === 0 ? (
           <EmptyState title={t("dash.nothingOverdue")}>{d.partyCount === 0 ? t("dash.firstCustomer") : t("dash.allWithin")}</EmptyState>
         ) : (
           <Card className="divide-y divide-line p-0">
             {d.overdue.map((p) => (
-              <Link key={p.id} href={`/parties/${p.id}`} className="flex items-center justify-between px-4 py-3 hover:bg-bg">
-                <span className="truncate">{p.name}</span>
+              <Link key={p.id} href={`/parties/${p.id}`} className="flex min-h-14 items-center justify-between gap-3 px-4 py-3 text-lg hover:bg-bg">
+                <span className="truncate font-medium">{p.name}</span>
                 <span className="text-right">
                   <span className="block font-semibold tabular-nums text-gave">{formatINR(p.overdue)}</span>
-                  <span className="text-xs text-muted">{t("dash.ofDue", { amount: formatINR(p.balance) })}</span>
+                  <span className="text-sm text-muted">{t("dash.ofDue", { amount: formatINR(p.balance) })}</span>
                 </span>
               </Link>
             ))}
@@ -63,16 +64,16 @@ export default async function Dashboard() {
     ),
     recent: (
       <section>
-        <h2 className="mb-2 font-semibold">{t("dash.recent")}</h2>
+        <h2 className="mb-2 text-xl font-bold">{t("dash.recent")}</h2>
         {d.recent.length === 0 ? (
           <EmptyState title={t("dash.noEntries")} />
         ) : (
           <Card className="divide-y divide-line p-0">
             {d.recent.map((e) => (
-              <Link key={e.id} href={`/parties/${e.partyId}`} className="flex items-center justify-between px-4 py-3 text-sm hover:bg-bg">
+              <Link key={e.id} href={`/parties/${e.partyId}`} className="flex min-h-14 items-center justify-between gap-3 px-4 py-3 text-base hover:bg-bg">
                 <span>
-                  <span className="block font-medium">{e.party.name}</span>
-                  <span className="text-xs text-muted">{fmtDate(e.date)} · {e.note ?? t(e.direction === "GAVE" ? "col.gave" : "col.got")}</span>
+                  <span className="block text-lg font-medium">{e.party.name}</span>
+                  <span className="text-sm text-muted">{fmtDate(e.date)} · {e.note ?? t(e.direction === "GAVE" ? "col.gave" : "col.got")}</span>
                 </span>
                 <span className={`font-semibold tabular-nums ${e.direction === "GAVE" ? "text-gave" : "text-got"}`}>
                   {formatINR(e.amountPaise)} <span className="text-xs font-normal">{accountant ? (e.direction === "GAVE" ? "Dr" : "Cr") : t(e.direction === "GAVE" ? "col.gave" : "col.got")}</span>
@@ -85,7 +86,7 @@ export default async function Dashboard() {
     ),
     team: (
       <section>
-        <h2 className="mb-2 font-semibold">{t("dash.team")}</h2>
+        <h2 className="mb-2 text-xl font-bold">{t("dash.team")}</h2>
         {d.activity.length === 0 ? (
           <EmptyState title={t("dash.noEntries")} />
         ) : (
@@ -116,13 +117,13 @@ export default async function Dashboard() {
       <PageHeader
         title={t("dash.today")}
         sub={new Date().toLocaleDateString(user.uiLanguage === "en" ? "en-IN" : `${user.uiLanguage}-IN`, { weekday: "long", day: "numeric", month: "long", timeZone: "Asia/Kolkata" })}
-        action={
-          <div className="flex flex-wrap items-center gap-2">
-            {can(role, "party:write") && <LinkButton href="/parties/new" variant="secondary">{t("dash.addParty")}</LinkButton>}
-            {can(role, "invoice:write") && <LinkButton href="/invoices/new">{t("dash.newInvoice")}</LinkButton>}
-          </div>
-        }
       />
+      <nav aria-label="Quick actions" className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
+        {can(role, "ledger:write") && <Quick href="/parties" icon="plus" label="Write credit or payment" tone="primary" />}
+        {can(role, "invoice:write") && <Quick href="/invoices/new" icon="bill" label={t("dash.newInvoice")} />}
+        {can(role, "reminder:send") && <Quick href="/collections" icon="send" label="Ask for money" />}
+        {can(role, "party:write") && <Quick href="/parties/new" icon="users" label={t("dash.addParty")} />}
+      </nav>
       <div className="mb-3 flex justify-end">
         <CustomizeTiles current={tiles} available={available} label={t("dash.customize")} />
       </div>
@@ -134,8 +135,8 @@ export default async function Dashboard() {
       )}
 
       {!business.upiId && (
-        <Card className="mt-4 border-brand/40 bg-brand/5 text-sm">
-          Add your UPI ID in <Link href="/settings" className="font-medium text-brand underline">Settings</Link> so customers can pay from reminders and invoices.
+        <Card className="mt-4 border-brand/40 bg-brand/5 text-base">
+          Add your UPI ID in <Link href="/settings" className="font-semibold text-brand underline">Settings</Link> so customers can pay you straight from your reminders and bills.
         </Card>
       )}
 
@@ -148,12 +149,24 @@ export default async function Dashboard() {
   );
 }
 
+function Quick({ href, icon, label, tone }: { href: string; icon: IconName; label: string; tone?: "primary" }) {
+  return (
+    <Link
+      href={href}
+      className={`flex min-h-24 flex-col items-start justify-between gap-3 rounded-2xl border p-4 text-lg font-bold leading-tight transition active:scale-[0.98] ${tone === "primary" ? "border-brand bg-brand text-brand-ink" : "border-line bg-card hover:bg-bg"}`}
+    >
+      <Icon name={icon} size={28} className={tone === "primary" ? "" : "text-brand"} />
+      {label}
+    </Link>
+  );
+}
+
 function Stat({ label, value, hint, tone, href }: { label: string; value: string; hint?: string; tone?: "gave" | "got"; href?: string }) {
   const body = (
     <Card className={`h-full ${href ? "hover:bg-bg" : ""}`}>
-      <p className="text-sm text-muted">{label}</p>
-      <p className={`mt-1 text-2xl font-semibold tabular-nums ${tone === "gave" ? "text-gave" : tone === "got" ? "text-got" : ""}`}>{value}</p>
-      {hint && <p className="mt-1 text-xs text-muted">{hint}</p>}
+      <p className="text-base text-muted">{label}</p>
+      <p className={`mt-1 text-3xl font-bold tabular-nums ${tone === "gave" ? "text-gave" : tone === "got" ? "text-got" : ""}`}>{value}</p>
+      {hint && <p className="mt-1 text-sm text-muted">{hint}</p>}
     </Card>
   );
   return href ? <Link href={href} className="block h-full">{body}</Link> : body;

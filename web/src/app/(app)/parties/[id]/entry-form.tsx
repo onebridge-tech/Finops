@@ -8,6 +8,7 @@ import { PAYMENT_MODES, PAYMENT_MODE_LABEL } from "@/lib/format";
 import { AttachmentInput } from "@/components/attachment-input";
 import { CreditWarning } from "@/components/credit-warning";
 import { useMode, useT } from "@/components/i18n-provider";
+import { Icon } from "@/components/icon";
 
 export type OpenBill = { id: string; label: string; due: string | null; open: string; openPaise: number };
 
@@ -48,14 +49,14 @@ export function EntryForm({ partyId, today, isSupplier, canNotify, notifyDefault
             key={d}
             type="button"
             onClick={() => setDirection(d)}
-            className={`rounded-lg border px-3 py-2 text-sm font-medium ${direction === d ? (d === "GAVE" ? "border-gave bg-gave/10 text-gave" : "border-got bg-got/10 text-got") : "border-line text-muted"}`}
+            aria-pressed={direction === d} className={`flex min-h-14 items-center justify-center gap-2 rounded-2xl border-2 px-3 py-3 text-base font-bold ${direction === d ? (d === "GAVE" ? "border-gave bg-gave/10 text-gave" : "border-got bg-got/10 text-got") : "border-line text-muted"}`}
           >
-            {accountant ? (d === "GAVE" ? "Debit (Dr) — party owes more" : "Credit (Cr) — payment / goods in") : t(d === "GAVE" ? "entry.gave" : "entry.got")}
+            <Icon name={d === "GAVE" ? "arrowUp" : "arrowDown"} size={20} />{accountant ? (d === "GAVE" ? "Debit (Dr) — party owes more" : "Credit (Cr) — payment / goods in") : t(d === "GAVE" ? "entry.gave" : "entry.got")}
           </button>
         ))}
       </div>
       <div className="grid gap-3 sm:grid-cols-4">
-        <Field label={t("entry.amount")}><Input name="amount" inputMode="decimal" required placeholder="0.00" /></Field>
+        <Field label={t("entry.amount")}><Input name="amount" inputMode="decimal" required placeholder="0" /></Field>
         <Field label={t("entry.date")}><Input name="date" type="date" defaultValue={today} required /></Field>
         {direction === "GAVE" && !isSupplier ? (
           <Field label={t("entry.due")}><Input name="dueDate" type="date" /></Field>
@@ -71,13 +72,13 @@ export function EntryForm({ partyId, today, isSupplier, canNotify, notifyDefault
       </div>
 
       {direction === "GOT" && openBills.length > 0 && (
-        <fieldset className="space-y-2 rounded-lg border border-line p-3 text-sm">
-          <legend className="px-1 text-xs text-muted">Settle against</legend>
+        <fieldset className="space-y-2 rounded-xl border border-line p-3 text-base">
+          <legend className="px-1 text-sm text-muted">Which bills is this for?</legend>
           <label className="mr-4 inline-flex items-center gap-2">
-            <input type="radio" name="settle" value="AUTO" checked={settle === "AUTO"} onChange={() => setSettle("AUTO")} className="accent-[var(--brand)]" /> Oldest bills first
+            <input type="radio" name="settle" value="AUTO" checked={settle === "AUTO"} onChange={() => setSettle("AUTO")} className="accent-[var(--brand)]" /> Oldest bills first (easiest)
           </label>
           <label className="inline-flex items-center gap-2">
-            <input type="radio" name="settle" value="BILLS" checked={settle === "BILLS"} onChange={() => setSettle("BILLS")} className="accent-[var(--brand)]" /> Choose bills
+            <input type="radio" name="settle" value="BILLS" checked={settle === "BILLS"} onChange={() => setSettle("BILLS")} className="accent-[var(--brand)]" /> I will choose
           </label>
           {settle === "BILLS" && (
             <ul className="divide-y divide-line">
@@ -96,9 +97,9 @@ export function EntryForm({ partyId, today, isSupplier, canNotify, notifyDefault
       <AttachmentInput />
       {canNotify ? (
         receiptGoesOut ? (
-          <p className="text-xs text-muted">{t("entry.receipt")}</p>
+          <p className="text-sm text-muted">{t("entry.receipt")}</p>
         ) : (
-          <label className="flex items-center gap-2 text-sm">
+          <label className="flex items-center gap-2 text-base">
             <input type="checkbox" name="notify" defaultChecked={notifyDefault} className="size-4 accent-[var(--brand)]" />
             {t("entry.notify")}
           </label>

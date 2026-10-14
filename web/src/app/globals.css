@@ -1,15 +1,15 @@
 @import "tailwindcss";
 
 :root {
-  --bg: #f6f7f9;
+  --bg: #faf5ec; /* warm paper */
   --card: #ffffff;
-  --ink: #111827;
-  --muted: #6b7280;
-  --line: #e5e7eb;
-  --brand: #0f766e;
+  --ink: #1c1917;
+  --muted: #57534e;
+  --line: #e4d9c6;
+  --brand: #b45309; /* chai */
   --brand-ink: #ffffff;
-  --gave: #b91c1c; /* you gave → they owe you (red, money out) */
-  --got: #047857; /* you got → money in (green) */
+  --gave: #b91c1c; /* money still to come in from customers (red) */
+  --got: #15803d; /* money received (green) */
 }
 
 @theme inline {
@@ -28,17 +28,22 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #0b0f14;
-    --card: #121821;
-    --ink: #e5e7eb;
-    --muted: #9ca3af;
-    --line: #253041;
-    --brand: #2dd4bf;
-    --brand-ink: #042f2e;
+    --bg: #17120d;
+    --card: #211a13;
+    --ink: #f5efe6;
+    --muted: #b8ab9a;
+    --line: #3a2f23;
+    --brand: #f59e0b;
+    --brand-ink: #1c1100;
     --gave: #f87171;
-    --got: #34d399;
+    --got: #4ade80;
   }
 }
+
+/* A little larger than the browser default so everything is easy to read at arm's length. */
+html { font-size: 106.25%; }
+
+:focus-visible { outline: 3px solid var(--brand); outline-offset: 2px; }
 
 body {
   background: var(--bg);

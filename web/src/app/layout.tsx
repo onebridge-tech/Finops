@@ -1,17 +1,18 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { BRAND } from "@/lib/brand";
 
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: { default: "Ledger", template: "%s · Ledger" },
-  description: "Customer ledger, GST invoices and payment collection for Indian businesses.",
+  title: { default: `${BRAND.NAME} — ${BRAND.TAGLINE}`, template: `%s · ${BRAND.NAME}` },
+  description: BRAND.ABOUT,
   manifest: "/manifest.webmanifest",
 };
 
-export const viewport: Viewport = { themeColor: "#0f766e", width: "device-width", initialScale: 1 };
+export const viewport: Viewport = { themeColor: "#b45309", width: "device-width", initialScale: 1 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (

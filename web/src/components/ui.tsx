@@ -4,15 +4,15 @@ import { formatINR } from "@/lib/money";
 import { translator, type T } from "@/lib/i18n";
 
 export function Card({ className = "", ...p }: ComponentProps<"div">) {
-  return <div className={`rounded-xl border border-line bg-card p-4 ${className}`} {...p} />;
+  return <div className={`rounded-2xl border border-line bg-card p-4 sm:p-5 ${className}`} {...p} />;
 }
 
 export function PageHeader({ title, action, sub }: { title: string; sub?: ReactNode; action?: ReactNode }) {
   return (
-    <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
+    <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
       <div>
-        <h1 className="text-xl font-semibold">{title}</h1>
-        {sub && <div className="mt-0.5 text-sm text-muted">{sub}</div>}
+        <h1 className="text-2xl font-bold tracking-tight">{title}</h1>
+        {sub && <div className="mt-1 text-base text-muted">{sub}</div>}
       </div>
       {action}
     </div>
@@ -20,13 +20,13 @@ export function PageHeader({ title, action, sub }: { title: string; sub?: ReactN
 }
 
 const btn = {
-  primary: "bg-brand text-brand-ink hover:opacity-90",
+  primary: "bg-brand text-brand-ink hover:opacity-90 active:opacity-80",
   secondary: "border border-line bg-card hover:bg-bg",
   danger: "border border-line text-gave hover:bg-bg",
 };
 
 export function buttonClass(variant: keyof typeof btn = "primary", extra = "") {
-  return `inline-flex items-center justify-center gap-2 rounded-lg px-3.5 py-2 text-sm font-medium transition disabled:opacity-50 ${btn[variant]} ${extra}`;
+  return `inline-flex items-center justify-center gap-2 min-h-11 rounded-xl px-4 py-2.5 text-base font-semibold transition disabled:opacity-50 ${btn[variant]} ${extra}`;
 }
 
 export function LinkButton({ variant = "primary", className = "", ...p }: ComponentProps<typeof Link> & { variant?: keyof typeof btn }) {
@@ -34,14 +34,14 @@ export function LinkButton({ variant = "primary", className = "", ...p }: Compon
 }
 
 export const inputClass =
-  "w-full rounded-lg border border-line bg-card px-3 py-2 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/20";
+  "min-h-12 w-full rounded-xl border border-line bg-card px-3.5 py-2.5 text-base outline-none placeholder:text-muted/70 focus:border-brand focus:ring-2 focus:ring-brand/25";
 
 export function Field({ label, hint, children }: { label: string; hint?: ReactNode; children: ReactNode }) {
   return (
     <label className="block space-y-1">
-      <span className="text-sm font-medium">{label}</span>
+      <span className="text-base font-semibold">{label}</span>
       {children}
-      {hint && <span className="block text-xs text-muted">{hint}</span>}
+      {hint && <span className="block text-sm text-muted">{hint}</span>}
     </label>
   );
 }
@@ -56,7 +56,7 @@ export function Select({ className = "", ...p }: ComponentProps<"select">) {
 
 export function ErrorText({ children }: { children?: ReactNode }) {
   if (!children) return null;
-  return <p role="alert" className="rounded-lg bg-gave/10 px-3 py-2 text-sm text-gave">{children}</p>;
+  return <p role="alert" className="rounded-xl bg-gave/10 px-3.5 py-2.5 text-base text-gave">{children}</p>;
 }
 
 /**
@@ -70,7 +70,7 @@ export function Balance({ paise, className = "", t, accountant = false }: { pais
   return (
     <span className={`${collect ? "text-gave" : "text-got"} font-semibold tabular-nums ${className}`}>
       {formatINR(Math.abs(paise))}
-      <span className="ml-1 text-xs font-normal text-muted">{accountant ? (collect ? "Dr" : "Cr") : tr(collect ? "bal.toCollect" : "bal.toPay")}</span>
+      <span className="ml-1.5 text-sm font-normal text-muted">{accountant ? (collect ? "Dr" : "Cr") : tr(collect ? "bal.toCollect" : "bal.toPay")}</span>
     </span>
   );
 }
@@ -78,8 +78,8 @@ export function Balance({ paise, className = "", t, accountant = false }: { pais
 export function EmptyState({ title, children }: { title: string; children?: ReactNode }) {
   return (
     <Card className="py-10 text-center">
-      <p className="font-medium">{title}</p>
-      {children && <div className="mt-2 text-sm text-muted">{children}</div>}
+      <p className="text-lg font-semibold">{title}</p>
+      {children && <div className="mt-2 text-base text-muted">{children}</div>}
     </Card>
   );
 }
