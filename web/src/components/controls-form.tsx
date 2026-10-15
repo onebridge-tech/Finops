@@ -12,7 +12,7 @@ export function ControlsForm({ v }: { v: V }) {
   const [state, action, pending] = useActionState(updateControls, {});
   return (
     <ActionForm dispatch={action} pending={pending} className="grid gap-4 sm:grid-cols-2">
-      <Field label="Credit limit check" hint="Checks a new bill or credit against the party’s credit limit.">
+      <Field label="Credit limit check" hint="You can set a credit limit for each customer. This decides what happens when a new bill would take them over it: nothing, a warning, or a stop.">
         <Select name="creditControl" defaultValue={v.creditControl}>
           <option value="OFF">Off</option>
           <option value="WARN">Warn me, but let it go through</option>
@@ -21,9 +21,9 @@ export function ControlsForm({ v }: { v: V }) {
       </Field>
       <label className="flex items-center gap-2 self-end pb-2 text-sm">
         <input type="checkbox" name="creditBlockOverdue" defaultChecked={v.creditBlockOverdue} className="size-4 accent-[var(--brand)]" />
-        Also act when the party already has overdue bills
+        <span>Also act when the customer already has overdue bills<span className="block text-xs text-muted">If they have not paid an old bill on time, new credit is warned or stopped even when they are under the limit.</span></span>
       </label>
-      <Field label="Daily summary for you" hint="A short summary of collections, dues and follow-ups at 8 am.">
+      <Field label="Daily summary for you" hint="One short message at 8 am: what you collected, who is late, and calls to make today. Sent to you only, not to customers.">
         <Select name="digestFrequency" defaultValue={v.digestFrequency}>
           <option value="OFF">Off</option><option value="DAILY">Every morning</option><option value="WEEKLY">Every Monday</option>
         </Select>

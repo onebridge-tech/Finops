@@ -12,7 +12,7 @@ export function CloseDayForm({ today, branchId }: { today: string; branchId: str
     <ActionForm dispatch={action} pending={pending} className="grid gap-3 sm:grid-cols-4">
       <input type="hidden" name="branchId" value={branchId} />
       <Field label="Day"><Input name="date" type="date" defaultValue={today} max={today} required /></Field>
-      <Field label="Cash counted (₹)"><Input name="counted" inputMode="decimal" required /></Field>
+      <Field label="Cash counted (₹)" hint="Count the notes and coins in your drawer now and type the total. We show the difference from what the books say, so you can spot missing cash."><Input name="counted" inputMode="decimal" required /></Field>
       <div className="sm:col-span-2"><Field label="Note"><Input name="note" placeholder="Optional, e.g. ₹200 short, change given" /></Field></div>
       <div className="flex items-center gap-3 sm:col-span-4">
         <SubmitButton>Close today</SubmitButton>

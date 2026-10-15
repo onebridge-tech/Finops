@@ -14,6 +14,8 @@ import { appUrl } from "@/lib/share";
 import { fileUrl } from "@/lib/files";
 import { inviteUrl } from "@/lib/referral";
 import { db } from "@/lib/db";
+import { MENU } from "@/lib/menu";
+import { Icon, isIconName } from "@/components/icon";
 import { CopyLink } from "../parties/[id]/reminder";
 
 export const metadata = { title: "Settings" };
@@ -35,7 +37,15 @@ export default async function Settings() {
 
   return (
     <>
-      <PageHeader title="Settings" />
+      <PageHeader title="Settings" sub="Everything about your shop in one place. Pick a tile, or scroll down for the basics." />
+      <div className="mb-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        {MENU.filter((m) => m.href.startsWith("/settings/") && m.href !== "/settings/tally" && (!m.permission || can(role, m.permission))).map((m) => (
+          <Link key={m.href} href={m.href} className="flex items-start gap-3 rounded-xl border border-line bg-card p-3.5 shadow-sm transition hover:border-brand/40">
+            <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-brand-soft text-brand">{isIconName(m.icon) && <Icon name={m.icon} size={20} />}</span>
+            <span><span className="block text-sm font-semibold">{m.label}</span><span className="text-xs leading-snug text-muted">{m.about}</span></span>
+          </Link>
+        ))}
+      </div>
       <div className="lg:flex lg:gap-8">
         <nav aria-label="On this page" className="mb-5 flex gap-1 overflow-x-auto pb-1 lg:sticky lg:top-20 lg:mb-0 lg:w-48 lg:shrink-0 lg:flex-col lg:self-start lg:overflow-visible">
           {SECTIONS.map(([id, label]) => (

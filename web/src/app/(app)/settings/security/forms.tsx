@@ -25,11 +25,11 @@ export function PinForm({ hasPin, lockAfterMin }: { hasPin: boolean; lockAfterMi
   return (
     <div className="space-y-3">
       <ActionForm dispatch={action} pending={pending} className="grid gap-3 sm:grid-cols-3">
-        <Field label={hasPin ? "New PIN" : "PIN (4–6 digits)"}>
+        <Field label={hasPin ? "New PIN" : "PIN (4–6 digits)"} hint="A secret number to open the app, like a phone lock. Choose one only you know.">
           <Input name="pin" type="password" inputMode="numeric" autoComplete="new-password" maxLength={6} required />
         </Field>
         <Field label="Repeat PIN"><Input name="confirm" type="password" inputMode="numeric" autoComplete="new-password" maxLength={6} required /></Field>
-        <Field label="Lock after">
+        <Field label="Lock after" hint="If the app is left alone this long, it asks for the PIN again.">
           <Select name="lockAfterMin" defaultValue={String(lockAfterMin)}>
             <option value="1">1 minute idle</option>
             <option value="5">5 minutes idle</option>

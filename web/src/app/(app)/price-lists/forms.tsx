@@ -26,7 +26,7 @@ export function RateForm({ listId, items }: { listId: string; items: { id: strin
       <input type="hidden" name="listId" value={listId} />
       <Field label="Item"><Select name="itemId">{items.map((i) => <option key={i.id} value={i.id}>{i.name} (standard {i.price})</option>)}</Select></Field>
       <Field label="Rate (₹)"><Input name="rate" inputMode="decimal" required /></Field>
-      <Field label="From quantity" hint="0 = any quantity; 50 = slab from 50"><Input name="minQty" inputMode="decimal" defaultValue="0" /></Field>
+      <Field label="From quantity" hint="0 means this rate applies to any quantity. 50 means the rate applies when the customer buys 50 or more."><Input name="minQty" inputMode="decimal" defaultValue="0" /></Field>
       <div className="flex items-end gap-3"><SubmitButton variant="secondary">Save rate</SubmitButton></div>
       <div className="sm:col-span-4"><ErrorText>{state.error}</ErrorText></div>
     </ActionForm>

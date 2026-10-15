@@ -5,6 +5,7 @@ import { translator } from "@/lib/i18n";
 import { logout } from "@/app/actions/auth";
 import { I18nProvider } from "@/components/i18n-provider";
 import { MENU } from "@/lib/menu";
+import { PageHelp } from "./page-help";
 import { Avatar } from "@/components/ui";
 import { Icon, Logo } from "@/components/icon";
 import { BRAND } from "@/lib/brand";
@@ -99,7 +100,7 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
               </div>
             </div>
           </header>
-          <main className="mx-auto max-w-6xl px-4 py-6 sm:px-6 sm:py-8 lg:px-8">{children}</main>
+          <main className="mx-auto max-w-6xl px-4 py-6 sm:px-6 sm:py-8 lg:px-8"><PageHelp />{children}</main>
         </div>
 
         <nav aria-label="Quick" className="no-print fixed inset-x-0 bottom-0 z-40 border-t border-line bg-card/95 backdrop-blur lg:hidden">

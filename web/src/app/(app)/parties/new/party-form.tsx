@@ -44,22 +44,22 @@ export function PartyForm({ defaultState, party, owners, branches, defaultBranch
         </Select>
       </Field>
       <Field label="Mobile (for WhatsApp reminders)"><Input name="phone" inputMode="tel" defaultValue={v?.phone ? `+${v.phone}` : ""} placeholder="98480 12345" /></Field>
-      <Field label="GSTIN (optional)">
+      <Field label="GSTIN (optional)" hint="Their 15-letter GST number, if they have one. Then the bill shows it, and we can fill the name and state for you.">
         <span className="flex flex-wrap gap-2">
           <Input name="gstin" maxLength={15} className="flex-1 uppercase" defaultValue={v?.gstin} />
           <GstinLookupButton />
         </span>
       </Field>
-      <Field label="State" hint="Used for place of supply on invoices.">
+      <Field label="State" hint="If their state is different from yours, the bill uses IGST instead of CGST and SGST.">
         <Select name="stateCode" defaultValue={v?.stateCode || defaultState}>
           {Object.entries(STATES).map(([c, n]) => <option key={c} value={c}>{c} · {n}</option>)}
         </Select>
       </Field>
       <Field label="Email"><Input name="email" type="email" defaultValue={v?.email} /></Field>
-      <Field label="Days to pay" hint="Default due date for credit you give.">
+      <Field label="Days to pay" hint="How many days they usually take to pay. The due date on each credit is set from this, and reminders start from it.">
         <Input name="creditDays" inputMode="numeric" placeholder="30" defaultValue={v?.creditDays} />
       </Field>
-      <Field label="Credit limit (₹)" hint="Optional. Credit control warns or blocks above this.">
+      <Field label="Credit limit (₹)" hint="The most they can owe you at one time. If a new bill goes above it, the app can warn you or stop it. Turn this on in Settings, Credit & summary.">
         <Input name="creditLimit" inputMode="decimal" defaultValue={v?.creditLimit} />
       </Field>
       {priceLists.length > 0 && (
@@ -70,14 +70,14 @@ export function PartyForm({ defaultState, party, owners, branches, defaultBranch
           </Select>
         </Field>
       )}
-      <Field label="Message language">
+      <Field label="Message language" hint="Reminders and receipts for this person are written in this language.">
         <Select name="language" defaultValue={v?.language ?? "en"}>
           {Object.entries(LANGUAGE_NAMES).map(([c, n]) => <option key={c} value={c}>{n}</option>)}
         </Select>
       </Field>
-      <Field label="Source" hint="Walk-in, referral, trade show, website…"><Input name="source" defaultValue={v?.source} /></Field>
+      <Field label="Source" hint="How they found you, for example walk-in or a friend’s name. Only for your own records."><Input name="source" defaultValue={v?.source} /></Field>
       {owners && (
-        <Field label="Assigned to" hint="Salesmen see only the customers given to them">
+        <Field label="Assigned to" hint="The staff member who looks after this customer. A salesman can only see customers given to him.">
           <Select name="ownerId" defaultValue={v?.ownerId ?? ""}>
             <option value="">Nobody in particular</option>
             {owners.map((o) => <option key={o.id} value={o.id}>{o.name}</option>)}
@@ -85,7 +85,7 @@ export function PartyForm({ defaultState, party, owners, branches, defaultBranch
         </Field>
       )}
       {branches && branches.length > 0 && (
-        <Field label="Branch">
+        <Field label="Branch" hint="Which of your shops this customer belongs to. “Shared” means every branch can see them.">
           <Select name="branchId" defaultValue={v ? v.branchId : defaultBranch}>
             <option value="">Shared by all branches</option>
             {branches.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
@@ -95,7 +95,7 @@ export function PartyForm({ defaultState, party, owners, branches, defaultBranch
       <div className="sm:col-span-2"><Field label="Address"><Input name="address" defaultValue={v?.address} /></Field></div>
       {!v && (
         <>
-          <Field label="Already pending before using this app (₹)"><Input name="opening" inputMode="decimal" placeholder="0" /></Field>
+          <Field label="Already pending before using this app (₹)" hint="If they already owed you (or you owed them) before today, put that amount here once. It becomes their starting balance."><Input name="opening" inputMode="decimal" placeholder="0" /></Field>
           <Field label="This amount is">
             <Select name="openingDirection" defaultValue="GAVE">
               <option value="GAVE">They owe me</option>

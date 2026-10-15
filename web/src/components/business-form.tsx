@@ -42,10 +42,10 @@ export function BusinessForm({ action, values = {}, submitLabel }: { action: (s:
       </div>
       <Field label="Shop phone"><Input name="phone" defaultValue={values.phone ?? ""} inputMode="tel" /></Field>
       <Field label="Email"><Input name="email" type="email" defaultValue={values.email ?? ""} /></Field>
-      <Field label="UPI ID for collections" hint="Customers pay to this ID from reminders, statements and invoices.">
+      <Field label="UPI ID for collections" hint="Your UPI address, like name@bank. Customers pay straight to it from your reminders and bills, and it makes your counter QR.">
         <Input name="upiId" defaultValue={values.upiId ?? ""} placeholder="yourshop@okicici" />
       </Field>
-      <Field label="Bill number starts with"><Input name="invoicePrefix" defaultValue={values.invoicePrefix ?? "INV-"} maxLength={10} /></Field>
+      <Field label="Bill number starts with" hint="Letters put before every bill number, for example INV- gives INV-0001, INV-0002."><Input name="invoicePrefix" defaultValue={values.invoicePrefix ?? "INV-"} maxLength={10} /></Field>
       <div className="space-y-3 sm:col-span-2">
         <ErrorText>{state.error}</ErrorText>
         {state.ok && <p className="text-sm text-got">Saved.</p>}

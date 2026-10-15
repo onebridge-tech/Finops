@@ -19,7 +19,7 @@ function AccessFields({ branches, canAddOwner, member }: { branches: Branch[]; c
           {ROLES.filter((r) => canAddOwner || r !== "OWNER").map((r) => <option key={r} value={r}>{ROLE_LABEL[r].name}</option>)}
         </Select>
       </Field>
-      <Field label="Branch">
+      <Field label="Branch" hint="Limit this person to one shop. “All branches” lets them see every shop.">
         <Select name="branchId" defaultValue={member?.branchId ?? ""}>
           <option value="">All branches</option>
           {branches.map((b) => <option key={b.id} value={b.id}>{b.name} only</option>)}
@@ -38,7 +38,7 @@ function AccessFields({ branches, canAddOwner, member }: { branches: Branch[]; c
           </Select>
         )}
       </Field>
-      <Field label="Max discount %" hint="Empty = no limit">
+      <Field label="Max discount %" hint="The biggest discount this person may give on a bill. Leave empty for no limit.">
         <Input name="maxDiscount" inputMode="decimal" defaultValue={member?.maxDiscount ?? ""} />
       </Field>
     </>
