@@ -158,7 +158,11 @@ export async function deleteStatement(form: FormData): Promise<void> {
   const s = await db.statement.findFirst({ where: { id, businessId: ctx.business.id } });
   if (!s) return;
   await db.$transaction(async (tx) => {
-    // Expenses and payments already made from these lines stay in the books; only the statement lines go.
+    // Payments written in customer accounts always stay. Expenses stay too, unless the person asked to cancel them.
+    if (form.get("cancelExpenses") === "1") {
+      const linked = await tx.bankTxn.findMany({ where: { businessId: ctx.business.id, statementId: id, expenseId: { not: null } }, select: { expenseId: true } });
+      await tx.expense.updateMany({ where: { businessId: ctx.business.id, id: { in: linked.map((l) => l.expenseId!) }, voidedAt: null }, data: { voidedAt: new Date(), voidReason: "Statement removed" } });
+    }
     const n = await tx.bankTxn.deleteMany({ where: { businessId: ctx.business.id, statementId: id } });
     await tx.statement.delete({ where: { id } });
     await audit(tx, { businessId: ctx.business.id, actorId: ctx.user.id, action: "delete_statement", entity: "Statement", entityId: id, data: { name: s.name, lines: n.count } });

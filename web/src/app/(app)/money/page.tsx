@@ -119,7 +119,7 @@ export default async function Money({ searchParams }: PageProps<"/money">) {
           <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
             <StatCard icon="arrowDown" label="Money earned" value={formatINR(s.income)} tone="got" hint="From customers and other income" />
             <StatCard icon="arrowUp" label="Money spent" value={formatINR(s.spend)} tone="gave" hint="Stock, rent, salaries and so on" />
-            <StatCard icon="trend" label="Left over" value={`${s.left < 0 ? "−" : ""}${formatINR(Math.abs(s.left))}`} tone={s.left >= 0 ? "got" : "gave"} hint={s.left >= 0 ? "Earned minus spent" : "You spent more than you earned"} />
+            <StatCard icon="trend" label="Left over" value={`${s.left < 0 ? "−⁠" : ""}${formatINR(Math.abs(s.left))}`} tone={s.left >= 0 ? "got" : "gave"} hint={s.left >= 0 ? "Earned minus spent" : "You spent more than you earned"} />
             <StatCard icon="wallet" label="Moved, not spent" value={formatINR(s.transferOut)} hint={`Cash taken out and your own use. ${formatINR(s.transferIn)} put in`} />
           </div>
           {s.balance && <p className="mt-3 text-sm text-muted">Bank balance: {formatINR(s.balance.opening)} at the start of the month, {formatINR(s.balance.closing)} at the end.</p>}
@@ -231,10 +231,16 @@ export default async function Money({ searchParams }: PageProps<"/money">) {
               <span className="text-xs text-muted">{st.fromDate ? fmtDay(st.fromDate) : ""} to {st.toDate ? fmtDay(st.toDate) : ""} · {st.imported} added{st.duplicates ? ` · ${st.duplicates} skipped as repeats` : ""}</span>
             </span>
             {manage && (
-              <form action={deleteStatement}>
-                <input type="hidden" name="id" value={st.id} />
-                <button className="text-sm text-muted underline hover:text-gave" title="Removes these lines from Money in & out. Expenses and payments already made from them stay.">Remove</button>
-              </form>
+              <details className="relative">
+                <summary className="cursor-pointer list-none text-sm text-muted underline hover:text-gave">Remove</summary>
+                <form action={deleteStatement} className="absolute right-0 z-10 mt-1 w-72 space-y-2.5 rounded-xl border border-line bg-card p-3 text-left shadow-[var(--shadow-lg)]">
+                  <input type="hidden" name="id" value={st.id} />
+                  <p className="text-sm">Remove these {st.imported} lines from Money in & out?</p>
+                  <label className="flex items-start gap-2 text-sm"><input type="checkbox" name="cancelExpenses" value="1" className="mt-0.5 size-4 accent-[var(--brand)]" />Also cancel the expenses that were added from them</label>
+                  <p className="text-xs text-muted">Payments already written in customer accounts stay.</p>
+                  <button className={buttonClass("danger", "w-full")}>Remove statement</button>
+                </form>
+              </details>
             )}
           </div>
         ))}

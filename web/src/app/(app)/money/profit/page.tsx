@@ -10,7 +10,7 @@ import { Icon } from "@/components/icon";
 export const metadata = { title: "Profit & loss" };
 
 const one = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v) ?? "";
-const signed = (p: number) => `${p < 0 ? "−" : ""}${formatINR(Math.abs(p))}`;
+const signed = (p: number) => `${p < 0 ? "−⁠" : ""}${formatINR(Math.abs(p))}`;
 const pct = (a: number, b: number) => (b === 0 ? "—" : `${Math.round((a / b) * 100)}%`);
 
 export default async function Profit({ searchParams }: PageProps<"/money/profit">) {
