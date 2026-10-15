@@ -11,6 +11,8 @@ export const MENU: MenuItem[] = [
   { href: "/items", icon: "box", label: "Your items", about: "What you sell, and the price", group: "Stock" },
   { href: "/stock", icon: "tag", label: "Stock", about: "How much is left, and what to buy soon", group: "Stock" },
   { href: "/price-lists", icon: "tag", label: "Special prices", about: "A different rate for dealers or regular customers", group: "Stock" },
+  { href: "/money", icon: "trend", label: "Money in & out", about: "Add your bank statement and see what you earned and spent", group: "Money", permission: "reports:view" },
+  { href: "/money/profit", icon: "chart", label: "Profit & loss", about: "What you made after costs, month by month", group: "Money", permission: "reports:view" },
   { href: "/expenses", icon: "bill", label: "Shop expenses", about: "Rent, transport, salaries, tea and snacks", group: "Money", permission: "ledger:write" },
   { href: "/cashbook", icon: "wallet", label: "Cash in the drawer", about: "Today’s cash in and out, and closing the day", group: "Money", permission: "ledger:write" },
   { href: "/payments", icon: "card", label: "Money paid online", about: "Payments customers made from your link", group: "Money", permission: "reports:view" },

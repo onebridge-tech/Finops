@@ -81,6 +81,57 @@ model OtpCode {
   @@index([email, createdAt])
 }
 
+// Money in and out as the bank or UPI statement shows it (STAGE M).
+model Statement {
+  id          String   @id @default(cuid())
+  businessId  String
+  name        String
+  fileName    String?
+  fromDate    DateTime?
+  toDate      DateTime?
+  rows        Int      @default(0)
+  imported    Int      @default(0)
+  duplicates  Int      @default(0)
+  createdById String
+  createdAt   DateTime @default(now())
+
+  @@index([businessId, createdAt])
+}
+
+model BankTxn {
+  id           String   @id @default(cuid())
+  businessId   String
+  statementId  String?
+  date         DateTime
+  description  String
+  direction    String // IN | OUT
+  amountPaise  BigInt
+  balancePaise BigInt?
+  ref          String?
+  category     String
+  manual       Boolean  @default(false) // the shop chose this group itself
+  counterparty String?
+  expenseId    String? // set when it was added to the shop's expenses
+  entryId      String? // set when it was recorded as a customer's payment
+  hash         String
+  createdAt    DateTime @default(now())
+
+  @@unique([businessId, hash])
+  @@index([businessId, date])
+}
+
+// "Anything from Ravi Traders is Rent": a correction the shop made once and wants remembered.
+model CategoryRule {
+  id         String   @id @default(cuid())
+  businessId String
+  keyword    String
+  category   String
+  direction  String?
+  createdAt  DateTime @default(now())
+
+  @@unique([businessId, keyword])
+}
+
 // A shop's own wording for a message (STAGE W). Without a row the built-in text is used.
 model MessageTemplate {
   id          String   @id @default(cuid())
