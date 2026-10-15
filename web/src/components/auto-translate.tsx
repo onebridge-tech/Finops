@@ -7,7 +7,8 @@ import { useLayoutEffect } from "react";
 // It only ever changes the value of an existing text node, so React keeps working normally.
 
 type Lex = Record<string, string>;
-const LOADERS: Record<string, () => Promise<{ default: Lex }>> = {
+type Pack = { default: Lex; frag: [string, string][] };
+const LOADERS: Record<string, () => Promise<Pack>> = {
   hi: () => import("@/lib/lex/hi"),
   te: () => import("@/lib/lex/te"),
   ta: () => import("@/lib/lex/ta"),
@@ -17,17 +18,59 @@ const ATTRS = ["placeholder", "title", "aria-label", "alt"] as const;
 const SKIP = new Set(["SCRIPT", "STYLE", "TEXTAREA", "CODE", "PRE", "NOSCRIPT"]);
 const NUM = /₹?\d[\d,]*(?:\.\d+)?/g;
 
-function lookup(lex: Lex, raw: string): string | null {
+const INDIC = /[ऀ-෿]/;
+const escapeRe = (t: string) => t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+type Names = { re: RegExp; map: Map<string, string> } | null;
+/** Month and weekday names in the person's language, taken from the browser's own calendar data. */
+function dateNames(lang: string): Names {
+  try {
+    const map = new Map<string, string>();
+    const loc = `${lang}-IN`;
+    for (let m = 0; m < 12; m++) {
+      const d = new Date(Date.UTC(2026, m, 15));
+      for (const style of ["long", "short"] as const) {
+        map.set(new Intl.DateTimeFormat("en-IN", { month: style, timeZone: "UTC" }).format(d), new Intl.DateTimeFormat(loc, { month: style, timeZone: "UTC" }).format(d));
+      }
+    }
+    for (let w = 0; w < 7; w++) {
+      const d = new Date(Date.UTC(2026, 9, 11 + w));
+      for (const style of ["long", "short"] as const) {
+        map.set(new Intl.DateTimeFormat("en-IN", { weekday: style, timeZone: "UTC" }).format(d), new Intl.DateTimeFormat(loc, { weekday: style, timeZone: "UTC" }).format(d));
+      }
+    }
+    map.delete("May"); // also an ordinary word, so it is left as it is
+    const re = new RegExp(`(?<![A-Za-z])(?:${[...map.keys()].map(escapeRe).join("|")})(?![A-Za-z])`, "g");
+    return { re, map };
+  } catch {
+    return null;
+  }
+}
+
+function lookup(lex: Lex, raw: string, frag: [string, string][], names: Names): string | null {
   const key = raw.replace(/\s+/g, " ").trim();
   if (!key || !/[A-Za-z]/.test(key)) return null;
   const hit = lex[key];
   if (hit !== undefined) return hit;
   // "12 bills" -> "{n} bills": the same sentence with the numbers filled back in.
   const nums = key.match(NUM);
-  if (!nums) return null;
-  let i = 0;
-  const pattern = lex[key.replace(NUM, "{n}")];
-  return pattern === undefined ? null : pattern.replace(/\{n\}/g, () => nums[i++] ?? "");
+  if (nums) {
+    let i = 0;
+    const pattern = lex[key.replace(NUM, "{n}")];
+    if (pattern !== undefined) return pattern.replace(/\{n\}/g, () => nums[i++] ?? "");
+  }
+  // Mixed text such as "Next number: INV-4" or "pay by 14 Oct 2026": translate the known pieces and dates inside it.
+  let out = key;
+  if (names) out = out.replace(names.re, (w) => names.map.get(w) ?? w);
+  if (!INDIC.test(key)) {
+    for (const [from, to] of frag) {
+      if (!out.includes(from)) continue;
+      const lead = /^\w/.test(from) ? "\\b" : "";
+      const tail = /\w$/.test(from) ? "\\b" : "";
+      out = out.replace(new RegExp(lead + escapeRe(from) + tail, "g"), to);
+    }
+  }
+  return out === key ? null : out;
 }
 
 function wrap(raw: string, translated: string) {
@@ -39,6 +82,8 @@ export function AutoTranslate({ lang }: { lang: string }) {
     const texts = new WeakMap<Text, { en: string; out: string }>();
     const attrs = new WeakMap<Element, Map<string, { en: string; out: string }>>();
     let lex: Lex | null = null;
+    let frag: [string, string][] = [];
+    let names: Names = null;
     let observer: MutationObserver | null = null;
     let cancelled = false;
 
@@ -48,7 +93,7 @@ export function AutoTranslate({ lang }: { lang: string }) {
       const cur = n.nodeValue ?? "";
       const rec = texts.get(n);
       if (rec && rec.out === cur) return;
-      const tr = lex ? lookup(lex, cur) : null;
+      const tr = lex ? lookup(lex, cur, frag, names) : null;
       const out = tr === null ? cur : wrap(cur, tr);
       texts.set(n, { en: cur, out });
       if (out !== cur) n.nodeValue = out;
@@ -60,7 +105,7 @@ export function AutoTranslate({ lang }: { lang: string }) {
         const m = attrs.get(el) ?? new Map();
         const rec = m.get(a);
         if (rec && rec.out === cur) continue;
-        const tr = lex ? lookup(lex, cur) : null;
+        const tr = lex ? lookup(lex, cur, frag, names) : null;
         const out = tr === null ? cur : tr;
         m.set(a, { en: cur, out });
         attrs.set(el, m);
@@ -70,7 +115,7 @@ export function AutoTranslate({ lang }: { lang: string }) {
     const doTitle = () => {
       const cur = document.title;
       const m = /^(.*?)( · .*)?$/.exec(cur);
-      const tr = lex && m?.[1] ? lookup(lex, m[1]) : null;
+      const tr = lex && m?.[1] ? lookup(lex, m[1], frag, names) : null;
       if (tr) document.title = tr + (m?.[2] ?? "");
     };
     const walk = (root: Node) => {
@@ -100,7 +145,10 @@ export function AutoTranslate({ lang }: { lang: string }) {
 
     const start = async () => {
       if (lang === "en" || !LOADERS[lang]) return;
-      lex = (await LOADERS[lang]()).default;
+      const pack = await LOADERS[lang]();
+      lex = pack.default;
+      frag = pack.frag;
+      names = dateNames(lang);
       if (cancelled) return;
       walk(document.body);
       doTitle();
