@@ -23,7 +23,7 @@ export default async function Health() {
               <span className="block text-xs text-muted">Should run {every(j.every)}. {j.schedulerOn ? "Built-in scheduler is on." : `Built-in scheduler is off (${j.flag} is not 1); it only runs if something calls its cron address.`}</span>
               {j.last && !j.last.ok && j.last.finishedAt && <span className="mt-1 block text-xs text-gave">Last run failed: {j.last.error}</span>}
             </span>
-            <span className="text-right">
+            <span className="sm:text-right">
               {j.lastOk ? <Badge tone={j.late ? "warn" : "good"}>{j.late ? "Late" : "Running"}</Badge> : <Badge tone="bad">Never ran</Badge>}
               <span className="mt-1 block text-xs text-muted">{j.lastOk ? `Last success ${since(j.lastOk.startedAt)}` : "No successful run recorded"}</span>
             </span>
