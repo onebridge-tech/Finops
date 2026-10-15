@@ -129,7 +129,7 @@ export function buildTxns(rows: string[][], map: Mapping, firstRow = 2): Parsed 
 
 /** The same transaction in two overlapping statements has the same fingerprint, so it is only counted once. */
 export function txnHash(t: Txn): string {
-  return createHash("sha1").update([t.date, t.direction, t.amountPaise, t.balancePaise ?? "", t.ref ?? "", t.description.toLowerCase().replace(/[^a-z0-9]+/g, "")].join("|")).digest("hex");
+  return createHash("sha1").update([t.date, t.direction, t.amountPaise, t.balancePaise ?? "", t.description.toLowerCase().replace(/[^a-z0-9]+/g, "")].join("|")).digest("hex");
 }
 
 const STOP = new Set(["upi", "cr", "dr", "neft", "imps", "rtgs", "ach", "nach", "pos", "ecom", "atm", "cash", "wdl", "dep", "chq", "cheque", "clg", "int", "pay", "payment", "payu", "ibl", "okaxis", "okhdfcbank", "oksbi", "okicici", "ybl", "paytm", "axl", "hdfc", "icici", "sbi", "axis", "bank", "ltd", "the", "to", "from", "by", "for", "transfer", "trf", "mob", "net", "banking", "bil", "online", "ref", "no"]);

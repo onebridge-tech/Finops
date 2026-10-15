@@ -75,6 +75,7 @@ export async function moneySummary(businessId: string, ym: string) {
 
 export type MonthPL = {
   month: string; sales: number; returns: number; netSales: number; cogs: number; costCoverage: number; grossProfit: number;
+  costBasis: "items" | "purchases" | "none"; itemCost: number; purchases: number;
   expenses: number; expenseByCategory: { category: string; paise: number }[]; netProfit: number; invoices: number;
 };
 
@@ -99,12 +100,21 @@ export async function profitAndLoss(ctx: Ctx, ym: string): Promise<MonthPL> {
   const sales = Number(inv._sum.taxablePaise ?? 0n);
   const returns = Number(notes._sum.taxablePaise ?? 0n);
   const by = new Map<string, number>();
-  for (const e of expenses) by.set(e.category, (by.get(e.category) ?? 0) + Number(e.amountPaise));
+  let purchases = 0;
+  for (const e of expenses) {
+    // Stock you paid suppliers for is what you bought, not an everyday running cost.
+    if (e.category === "Stock purchases") purchases += Number(e.amountPaise);
+    else by.set(e.category, (by.get(e.category) ?? 0) + Number(e.amountPaise));
+  }
   const expTotal = [...by.values()].reduce((s, v) => s + v, 0);
   const netSales = sales - returns;
+  const coverage = total === 0 ? 100 : Math.round((known / total) * 100);
+  // Best cost: the buying price of the items sold. If most items have no buying price, fall back to what was paid for stock that month.
+  const basis: MonthPL["costBasis"] = coverage >= 90 && cogs > 0 ? "items" : purchases > 0 ? "purchases" : cogs > 0 ? "items" : "none";
+  const used = basis === "purchases" ? purchases : cogs;
   return {
-    month: ym, sales, returns, netSales, cogs, costCoverage: total === 0 ? 100 : Math.round((known / total) * 100), grossProfit: netSales - cogs,
-    expenses: expTotal, expenseByCategory: [...by].map(([category, paise]) => ({ category, paise })).sort((a, b) => b.paise - a.paise), netProfit: netSales - cogs - expTotal, invoices: inv._count,
+    month: ym, sales, returns, netSales, cogs: used, costCoverage: coverage, grossProfit: netSales - used, costBasis: basis, itemCost: cogs, purchases,
+    expenses: expTotal, expenseByCategory: [...by].map(([category, paise]) => ({ category, paise })).sort((a, b) => b.paise - a.paise), netProfit: netSales - used - expTotal, invoices: inv._count,
   };
 }
 

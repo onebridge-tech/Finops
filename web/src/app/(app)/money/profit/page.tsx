@@ -41,15 +41,21 @@ export default async function Profit({ searchParams }: PageProps<"/money/profit"
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <StatCard icon="bill" label="Sales" value={formatINR(pl.netSales)} hint={`${pl.invoices} bill${pl.invoices === 1 ? "" : "s"}${pl.returns ? `, after ${formatINR(pl.returns)} returned` : ""}. Before GST`} />
-        <StatCard icon="box" label="Cost of what you sold" value={formatINR(pl.cogs)} hint={pl.costCoverage < 100 ? `Known for ${pl.costCoverage}% of sales` : "Known for all sales"} />
+        <StatCard icon="box" label={pl.costBasis === "purchases" ? "Stock you bought" : "Cost of what you sold"} value={formatINR(pl.cogs)} hint={pl.costBasis === "purchases" ? "What you paid suppliers this month" : pl.costBasis === "none" ? "No cost known yet" : pl.costCoverage < 100 ? `Known for ${pl.costCoverage}% of sales` : "From your items’ buying prices"} />
         <StatCard icon="arrowUp" label="Shop expenses" value={formatINR(pl.expenses)} tone="gave" hint="Rent, salaries, transport and so on" />
         <StatCard icon="trend" label="Profit" value={signed(pl.netProfit)} tone={pl.netProfit >= 0 ? "got" : "gave"} hint={margin === null ? "No sales this month" : `${margin}% of sales`} />
       </div>
 
-      {pl.costCoverage < 100 && pl.netSales > 0 && (
+      {pl.costBasis !== "purchases" && pl.costCoverage < 100 && pl.netSales > 0 && (
         <Card className="mt-4 border-warn/30 bg-warn/5 text-sm">
           <p className="font-medium">Your profit is higher than it really is</p>
           <p className="text-muted">We only know what you paid for items that have a <b>buying price</b> set. That is {pl.costCoverage}% of this month’s sales. Add the buying price in <Link href="/items" className="font-medium text-brand underline">Your items</Link> to get the true profit.</p>
+        </Card>
+      )}
+      {pl.costBasis === "purchases" && pl.netSales > 0 && (
+        <Card className="mt-4 border-line text-sm">
+          <p className="font-medium">Cost is based on the stock you paid for this month</p>
+          <p className="text-muted">Most of your items have no <b>buying price</b>, so we used what you paid suppliers instead. That is a fair guide, but stock bought and not yet sold (or sold from older stock) makes a month look better or worse than it is. Add buying prices in <Link href="/items" className="font-medium text-brand underline">Your items</Link> for a truer figure.</p>
         </Card>
       )}
       {unrecorded > 0 && (
@@ -65,7 +71,7 @@ export default async function Profit({ searchParams }: PageProps<"/money/profit"
           <Card className="divide-y divide-line p-0 sm:p-0">
             {[
               ["Sales (before GST)", pl.sales, ""], ["Less: goods returned", -pl.returns, ""], ["Net sales", pl.netSales, "font-semibold"],
-              ["Less: cost of what you sold", -pl.cogs, ""], ["Gross profit", pl.grossProfit, "font-semibold"],
+              [pl.costBasis === "purchases" ? "Less: stock you bought this month" : "Less: cost of what you sold", -pl.cogs, ""], ["Gross profit", pl.grossProfit, "font-semibold"],
               ["Less: shop expenses", -pl.expenses, ""], ["Profit", pl.netProfit, "font-semibold text-base"],
             ].map(([label, v, cls]) => (
               <div key={label as string} className={`flex justify-between px-4 py-2.5 text-sm ${cls}`}><span>{label}</span><span className={`tabular-nums ${(v as number) < 0 && !String(cls).includes("font-semibold") ? "text-muted" : ""}`}>{signed(v as number)}</span></div>

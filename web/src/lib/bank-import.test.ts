@@ -71,6 +71,7 @@ describe("duplicates", () => {
   it("gives the same fingerprint to the same transaction", () => {
     const t = { date: "2026-10-01", description: "UPI-RAVI", direction: "IN" as const, amountPaise: 100, balancePaise: 500, ref: "1" };
     expect(txnHash(t)).toBe(txnHash({ ...t, description: "upi ravi" }));
+    expect(txnHash(t)).toBe(txnHash({ ...t, ref: null })); // one statement may have a reference column and another not
     expect(txnHash(t)).not.toBe(txnHash({ ...t, amountPaise: 101 }));
   });
 });

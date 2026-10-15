@@ -12,7 +12,7 @@ export const CATEGORIES: Category[] = [
   { name: "Cash deposited", direction: "IN", kind: "transfer" },
   { name: "Money put in by owner / loan received", direction: "IN", kind: "transfer" },
 
-  { name: "Stock & supplier payments", direction: "OUT", kind: "spend", expense: "Other" },
+  { name: "Stock & supplier payments", direction: "OUT", kind: "spend", expense: "Stock purchases" },
   { name: "Rent", direction: "OUT", kind: "spend", expense: "Rent" },
   { name: "Salaries & wages", direction: "OUT", kind: "spend", expense: "Salaries" },
   { name: "Electricity & water", direction: "OUT", kind: "spend", expense: "Electricity" },
