@@ -4,7 +4,7 @@ import { can, docWhere, requireBusiness } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { appUrl, whatsappLink } from "@/lib/share";
 import { formatINR } from "@/lib/money";
-import { renderMessage } from "@/lib/messaging/templates";
+import { renderFor } from "@/lib/messaging/render";
 import { blockedReason } from "@/lib/messaging/send";
 import { DocumentView } from "@/components/document-view";
 import { CancelInvoiceForm, SendDocumentForm } from "@/components/document-actions";
@@ -26,7 +26,7 @@ export default async function InvoicePage({ params }: PageProps<"/invoices/[id]"
   const pay = (await invoicePayments(business.id, [invoice])).get(invoice.id);
   const cancelled = invoice.status === "CANCELLED";
   const url = appUrl(`/i/${invoice.shareToken}`);
-  const text = renderMessage("INVOICE", invoice.party.language, { party: invoice.party.name, business: business.name, number: invoice.number, amountPaise: Number(invoice.totalPaise), link: url });
+  const text = await renderFor(business.id, "INVOICE", invoice.party.language, { party: invoice.party.name, business: business.name, number: invoice.number, amountPaise: Number(invoice.totalPaise), link: url });
   const wa = invoice.party.phone ? whatsappLink(invoice.party.phone, text) : null;
   const p = invoice.party;
 

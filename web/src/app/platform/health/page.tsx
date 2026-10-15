@@ -37,11 +37,11 @@ export default async function Health() {
         {h.channels.map((c) => (
           <Card key={c.channel}>
             <div className="flex items-center justify-between">
-              <p className="font-medium">{c.channel === "WHATSAPP" ? "WhatsApp" : c.channel === "SMS" ? "SMS" : "Email"}</p>
-              <Badge tone={c.test ? "warn" : "good"}>{c.test ? "Test mode" : `Live · ${c.provider}`}</Badge>
+              <p className="font-medium">{c.channel === "WHATSAPP_LINK" ? "WhatsApp" : c.channel === "SMS" ? "SMS" : "Email"}</p>
+              <Badge tone={c.test ? "warn" : "good"}>{c.channel === "WHATSAPP_LINK" ? "Click-to-chat" : c.test ? "Test mode" : `Live · ${c.provider}`}</Badge>
             </div>
-            <p className="mt-2 text-2xl font-semibold tabular-nums">{c.rate === null ? "—" : `${c.rate}%`}</p>
-            <p className="text-xs text-muted">{c.ok} sent · {c.failed} failed · {c.skipped} skipped</p>
+            <p className="mt-2 text-2xl font-semibold tabular-nums">{c.channel === "WHATSAPP_LINK" ? c.ok : c.rate === null ? "—" : `${c.rate}%`}</p>
+            <p className="text-xs text-muted">{c.channel === "WHATSAPP_LINK" ? `opened in WhatsApp · ${c.waiting} waiting in outboxes · ${c.skipped} removed` : `${c.ok} sent · ${c.failed} failed · ${c.skipped} skipped`}</p>
           </Card>
         ))}
       </div>

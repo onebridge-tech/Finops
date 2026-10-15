@@ -48,8 +48,8 @@ export function SideNav({ groups }: { groups: NavGroup[] }) {
 }
 
 /** Bottom bar on a phone. */
-export function BottomNav({ items, moreLabel, morePaths }: { items: NavItem[]; moreLabel: string; morePaths: string[] }) {
-  const all: NavItem[] = [...items, { href: "/more", label: moreLabel, icon: "grid" }];
+export function BottomNav({ items, moreLabel, morePaths, moreBadge = 0 }: { items: NavItem[]; moreLabel: string; morePaths: string[]; moreBadge?: number }) {
+  const all: NavItem[] = [...items, { href: "/more", label: moreLabel, icon: "grid", badge: moreBadge }];
   const path = usePathname();
   const active = useActive(all);
   // "More" is lit on every screen that is reached through it.

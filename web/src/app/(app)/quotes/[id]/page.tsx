@@ -3,7 +3,7 @@ import Link from "next/link";
 import { can, docWhere, requireBusiness } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { appUrl, whatsappLink } from "@/lib/share";
-import { renderMessage } from "@/lib/messaging/templates";
+import { renderFor } from "@/lib/messaging/render";
 import { blockedReason } from "@/lib/messaging/send";
 import { convertQuote, setQuoteStatus } from "@/app/actions/billing";
 import { quoteToOrder } from "@/app/actions/orders";
@@ -25,7 +25,7 @@ export default async function QuotePage({ params }: PageProps<"/quotes/[id]">) {
 
   const url = appUrl(`/q/${quote.shareToken}`);
   const p = quote.party;
-  const text = renderMessage("QUOTE", p.language, { party: p.name, business: business.name, number: quote.number, amountPaise: Number(quote.totalPaise), link: url });
+  const text = await renderFor(business.id, "QUOTE", p.language, { party: p.name, business: business.name, number: quote.number, amountPaise: Number(quote.totalPaise), link: url });
   const wa = p.phone ? whatsappLink(p.phone, text) : null;
   const s = quoteStatus(quote);
   const open = quote.status === "OPEN" || quote.status === "ACCEPTED";

@@ -25,7 +25,7 @@ export default async function Settings() {
   const counterQr = business.upiId
     ? await QRCode.toDataURL(upiLink({ vpa: business.upiId, payee: business.name }), { margin: 1, width: 220 })
     : null;
-  const testChannels = (["WHATSAPP", "SMS", "EMAIL"] as const).filter(isTestMode);
+  const testChannels = (["SMS", "EMAIL"] as const).filter(isTestMode);
   const owner = can(role, "settings:write");
   const [invite, referred, publicItems] = await Promise.all([
     inviteUrl(business.id),
@@ -93,7 +93,12 @@ export default async function Settings() {
         </Card>
         
         <Card id="messages" className="scroll-mt-24 ">
-          <h2 className="mb-4 text-base font-semibold tracking-tight">Messages & reminders</h2>
+          <h2 className="mb-3 text-base font-semibold tracking-tight">Messages & reminders</h2>
+          <div className="mb-4 rounded-lg border border-[#16a34a]/30 bg-[#16a34a]/10 px-3 py-2.5 text-sm">
+            <p className="font-medium">WhatsApp works from your own phone. No WhatsApp Business API needed.</p>
+            <p className="mt-0.5 text-muted">Reminders, receipts and bills are written from your templates and wait in your <Link href="/outbox" className="font-medium text-brand underline">WhatsApp outbox</Link>. You tap Send, WhatsApp opens with the words ready, and you press send there. It costs nothing.</p>
+            {owner && <Link href="/settings/templates" className="mt-1.5 inline-block font-medium text-brand underline">Change the wording of your messages</Link>}
+          </div>
           {testChannels.length > 0 && (
             <p className="mb-4 rounded-lg bg-brand/10 px-3 py-2 text-xs">
               Test mode for {testChannels.map((c) => ({ WHATSAPP: "WhatsApp", SMS: "SMS", EMAIL: "email" })[c]).join(", ")}: messages are recorded and marked delivered but not actually sent. Add provider keys to send for real.
@@ -114,7 +119,7 @@ export default async function Settings() {
         <Card id="credits" className="scroll-mt-24 space-y-3">
           <h2 className="mb-4 text-base font-semibold tracking-tight">Message credits</h2>
           <p className="text-3xl font-semibold tabular-nums">{business.creditBalance}</p>
-          <p className="text-sm text-muted">1 credit per WhatsApp or SMS message. Email is free.</p>
+          <p className="text-sm text-muted">1 credit per SMS. WhatsApp and email are free.</p>
           <Link href="/settings/credits" className="text-sm font-medium text-brand underline">Buy credits & see usage</Link>
           {owner && <div className="border-t border-line pt-3"><RunRemindersButton /></div>}
         </Card>

@@ -115,3 +115,57 @@ export function templateParams(kind: MessageKind, v: TemplateVars): string[] {
     case "INVITE": return [v.business, v.link];
   }
 }
+
+// ── Editable templates ───────────────────────────────────────────────────────
+// A shop can change the wording of any message. The text holds {placeholders} that are filled in per customer.
+
+export const TEMPLATE_KINDS: { kind: MessageKind; label: string; about: string }[] = [
+  { kind: "REMINDER", label: "Payment reminder", about: "Asking a customer to pay what is pending" },
+  { kind: "ENTRY_GAVE", label: "Credit given", about: "Confirming goods or credit you gave" },
+  { kind: "ENTRY_GOT", label: "Payment received (entry)", about: "Confirming a payment you wrote down" },
+  { kind: "RECEIPT", label: "Receipt", about: "Thanking them for a payment" },
+  { kind: "INVOICE", label: "Bill", about: "Sending a bill with a link to pay" },
+  { kind: "QUOTE", label: "Price quote", about: "Sending a price quote" },
+  { kind: "STATEMENT", label: "Account statement", about: "Sharing their account" },
+  { kind: "INVITE", label: "Invitation", about: "Inviting them to keep their own account" },
+];
+
+export const TEMPLATE_TOKENS: { token: string; about: string }[] = [
+  { token: "party", about: "Customer name" },
+  { token: "business", about: "Your shop name" },
+  { token: "amount", about: "The amount of this bill, receipt or entry" },
+  { token: "balance", about: "Their total pending amount" },
+  { token: "balanceText", about: "Pending amount in words, e.g. “₹500 due”" },
+  { token: "date", about: "The date" },
+  { token: "number", about: "Bill, receipt or quote number" },
+  { token: "link", about: "The link they open" },
+];
+const KNOWN = new Set(TEMPLATE_TOKENS.map((t) => t.token));
+
+/** The built-in wording as editable text with {placeholders}. */
+export function defaultTemplateText(kind: MessageKind, lang: string): string {
+  const l = LANGUAGES[lang] ?? en;
+  const A = 111_111_111, B = 222_222_222;
+  const text = l[kind]({ party: "{party}", business: "{business}", link: "{link}", number: "{number}", date: "{date}", amountPaise: A, balancePaise: B });
+  return text.split(l.balance(B)).join("{balanceText}").split(amt(B)).join("{balance}").split(amt(A)).join("{amount}");
+}
+
+/** Why this wording can't be saved, or null. */
+export function checkTemplate(text: string): string | null {
+  const t = text.trim();
+  if (t.length < 10) return "Write a few more words.";
+  if (t.length > 900) return "Keep it under 900 characters so it fits one WhatsApp message.";
+  for (const m of t.matchAll(/\{([^{}]*)\}/g)) if (!KNOWN.has(m[1]!)) return `“{${m[1]}}” is not a known placeholder.`;
+  if (!t.includes("{link}")) return "Include {link} so the customer can open it.";
+  return null;
+}
+
+/** Fills the placeholders in a shop's own wording. */
+export function fillTemplate(text: string, lang: string, v: TemplateVars): string {
+  const l = LANGUAGES[lang] ?? en;
+  const values: Record<string, string> = {
+    party: v.party, business: v.business, link: v.link, number: v.number ?? "", date: v.date ?? "",
+    amount: amt(v.amountPaise ?? 0), balance: amt(Math.abs(v.balancePaise ?? 0)), balanceText: l.balance(v.balancePaise ?? 0),
+  };
+  return text.replace(/\{([a-zA-Z]+)\}/g, (all, k: string) => values[k] ?? all);
+}

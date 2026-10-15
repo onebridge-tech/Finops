@@ -5,7 +5,8 @@ import { CREDIT_COST } from "../credits";
 import { appUrl, normalizeIndianMobile } from "../share";
 import type { Channel } from "../reminder-rule";
 import { deliver, providerName } from "./providers";
-import { renderMessage, templateParams, type MessageKind, type TemplateVars } from "./templates";
+import { templateParams, type MessageKind, type TemplateVars } from "./templates";
+import { renderFor } from "./render";
 
 const COARSE_KIND: Record<MessageKind, string> = {
   REMINDER: "REMINDER", ENTRY_GAVE: "ENTRY_CONFIRMATION", ENTRY_GOT: "ENTRY_CONFIRMATION", RECEIPT: "RECEIPT",
@@ -48,7 +49,7 @@ export function blockedReason(party: Party, channel: Channel): string | null {
 export async function sendToParty(o: SendOptions): Promise<SendOutcome> {
   const { business, party, kind, channel } = o;
   const vars: TemplateVars = { party: party.name, business: business.name, ...o.vars };
-  const body = renderMessage(kind, party.language, vars, appUrl(`/o/${party.shareToken}`));
+  const body = await renderFor(business.id, kind, party.language, vars, appUrl(`/o/${party.shareToken}`));
   const to = channel === "EMAIL" ? (party.email ?? "") : (normalizeIndianMobile(party.phone ?? "") ?? "");
   const base = {
     businessId: business.id, partyId: party.id, kind: COARSE_KIND[kind], channel, to,
@@ -59,6 +60,18 @@ export async function sendToParty(o: SendOptions): Promise<SendOutcome> {
   if (blocked) {
     const m = await db.message.create({ data: { ...base, status: "SKIPPED", provider: providerName(channel), error: blocked } });
     return { ok: false, status: "SKIPPED", error: blocked, messageId: m.id };
+  }
+
+  // WhatsApp is not sent from here. The message is written from the template and waits in the shop's
+  // WhatsApp outbox until a person taps Send, which opens their own WhatsApp with the text ready.
+  if (channel === "WHATSAPP") {
+    if (o.trigger && o.trigger !== "MANUAL") {
+      // Automatic and bulk runs must not pile up the same reminder every hour.
+      const waiting = await db.message.findFirst({ where: { businessId: business.id, partyId: party.id, kind: base.kind, channel: "WHATSAPP_LINK", status: "QUEUED", createdAt: { gt: new Date(Date.now() - 3 * 86400_000) } } });
+      if (waiting) return { ok: true, status: "QUEUED", messageId: waiting.id };
+    }
+    const m = await db.message.create({ data: { ...base, channel: "WHATSAPP_LINK", status: "QUEUED", provider: "link", credits: 0 } });
+    return { ok: true, status: "QUEUED", messageId: m.id };
   }
 
   const cost = CREDIT_COST[channel];
@@ -138,6 +151,11 @@ export async function sendToOwner(o: OwnerMessage): Promise<SendOutcome> {
   if (!to) {
     const m = await db.message.create({ data: { ...base, status: "SKIPPED", provider: providerName(channel), error: channel === "EMAIL" ? "No email address" : "No mobile number" } });
     return { ok: false, status: "SKIPPED", error: "No address to send to", messageId: m.id };
+  }
+  if (channel === "WHATSAPP") {
+    // The owner's own summary also waits in the outbox: nothing is sent through the WhatsApp API.
+    const m = await db.message.create({ data: { ...base, channel: "WHATSAPP_LINK", status: "QUEUED", provider: "link", credits: 0 } });
+    return { ok: true, status: "QUEUED", messageId: m.id };
   }
   const cost = CREDIT_COST[channel];
   const message = await db.$transaction(async (tx) => {

@@ -35,7 +35,7 @@ export function BulkReminderForm({ rows, credits }: { rows: Row[]; credits: numb
           <p>{selected.length} selected · <span className={cost > credits ? "text-gave" : ""}>{cost} credit{cost === 1 ? "" : "s"}</span> of {credits} available</p>
           {cost > credits && <Link href="/settings/credits" className="text-xs text-brand underline">Buy credits</Link>}
         </div>
-        <SubmitButton>Send {selected.length || ""} reminder{selected.length === 1 ? "" : "s"}</SubmitButton>
+        <SubmitButton>{channel === "WHATSAPP" ? "Add" : "Send"} {selected.length || ""} reminder{selected.length === 1 ? "" : "s"}{channel === "WHATSAPP" ? " to my outbox" : ""}</SubmitButton>
       </Card>
       <ErrorText>{state.error}</ErrorText>
       {state.info && <p className="text-sm text-got">{state.info}</p>}

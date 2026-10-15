@@ -6,12 +6,12 @@ import { cancelInvoice, sendDocument } from "@/app/actions/billing";
 import { ErrorText, Input, Select } from "./ui";
 import { SubmitButton } from "./submit-button";
 
-type Ch = "WHATSAPP" | "SMS" | "EMAIL";
+type Ch = "SMS" | "EMAIL";
 
-/** Send an invoice or quotation through WhatsApp API, SMS or email (BD-05). */
-export function SendDocumentForm({ kind, id, blocked }: { kind: "INVOICE" | "QUOTE"; id: string; blocked: Record<Ch, string | null> }) {
+/** Send an invoice or quotation by SMS or email (BD-05). WhatsApp has its own button that opens the shop's own WhatsApp. */
+export function SendDocumentForm({ kind, id, blocked }: { kind: "INVOICE" | "QUOTE"; id: string; blocked: Record<Ch | "WHATSAPP", string | null> }) {
   const [state, action, pending] = useActionState(sendDocument, {});
-  const options: [Ch, string][] = [["WHATSAPP", "WhatsApp"], ["SMS", "SMS"], ["EMAIL", "Email"]];
+  const options: [Ch, string][] = [["SMS", "SMS"], ["EMAIL", "Email"]];
   return (
     <ActionForm dispatch={action} pending={pending} className="flex flex-wrap items-center gap-2">
       <input type="hidden" name="kind" value={kind} />

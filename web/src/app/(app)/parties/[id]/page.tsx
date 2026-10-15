@@ -7,7 +7,7 @@ import { istDay, openDues, reversedIds, withRunningBalance } from "@/lib/ledger"
 import { promiseStatus } from "@/lib/rules";
 import { formatINR } from "@/lib/money";
 import { appUrl, whatsappLink } from "@/lib/share";
-import { renderMessage } from "@/lib/messaging/templates";
+import { renderFor } from "@/lib/messaging/render";
 import { blockedReason } from "@/lib/messaging/send";
 import { describeRule, effectiveRule } from "@/lib/reminder-rule";
 import { PAYMENT_MODE_LABEL, type PaymentMode } from "@/lib/format";
@@ -26,7 +26,7 @@ import { translator } from "@/lib/i18n";
 import { drCr, ledgerGroup, voucherType } from "@/lib/accounting";
 import { convertLead } from "@/app/actions/ledger";
 
-const CHANNEL_NAME: Record<string, string> = { WHATSAPP: "WhatsApp", SMS: "SMS", EMAIL: "Email", WHATSAPP_LINK: "WhatsApp (own phone)" };
+const CHANNEL_NAME: Record<string, string> = { WHATSAPP: "WhatsApp", SMS: "SMS", EMAIL: "Email", WHATSAPP_LINK: "WhatsApp" };
 const STATUS_TONE: Record<string, string> = { DELIVERED: "text-got", READ: "text-got", SENT: "text-muted", QUEUED: "text-muted", FAILED: "text-gave", SKIPPED: "text-gave" };
 
 export const metadata = { title: "Customer account" };
@@ -65,7 +65,7 @@ export default async function PartyPage({ params }: PageProps<"/parties/[id]">) 
   const rows = withRunningBalance(entries).reverse();
   const struck = reversedIds(entries);
   const statementUrl = appUrl(`/s/${party.shareToken}`);
-  const reminder = renderMessage("REMINDER", party.language, { party: party.name, business: business.name, balancePaise: balance, link: statementUrl });
+  const reminder = await renderFor(business.id, "REMINDER", party.language, { party: party.name, business: business.name, balancePaise: balance, link: statementUrl });
   const wa = party.phone ? whatsappLink(party.phone, reminder) : null;
   const blocked = { WHATSAPP: blockedReason(party, "WHATSAPP"), SMS: blockedReason(party, "SMS"), EMAIL: blockedReason(party, "EMAIL") };
   const canMessage = Object.values(blocked).some((b) => !b);
@@ -309,7 +309,7 @@ export default async function PartyPage({ params }: PageProps<"/parties/[id]">) 
                 <div key={m.id} className="px-4 py-3">
                   <p className="flex flex-wrap justify-between gap-2 text-xs">
                     <span className="text-muted">{fmtDate(m.createdAt)} · {CHANNEL_NAME[m.channel] ?? m.channel} · {m.kind.toLowerCase().replace("_", " ")}{m.trigger !== "MANUAL" && ` · ${m.trigger.toLowerCase()}`}{m.provider === "test" && " · test mode"}</span>
-                    <span className={STATUS_TONE[m.status] ?? "text-muted"}>{m.status.toLowerCase()}{m.error && `: ${m.error}`}</span>
+                    <span className={STATUS_TONE[m.status] ?? "text-muted"}>{m.channel === "WHATSAPP_LINK" ? (m.status === "QUEUED" ? "waiting in your outbox" : m.status === "SENT" ? "opened in WhatsApp" : m.status.toLowerCase()) : m.status.toLowerCase()}{m.error && `: ${m.error}`}</span>
                   </p>
                   <p className="mt-1 whitespace-pre-line">{m.body}</p>
                 </div>

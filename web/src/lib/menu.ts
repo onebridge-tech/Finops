@@ -4,6 +4,7 @@ import type { Permission } from "./roles";
 export type MenuItem = { href: string; icon: string; label: string; about: string; permission?: Permission; group: "Sell" | "Money" | "Stock" | "Field" | "Business" };
 
 export const MENU: MenuItem[] = [
+  { href: "/outbox", icon: "send", label: "WhatsApp outbox", about: "Messages ready to send from your own WhatsApp", group: "Sell", permission: "reminder:send" },
   { href: "/quotes", icon: "note", label: "Price quotes", about: "Send a price, get a yes", group: "Sell" },
   { href: "/orders", icon: "cart", label: "Orders", about: "What customers ordered, and what you ordered", group: "Sell" },
   { href: "/notes", icon: "undo", label: "Returns", about: "Goods sent back, or a bill that needs fixing", group: "Sell" },

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { can, requireBusiness } from "@/lib/auth";
+import { can, partyWhere, requireBusiness } from "@/lib/auth";
+import { db } from "@/lib/db";
 import { dashboard } from "@/lib/queries";
 import { formatINR } from "@/lib/money";
 import { translator } from "@/lib/i18n";
@@ -22,6 +23,7 @@ export default async function Dashboard() {
   const ctx = await requireBusiness();
   const { business, role, user } = ctx;
   const d = await dashboard(ctx);
+  const waiting = can(role, "reminder:send") ? await db.message.count({ where: { businessId: business.id, channel: "WHATSAPP_LINK", status: "QUEUED", party: partyWhere(ctx) } }) : 0;
   const t = translator(user.uiLanguage);
   const accountant = user.uiMode === "ACCOUNTANT";
   const english = user.uiLanguage === "en";
@@ -147,6 +149,14 @@ export default async function Dashboard() {
           </div>
         }
       />
+
+      {waiting > 0 && (
+        <Link href="/outbox" className="mb-6 flex items-center gap-3 rounded-xl border border-[#16a34a]/30 bg-[#16a34a]/10 px-4 py-3 transition hover:bg-[#16a34a]/15">
+          <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-[#16a34a] text-white"><Icon name="send" size={18} /></span>
+          <span className="min-w-0 flex-1"><span className="block font-semibold">{waiting} WhatsApp message{waiting === 1 ? "" : "s"} ready to send</span><span className="text-sm text-muted">Tap Send on each one. WhatsApp opens with the words ready.</span></span>
+          <Icon name="chevron" size={18} className="text-muted" />
+        </Link>
+      )}
 
       {onboarding && (
         <Card className="mb-6 border-brand/30 bg-brand-soft">

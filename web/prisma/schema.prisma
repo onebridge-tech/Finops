@@ -81,6 +81,19 @@ model OtpCode {
   @@index([email, createdAt])
 }
 
+// A shop's own wording for a message (STAGE W). Without a row the built-in text is used.
+model MessageTemplate {
+  id          String   @id @default(cuid())
+  businessId  String
+  kind        String // REMINDER | ENTRY_GAVE | ENTRY_GOT | RECEIPT | INVOICE | QUOTE | STATEMENT | INVITE
+  lang        String
+  body        String
+  updatedById String?
+  updatedAt   DateTime @updatedAt
+
+  @@unique([businessId, kind, lang])
+}
+
 // Server problems, one row per kind of problem with a count (STAGE C).
 model ErrorLog {
   id          String    @id @default(cuid())

@@ -21,7 +21,7 @@ export type MessageState = { error?: string; ok?: boolean; info?: string };
 const field = (f: FormData, k: string) => String(f.get(k) ?? "");
 const channelOf = (v: string): Channel | null => (CHANNELS.includes(v as Channel) ? (v as Channel) : null);
 
-/** One-tap reminder or statement share through the WhatsApp API, SMS or email (CP-01). */
+/** One-tap reminder or statement: WhatsApp goes to the outbox, SMS and email are sent (CP-01). */
 export async function sendPartyMessage(_prev: MessageState, form: FormData): Promise<MessageState> {
   const ctx = await requireBusiness("reminder:send");
   const { user, business } = ctx;
@@ -39,7 +39,7 @@ export async function sendPartyMessage(_prev: MessageState, form: FormData): Pro
     vars: { balancePaise: balance, link: kind === "INVITE" ? await inviteUrl(business.id) : appUrl(`/s/${party.shareToken}`) },
   });
   revalidatePath(`/parties/${party.id}`);
-  return r.ok ? { ok: true, info: "Sent" } : { error: r.error };
+  return r.ok ? { ok: true, info: r.status === "QUEUED" && channel === "WHATSAPP" ? "Ready in your WhatsApp outbox. Open the outbox and tap Send." : "Sent" } : { error: r.error };
 }
 
 /** Reminders to many parties at once (CP-03). */
@@ -64,7 +64,7 @@ export async function sendBulkReminders(_prev: MessageState, form: FormData): Pr
     if (r.ok) sent++; else if (r.status === "SKIPPED") skipped++; else failed++;
   }
   revalidatePath("/collections");
-  return { ok: true, info: `Sent ${sent}` + (skipped ? ` · skipped ${skipped}` : "") + (failed ? ` · failed ${failed}` : "") };
+  return { ok: true, info: (channel === "WHATSAPP" ? `${sent} ready in your WhatsApp outbox` : `Sent ${sent}`) + (skipped ? ` · skipped ${skipped}` : "") + (failed ? ` · failed ${failed}` : "") };
 }
 
 /** The business records that a party agreed to messages, or relays an opt-out/opt-in request. */

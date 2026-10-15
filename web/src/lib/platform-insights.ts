@@ -37,13 +37,15 @@ export async function health() {
     }),
   );
 
-  const msgs = await db.message.groupBy({ by: ["channel", "status"], where: { createdAt: { gte: ago(7) }, provider: { not: "link" } }, _count: true });
-  const channels = (["WHATSAPP", "SMS", "EMAIL"] as const).map((c) => {
+  const msgs = await db.message.groupBy({ by: ["channel", "status"], where: { createdAt: { gte: ago(7) } }, _count: true });
+  const waiting = await db.message.count({ where: { channel: "WHATSAPP_LINK", status: "QUEUED" } });
+  const channels = (["WHATSAPP_LINK", "SMS", "EMAIL"] as const).map((c) => {
     const rows = msgs.filter((m) => m.channel === c);
     const n = (...s: string[]) => rows.filter((r) => s.includes(r.status)).reduce((t, r) => t + r._count, 0);
     const ok = n("SENT", "DELIVERED", "READ");
     const failed = n("FAILED");
-    return { channel: c, provider: providerName(c), test: isTestMode(c), ok, failed, skipped: n("SKIPPED"), rate: ok + failed === 0 ? null : Math.round((ok / (ok + failed)) * 100) };
+    if (c === "WHATSAPP_LINK") return { channel: c, provider: "click-to-chat", test: false, ok, failed: 0, skipped: n("SKIPPED"), rate: null as number | null, waiting };
+    return { waiting: 0, channel: c, provider: providerName(c), test: isTestMode(c), ok, failed, skipped: n("SKIPPED"), rate: ok + failed === 0 ? null : Math.round((ok / (ok + failed)) * 100) };
   });
 
   const pay = gatewayMode();

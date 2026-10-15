@@ -1,7 +1,8 @@
-// Messaging credits (CP-12). One credit ≈ ₹0.50; email and in-app delivery are free.
+// Messaging credits (CP-12). One credit ≈ ₹0.50. SMS costs a credit; email is free, and WhatsApp is free because
+// messages are opened in the shop's own WhatsApp (click-to-chat), not sent through the paid WhatsApp API.
 import type { Channel } from "./reminder-rule";
 
-export const CREDIT_COST: Record<Channel, number> = { WHATSAPP: 1, SMS: 1, EMAIL: 0 };
+export const CREDIT_COST: Record<Channel, number> = { WHATSAPP: 0, SMS: 1, EMAIL: 0 };
 
 export const WELCOME_CREDITS = 50;
 

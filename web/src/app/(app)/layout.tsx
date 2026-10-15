@@ -23,10 +23,11 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
   const { business, user, role, membership, branchId } = ctx;
   const t = translator(user.uiLanguage);
   const endOfToday = new Date(`${new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" })}T23:59:59+05:30`);
-  const [memberships, branches, followUpsDue] = await Promise.all([
+  const [memberships, branches, followUpsDue, outboxWaiting] = await Promise.all([
     db.membership.findMany({ where: { userId: user.id }, include: { business: { select: { id: true, name: true } } }, orderBy: { createdAt: "asc" } }),
     db.branch.findMany({ where: { businessId: business.id, archivedAt: null }, select: { id: true, name: true }, orderBy: { name: "asc" } }),
     db.followUp.count({ where: { businessId: business.id, assignedToId: user.id, doneAt: null, dueAt: { lte: endOfToday }, party: partyWhere(ctx) } }),
+    can(role, "reminder:send") ? db.message.count({ where: { businessId: business.id, channel: "WHATSAPP_LINK", status: "QUEUED", party: partyWhere(ctx) } }) : Promise.resolve(0),
   ]);
   const tiedBranch = membership.branchId ? branches.find((b) => b.id === membership.branchId) : null;
   const visible = MENU.filter((m) => !m.permission || can(role, m.permission));
@@ -40,7 +41,7 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
   ];
   const groups: NavGroup[] = [{ items: core }];
   for (const g of ["Sell", "Stock", "Money", "Field", "Business"] as const) {
-    const items = visible.filter((m) => m.group === g).map((m): NavItem => ({ href: m.href, label: m.label, icon: m.icon as NavItem["icon"] }));
+    const items = visible.filter((m) => m.group === g).map((m): NavItem => ({ href: m.href, label: m.label, icon: m.icon as NavItem["icon"], badge: m.href === "/outbox" ? outboxWaiting : undefined }));
     if (items.length) groups.push({ title: GROUP_TITLE[g], items });
   }
   const name = userLabel(user);
@@ -102,7 +103,7 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
         </div>
 
         <nav aria-label="Quick" className="no-print fixed inset-x-0 bottom-0 z-40 border-t border-line bg-card/95 backdrop-blur lg:hidden">
-          <BottomNav items={core} moreLabel={t("nav.more")} morePaths={[...visible.map((m) => m.href), "/search"]} />
+          <BottomNav items={core} moreBadge={outboxWaiting} moreLabel={t("nav.more")} morePaths={[...visible.map((m) => m.href), "/search"]} />
         </nav>
       </div>
     </I18nProvider>

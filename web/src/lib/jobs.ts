@@ -107,6 +107,8 @@ export async function runInactiveScan(now = new Date(), businessId?: string) {
 
 /** Everything scheduled, in one call. */
 export async function runHourly(now = new Date()) {
+  // A reminder nobody sent for a week is out of date; take it out of the outbox.
+  await db.message.updateMany({ where: { channel: "WHATSAPP_LINK", status: "QUEUED", createdAt: { lt: new Date(now.getTime() - 7 * 86400_000) } }, data: { status: "SKIPPED", error: "Not sent within a week" } });
   const reminders = await runAutoReminders({ now });
   const digests = await runDigests(now);
   const tasks = hourIST(now) >= 9 ? await runInactiveScan(now) : { inactive: 0, upsell: 0 };

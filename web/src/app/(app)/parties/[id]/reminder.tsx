@@ -4,7 +4,7 @@ import { useState, useTransition } from "react";
 import { logReminder } from "@/app/actions/ledger";
 import { buttonClass } from "@/components/ui";
 
-/** Phase 1: WhatsApp click-to-chat. Phase 1 launch adds the WhatsApp Business API (IN-05). */
+/** WhatsApp click-to-chat: opens the shop's own WhatsApp with the message written from the template. */
 export function ReminderButton({ partyId, href, text, label = "Send WhatsApp reminder" }: { partyId: string; href: string | null; text: string; label?: string }) {
   const [pending, start] = useTransition();
   if (!href) {

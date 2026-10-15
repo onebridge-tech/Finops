@@ -10,7 +10,7 @@ import { RuleFields } from "@/components/rule-fields";
 const CHANNEL_LABEL = { WHATSAPP: "WhatsApp", SMS: "SMS", EMAIL: "Email" } as const;
 type Ch = keyof typeof CHANNEL_LABEL;
 
-/** Send a reminder or statement through the app's messaging (credits apply to WhatsApp/SMS). */
+/** Send a reminder or statement. WhatsApp goes to your outbox (free); SMS costs a credit; email is free. */
 export function SendMessageForm({ partyId, blocked, canRemind }: { partyId: string; blocked: Record<Ch, string | null>; canRemind: boolean }) {
   const [state, action, pending] = useActionState(sendPartyMessage, {});
   const first = (Object.keys(blocked) as Ch[]).find((c) => !blocked[c]) ?? "WHATSAPP";
@@ -26,7 +26,7 @@ export function SendMessageForm({ partyId, blocked, canRemind }: { partyId: stri
             <option value="INVITE">Invite to use the app (free)</option>
           </Select>
         </Field>
-        <Field label="By" hint={channel === "EMAIL" ? "Free" : "1 credit"}>
+        <Field label="By" hint={channel === "SMS" ? "1 credit" : channel === "WHATSAPP" ? "Free. Goes to your WhatsApp outbox" : "Free"}>
           <Select name="channel" value={channel} onChange={(e) => setChannel(e.target.value as Ch)}>
             {(Object.keys(CHANNEL_LABEL) as Ch[]).map((c) => (
               <option key={c} value={c} disabled={!!blocked[c]}>
