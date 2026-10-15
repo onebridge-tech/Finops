@@ -81,6 +81,38 @@ model OtpCode {
   @@index([email, createdAt])
 }
 
+// Server problems, one row per kind of problem with a count (STAGE C).
+model ErrorLog {
+  id          String    @id @default(cuid())
+  fingerprint String    @unique
+  kind        String // SERVER | ACTION | ROUTE | CLIENT
+  route       String
+  method      String?
+  message     String
+  stack       String?
+  digest      String?
+  count       Int       @default(1)
+  firstSeenAt DateTime  @default(now())
+  lastSeenAt  DateTime  @default(now())
+  resolvedAt  DateTime?
+
+  @@index([lastSeenAt])
+}
+
+// One run of a scheduled job (reminders, daily summary, backup).
+model JobRun {
+  id         String    @id @default(cuid())
+  name       String
+  source     String    @default("scheduler") // scheduler | cron
+  startedAt  DateTime  @default(now())
+  finishedAt DateTime?
+  ok         Boolean?
+  summary    String?
+  error      String?
+
+  @@index([name, startedAt])
+}
+
 // What platform admins looked at or changed (separate from each shop's own audit trail).
 model PlatformAudit {
   id        String   @id @default(cuid())

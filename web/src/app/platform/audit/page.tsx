@@ -6,7 +6,7 @@ import { since } from "../bars";
 export const metadata = { title: "Admin log · Platform admin" };
 export const dynamic = "force-dynamic";
 
-const WHAT: Record<string, string> = { view_shop: "looked at", suspend_shop: "paused", restore_shop: "opened again", grant_credits: "gave credits to" };
+const WHAT: Record<string, string> = { view_shop: "looked at", suspend_shop: "paused", restore_shop: "opened again", grant_credits: "gave credits to", resolve_error: "marked an error resolved", reopen_error: "reopened an error" };
 
 function detail(d: string | null): string {
   if (!d) return "";

@@ -1,5 +1,6 @@
 import { timingSafeEqual } from "node:crypto";
 import { runHourly } from "@/lib/jobs";
+import { recordJob } from "@/lib/job-runs";
 
 // Called hourly by an external scheduler (cron, Render cron job, GitHub Actions…):
 //   curl -H "Authorization: Bearer $CRON_SECRET" https://<app>/api/cron/reminders
@@ -9,5 +10,5 @@ export async function GET(request: Request) {
   if (!secret || given.length !== secret.length || !timingSafeEqual(Buffer.from(given), Buffer.from(secret))) {
     return new Response("Unauthorized", { status: 401 });
   }
-  return Response.json(await runHourly());
+  return Response.json(await recordJob("hourly", () => runHourly(), "cron"));
 }

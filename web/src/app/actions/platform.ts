@@ -68,3 +68,20 @@ export async function grantCredits(_prev: AdminState, form: FormData): Promise<A
   revalidatePath(`/platform/shops/${id}`);
   return { ok: `Added ${amount} credits to ${shop.name}. They now have ${balance}.` };
 }
+
+/** Marks a kind of error as dealt with. It reopens by itself if it happens again. */
+export async function resolveError(form: FormData): Promise<void> {
+  const admin = await requirePlatformAdmin();
+  const id = text(form, "id");
+  await db.errorLog.updateMany({ where: { id, resolvedAt: null }, data: { resolvedAt: new Date() } });
+  await platformAudit(admin.id, "resolve_error", id);
+  revalidatePath("/platform/errors");
+}
+
+export async function reopenError(form: FormData): Promise<void> {
+  const admin = await requirePlatformAdmin();
+  const id = text(form, "id");
+  await db.errorLog.updateMany({ where: { id }, data: { resolvedAt: null } });
+  await platformAudit(admin.id, "reopen_error", id);
+  revalidatePath("/platform/errors");
+}
