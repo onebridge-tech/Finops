@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { shopDetail } from "@/lib/platform";
-import { platformAudit, requirePlatformAdmin } from "@/lib/platform-auth";
+import { platformView, requirePlatformAdmin } from "@/lib/platform-auth";
 import { userLabel } from "@/lib/identity";
 import { formatINR } from "@/lib/money";
 import { Avatar, Badge, Card, PageHeader, SectionTitle, StatCard } from "@/components/ui";
@@ -18,7 +18,7 @@ export default async function ShopPage({ params }: PageProps<"/platform/shops/[i
   const admin = await requirePlatformAdmin();
   const d = await shopDetail(id);
   if (!d) notFound();
-  await platformAudit(admin.id, "view_shop", id);
+  await platformView(admin.id, id);
   const b = d.business;
   const sent = (d.messages.SENT ?? 0) + (d.messages.DELIVERED ?? 0) + (d.messages.READ ?? 0);
   const paid = d.payments.find((p) => p.status === "PAID");
@@ -34,8 +34,8 @@ export default async function ShopPage({ params }: PageProps<"/platform/shops/[i
       />
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <StatCard icon="users" label="Customers" value={String(d.counts.parties)} hint={`${d.counts.suppliers} suppliers`} />
-        <StatCard icon="bill" label="Bills" value={String(d.counts.invoices)} hint={`${d.counts.quotes} quotes · ${d.counts.orders} orders`} />
+        <StatCard icon="users" label="Customers" value={String(d.counts.parties)} hint={`${d.counts.suppliers} supplier${d.counts.suppliers === 1 ? "" : "s"}`} />
+        <StatCard icon="bill" label="Bills" value={String(d.counts.invoices)} hint={`${d.counts.quotes} quote${d.counts.quotes === 1 ? "" : "s"} · ${d.counts.orders} order${d.counts.orders === 1 ? "" : "s"}`} />
         <StatCard icon="note" label="Entries written" value={String(d.counts.entries)} />
         <StatCard icon="box" label="Items" value={String(d.counts.items)} />
       </div>

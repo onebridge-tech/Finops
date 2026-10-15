@@ -28,6 +28,12 @@ export async function requirePlatformAdmin() {
   return user;
 }
 
+/** Notes that an admin opened a shop, at most once every ten minutes so the log stays readable. */
+export async function platformView(actorId: string, target: string) {
+  const recent = await db.platformAudit.findFirst({ where: { actorId, action: "view_shop", target, createdAt: { gt: new Date(Date.now() - 600_000) } }, select: { id: true } });
+  if (!recent) await platformAudit(actorId, "view_shop", target);
+}
+
 /** Records what an admin looked at or changed. */
 export async function platformAudit(actorId: string, action: string, target?: string, data?: unknown) {
   await db.platformAudit.create({ data: { actorId, action, target: target ?? null, data: data === undefined ? null : JSON.stringify(data).slice(0, 2000) } });
