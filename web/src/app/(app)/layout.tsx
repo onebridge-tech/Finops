@@ -5,6 +5,7 @@ import { translator } from "@/lib/i18n";
 import { logout } from "@/app/actions/auth";
 import { I18nProvider } from "@/components/i18n-provider";
 import { MENU } from "@/lib/menu";
+import { AutoTranslate } from "@/components/auto-translate";
 import { PageHelp } from "./page-help";
 import { Avatar } from "@/components/ui";
 import { Icon, Logo } from "@/components/icon";
@@ -51,6 +52,7 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
   return (
     <I18nProvider lang={user.uiLanguage} mode={user.uiMode}>
       <div className="min-h-screen pb-20 lg:pb-0" lang={user.uiLanguage}>
+        <AutoTranslate lang={user.uiLanguage} />
         {user.pinHash && <IdleLock minutes={user.lockAfterMin} />}
         <OfflineRegister />
         <CommandPalette screens={visible.map((m) => ({ href: m.href, label: m.label, hint: m.about }))} />

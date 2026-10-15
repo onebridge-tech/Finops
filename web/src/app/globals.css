@@ -29,7 +29,7 @@
   --color-gave: var(--gave);
   --color-got: var(--got);
   --color-warn: var(--warn);
-  --font-sans: var(--font-inter), var(--font-telugu), system-ui, sans-serif;
+  --font-sans: var(--font-inter), var(--font-telugu), var(--font-hindi), var(--font-tamil), var(--font-kannada), system-ui, sans-serif;
 }
 
 @media (prefers-color-scheme: dark) {
