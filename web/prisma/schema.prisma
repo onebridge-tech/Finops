@@ -14,8 +14,8 @@ model User {
   id           String       @id @default(cuid())
   // A person signs in with a phone code, an email code or Google. At least one of these is set.
   phone        String?      @unique
-  email        String?      @unique
-  googleSub    String?      @unique
+  email        String?
+  googleSub    String?
   emailVerifiedAt DateTime?
   name         String?
   // App lock (SE-03): scrypt hash of a 4–6 digit PIN; lock after this many idle minutes.

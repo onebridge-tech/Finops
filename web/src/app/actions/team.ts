@@ -7,6 +7,7 @@ import { requireBusiness, requireUser, ROLES, type Role } from "@/lib/auth";
 import { audit } from "@/lib/audit";
 import { normalizeIndianMobile } from "@/lib/share";
 import { normalizeEmail } from "@/lib/identity";
+import { invitedEmailUser } from "@/lib/signin";
 import { isValidGstin, normalizeGstin } from "@/lib/gstin";
 import { UI_LANGUAGES } from "@/lib/i18n";
 import { TILES } from "@/lib/tiles";
@@ -55,8 +56,8 @@ export async function inviteMember(_prev: TeamState, form: FormData): Promise<Te
   const name = field(form, "name").trim().slice(0, 80) || null;
   // The person signs in with that number or email (or Google on that email) and lands in this business.
   const user = phone
-    ? await db.user.upsert({ where: { phone }, update: {}, create: { phone, name, ...(email && !(await db.user.findUnique({ where: { email } })) ? { email } : {}) } })
-    : await db.user.upsert({ where: { email: email! }, update: {}, create: { email: email!, name } });
+    ? await db.user.upsert({ where: { phone }, update: {}, create: { phone, name, ...(email && !(await db.user.findFirst({ where: { email } })) ? { email } : {}) } })
+    : await invitedEmailUser(email!, name);
   if (!user.name && name) await db.user.update({ where: { id: user.id }, data: { name } });
   const existing = await db.membership.findUnique({ where: { userId_businessId: { userId: user.id, businessId: ctx.business.id } } });
   if (existing) return { error: "This person is already on your team" };

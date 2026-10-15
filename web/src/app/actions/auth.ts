@@ -9,7 +9,7 @@ import { normalizeIndianMobile } from "@/lib/share";
 import { deliver, isTestMode } from "@/lib/messaging/providers";
 import { normalizeEmail } from "@/lib/identity";
 import { BRAND } from "@/lib/brand";
-import { signInUser } from "@/lib/signin";
+import { emailUser, signInUser } from "@/lib/signin";
 
 export type Method = "phone" | "email";
 export type OtpState = { step: "start" | "verify"; method: Method; to?: string; devCode?: string; error?: string };
@@ -88,7 +88,7 @@ async function verifyOtp(prev: OtpState, form: FormData): Promise<OtpState> {
   if (bad) return { step: "start", method, error: bad };
 
   const user = method === "email"
-    ? await db.user.upsert({ where: { email: to }, update: { emailVerifiedAt: new Date() }, create: { email: to, emailVerifiedAt: new Date() } })
+    ? await emailUser(to)
     : await db.user.upsert({ where: { phone: to }, update: {}, create: { phone: to } });
   return signInUser(user.id);
 }
@@ -105,7 +105,7 @@ export async function linkEmail(prev: LinkState, form: FormData): Promise<LinkSt
     const bad = await checkCode("email", email, String(form.get("code") ?? "").trim());
     if (bad === "Incorrect code.") return { ...prev, step: "verify", error: bad };
     if (bad) return { step: "start", error: bad };
-    const taken = await db.user.findUnique({ where: { email } });
+    const taken = await db.user.findFirst({ where: { email } });
     if (taken && taken.id !== user.id) return { step: "start", error: "That email already belongs to another account." };
     await db.user.update({ where: { id: user.id }, data: { email, emailVerifiedAt: new Date() } });
     revalidatePath("/settings/security");
@@ -113,7 +113,7 @@ export async function linkEmail(prev: LinkState, form: FormData): Promise<LinkSt
   }
   const email = normalizeEmail(String(form.get("to") ?? ""));
   if (!email) return { step: "start", error: "Enter a valid email address." };
-  const taken = await db.user.findUnique({ where: { email } });
+  const taken = await db.user.findFirst({ where: { email } });
   if (taken && taken.id !== user.id) return { step: "start", error: "That email already belongs to another account." };
   const recent = await db.otpCode.count({ where: { email, createdAt: { gt: new Date(Date.now() - 3600_000) } } });
   if (recent >= MAX_CODES_PER_HOUR) return { step: "start", error: "Too many codes requested. Try again in an hour." };

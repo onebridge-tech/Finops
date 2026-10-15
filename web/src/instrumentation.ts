@@ -5,6 +5,16 @@
 // /api/cron/backup from an external cron instead.
 export async function register() {
   if (process.env.NEXT_RUNTIME !== "nodejs") return;
+  if ((process.env.DATABASE_URL ?? "").startsWith("postgres")) {
+    // One account per email address and per Google account. The names match what Prisma would create for @unique.
+    const { db } = await import("./lib/db");
+    for (const sql of [
+      'CREATE UNIQUE INDEX IF NOT EXISTS "User_email_key" ON "User" ("email")',
+      'CREATE UNIQUE INDEX IF NOT EXISTS "User_googleSub_key" ON "User" ("googleSub")',
+    ]) {
+      await db.$executeRawUnsafe(sql).catch((e) => console.error("[startup] index failed", e instanceof Error ? e.message : e));
+    }
+  }
   const every = (ms: number, job: () => Promise<unknown>) => {
     setInterval(job, ms);
     setTimeout(job, 30_000);

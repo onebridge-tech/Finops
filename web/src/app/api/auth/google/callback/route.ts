@@ -27,10 +27,10 @@ export async function GET(request: Request) {
   if (flow.link) {
     const s = await readSession();
     if (!s) return fail("google_failed");
-    const other = await db.user.findUnique({ where: { googleSub: profile.sub } });
+    const other = await db.user.findFirst({ where: { googleSub: profile.sub } });
     if (other && other.id !== s.uid) return fail("google_taken", "/settings/security");
     const me = await db.user.findUnique({ where: { id: s.uid } });
-    const emailTaken = !me?.email ? await db.user.findUnique({ where: { email: profile.email } }) : null;
+    const emailTaken = !me?.email ? await db.user.findFirst({ where: { email: profile.email } }) : null;
     await db.user.update({
       where: { id: s.uid },
       data: { googleSub: profile.sub, ...(me && !me.email && !emailTaken ? { email: profile.email, emailVerifiedAt: new Date() } : {}) },
@@ -39,9 +39,9 @@ export async function GET(request: Request) {
   }
 
   // Signing in: the Google account first, then a person who already uses this (verified) email, else a new account.
-  let user = await db.user.findUnique({ where: { googleSub: profile.sub } });
+  let user = await db.user.findFirst({ where: { googleSub: profile.sub } });
   if (!user) {
-    const byEmail = await db.user.findUnique({ where: { email: profile.email } });
+    const byEmail = await db.user.findFirst({ where: { email: profile.email } });
     user = byEmail
       ? await db.user.update({ where: { id: byEmail.id }, data: { googleSub: profile.sub, emailVerifiedAt: byEmail.emailVerifiedAt ?? new Date() } })
       : await db.user.create({ data: { email: profile.email, emailVerifiedAt: new Date(), googleSub: profile.sub, name: profile.name } });
