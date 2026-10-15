@@ -8,7 +8,7 @@ const TABS = [["/platform", "Overview"], ["/platform/shops", "Shops"], ["/platfo
 export function PlatformNav() {
   const path = usePathname();
   return (
-    <nav aria-label="Platform admin" className="flex gap-1 overflow-x-auto">
+    <nav aria-label="Platform admin" className="flex gap-1 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
       {TABS.map(([href, label]) => {
         const on = href === "/platform" ? path === href : path === href || path.startsWith(href + "/");
         return (

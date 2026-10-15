@@ -96,7 +96,7 @@ export default async function ShopPage({ params }: PageProps<"/platform/shops/[i
         <section>
           <SectionTitle>Online payments</SectionTitle>
           <Card>
-            <p><span className="text-2xl font-semibold tabular-nums">{formatINR(paid?.paise ?? 0)}</span> <span className="text-muted">received in {paid?.count ?? 0} payments</span></p>
+            <p><span className="text-2xl font-semibold tabular-nums">{formatINR(paid?.paise ?? 0)}</span> <span className="text-muted">received in {paid?.count ?? 0} payment{paid?.count === 1 ? "" : "s"}</span></p>
             <p className="mt-1 text-sm text-muted">{d.payments.filter((p) => p.status !== "PAID").map((p) => `${p.count} ${p.status.toLowerCase()}`).join(" · ") || "No other attempts"}</p>
           </Card>
         </section>

@@ -24,7 +24,7 @@ export default async function PlatformHome() {
         <StatCard icon="note" label="Entries written (7 days)" value={String(d.entries7)} hint={trend} />
         <StatCard icon="bill" label="Bills made (7 days)" value={String(d.bills7)} />
         <StatCard icon="send" label="Messages sent (7 days)" value={String(sent)} hint={`${d.messages.FAILED ?? 0} failed · ${d.messages.SKIPPED ?? 0} skipped`} tone={(d.messages.FAILED ?? 0) > 0 ? "gave" : undefined} />
-        <StatCard icon="card" label="Online payments (7 days)" value={formatINR(d.pay7.paise)} hint={`${d.pay7.count} payments · ${d.paySuccess} ever`} />
+        <StatCard icon="card" label="Online payments (7 days)" value={formatINR(d.pay7.paise)} hint={`${d.pay7.count} payment${d.pay7.count === 1 ? "" : "s"} · ${d.paySuccess} ever`} />
       </div>
 
       <SectionTitle>Last 14 days</SectionTitle>
