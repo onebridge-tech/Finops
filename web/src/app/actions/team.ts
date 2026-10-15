@@ -6,6 +6,7 @@ import { db } from "@/lib/db";
 import { requireBusiness, requireUser, ROLES, type Role } from "@/lib/auth";
 import { audit } from "@/lib/audit";
 import { normalizeIndianMobile } from "@/lib/share";
+import { normalizeEmail } from "@/lib/identity";
 import { isValidGstin, normalizeGstin } from "@/lib/gstin";
 import { UI_LANGUAGES } from "@/lib/i18n";
 import { TILES } from "@/lib/tiles";
@@ -43,22 +44,28 @@ async function parseMember(form: FormData, businessId: string) {
 export async function inviteMember(_prev: TeamState, form: FormData): Promise<TeamState> {
   const ctx = await requireBusiness("team:manage");
   const phone = normalizeIndianMobile(field(form, "phone"));
-  if (!phone) return { error: "Enter a valid 10-digit mobile number" };
+  const email = normalizeEmail(field(form, "email"));
+  if (field(form, "phone").trim() && !phone) return { error: "Enter a valid 10-digit mobile number" };
+  if (field(form, "email").trim() && !email) return { error: "Enter a valid email address" };
+  if (!phone && !email) return { error: "Enter their mobile number or email address" };
   const p = await parseMember(form, ctx.business.id);
   if ("error" in p) return { error: p.error };
   if (p.data.role === "OWNER" && ctx.role !== "OWNER") return { error: "Only the owner can add another owner" };
 
   const name = field(form, "name").trim().slice(0, 80) || null;
-  const user = await db.user.upsert({ where: { phone }, update: {}, create: { phone, name } });
+  // The person signs in with that number or email (or Google on that email) and lands in this business.
+  const user = phone
+    ? await db.user.upsert({ where: { phone }, update: {}, create: { phone, name, ...(email && !(await db.user.findUnique({ where: { email } })) ? { email } : {}) } })
+    : await db.user.upsert({ where: { email: email! }, update: {}, create: { email: email!, name } });
   if (!user.name && name) await db.user.update({ where: { id: user.id }, data: { name } });
   const existing = await db.membership.findUnique({ where: { userId_businessId: { userId: user.id, businessId: ctx.business.id } } });
-  if (existing) return { error: "This number is already on your team" };
+  if (existing) return { error: "This person is already on your team" };
   await db.$transaction(async (tx) => {
     const m = await tx.membership.create({ data: { userId: user.id, businessId: ctx.business.id, invitedById: ctx.user.id, ...p.data } });
-    await audit(tx, { businessId: ctx.business.id, actorId: ctx.user.id, action: "invite", entity: "Membership", entityId: m.id, data: { phone, ...p.data } });
+    await audit(tx, { businessId: ctx.business.id, actorId: ctx.user.id, action: "invite", entity: "Membership", entityId: m.id, data: { phone, email, ...p.data } });
   });
   revalidatePath("/settings/team");
-  return { ok: true, info: `Added +${phone}. They can sign in with that number now.` };
+  return { ok: true, info: `Added ${phone ? `+${phone}` : email}. They can sign in with ${phone ? "that number" : "that email, or Google on it,"} now.` };
 }
 
 async function guardTarget(ctx: Awaited<ReturnType<typeof requireBusiness>>, membershipId: string) {

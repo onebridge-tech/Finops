@@ -5,6 +5,7 @@ import { istDay } from "./ledger";
 import { beatRunsOn } from "./rules";
 
 import { METRIC_LABEL } from "./metric-labels";
+import { userLabel } from "@/lib/identity";
 export { METRIC_LABEL };
 export const isMoney = (m: string) => m === "SALES" || m === "COLLECTIONS";
 
@@ -12,7 +13,7 @@ const istStart = (ymd: string) => new Date(`${ymd}T00:00:00+05:30`);
 const istEnd = (ymd: string) => new Date(`${ymd}T23:59:59.999+05:30`);
 const addDays = (ymd: string, n: number) => istDay(new Date(new Date(`${ymd}T12:00:00+05:30`).getTime() + n * 86400_000));
 
-const who = (users: { id: string; name: string | null; phone: string }[], id: string) => { const u = users.find((x) => x.id === id); return u ? (u.name ?? `+${u.phone}`) : "—"; };
+const who = (users: { id: string; name: string | null; phone: string | null; email: string | null }[], id: string) => { const u = users.find((x) => x.id === id); return u ? (userLabel(u)) : "—"; };
 
 export type Progress = { userId: string; name: string; metric: string; actual: number; target: number | null; expected: number | null };
 
@@ -48,7 +49,7 @@ export async function teamProgress(ctx: Ctx, month: string, today: string): Prom
     for (const metric of metrics) {
       const t = has.find((x) => x.metric === metric);
       const target = t ? Number(t.value) : null;
-      out.push({ userId: r.userId, name: r.user.name ?? `+${r.user.phone}`, metric, actual: actual[metric], target, expected: target === null ? null : Math.round((target * elapsed) / daysInMonth) });
+      out.push({ userId: r.userId, name: userLabel(r.user), metric, actual: actual[metric], target, expected: target === null ? null : Math.round((target * elapsed) / daysInMonth) });
     }
   }
   return out;

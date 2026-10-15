@@ -4,62 +4,133 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { requireUser } from "@/lib/auth";
-import { endSession, hashOtp, hashPin, newOtp, readSession, startSession, updateSession, verifyPin } from "@/lib/session";
+import { endSession, hashOtp, hashPin, newOtp, readSession, updateSession, verifyPin } from "@/lib/session";
 import { normalizeIndianMobile } from "@/lib/share";
 import { deliver, isTestMode } from "@/lib/messaging/providers";
+import { normalizeEmail } from "@/lib/identity";
+import { BRAND } from "@/lib/brand";
+import { signInUser } from "@/lib/signin";
 
-export type OtpState = { step: "phone" | "verify"; phone?: string; devCode?: string; error?: string };
+export type Method = "phone" | "email";
+export type OtpState = { step: "start" | "verify"; method: Method; to?: string; devCode?: string; error?: string };
 
 const OTP_TTL_MS = 10 * 60 * 1000;
 const MAX_ATTEMPTS = 5;
 const MAX_CODES_PER_HOUR = 5;
 const MAX_PIN_FAILURES = 5;
 
-async function requestOtp(_prev: OtpState, form: FormData): Promise<OtpState> {
-  const phone = normalizeIndianMobile(String(form.get("phone") ?? ""));
-  if (!phone) return { step: "phone", error: "Enter a valid 10-digit Indian mobile number." };
+/** What the code is tied to: the phone number, or the email address with a prefix so the two can never collide. */
+const keyFor = (method: Method, to: string) => (method === "email" ? `email:${to}` : to);
+const where = (method: Method, to: string) => (method === "email" ? { email: to } : { phone: to });
 
-  const recent = await db.otpCode.count({ where: { phone, createdAt: { gt: new Date(Date.now() - 3600_000) } } });
-  if (recent >= MAX_CODES_PER_HOUR) return { step: "phone", error: "Too many codes requested. Try again in an hour." };
+function clean(method: Method, raw: string): string | null {
+  return method === "email" ? normalizeEmail(raw) : normalizeIndianMobile(raw);
+}
+
+/** Sends a one-time code by SMS or email (or shows it on screen in test mode). */
+async function sendCode(method: Method, to: string, code: string): Promise<{ ok: true; devCode?: string } | { ok: false; error: string }> {
+  if (process.env.OTP_DEV_MODE === "1") {
+    console.log(`[dev] OTP for ${to}: ${code}`);
+    return { ok: true, devCode: code };
+  }
+  if (method === "phone") {
+    if (isTestMode("SMS")) return { ok: false, error: "SMS delivery is not set up yet. Try email or Google instead." };
+    const r = await deliver({ channel: "SMS", to, kind: "OTP", lang: "en", params: [code], subject: "", body: `${code} is your login code. It expires in 10 minutes.` });
+    return r.ok ? { ok: true } : { ok: false, error: "Couldn’t send the code. Please try again." };
+  }
+  if (isTestMode("EMAIL")) return { ok: false, error: "Email delivery is not set up yet. Try Google or your phone instead." };
+  const r = await deliver({
+    channel: "EMAIL", to, kind: "OTP", lang: "en", params: [code], subject: `${BRAND.NAME} sign-in code: ${code}`,
+    body: `Your ${BRAND.NAME} sign-in code is ${code}.\n\nIt expires in 10 minutes. If you did not ask for it, you can ignore this email.`,
+  });
+  return r.ok ? { ok: true } : { ok: false, error: "Couldn’t send the email. Please try again." };
+}
+
+async function requestOtp(form: FormData): Promise<OtpState> {
+  const method: Method = form.get("method") === "email" ? "email" : "phone";
+  const to = clean(method, String(form.get("to") ?? ""));
+  if (!to) return { step: "start", method, error: method === "email" ? "Enter a valid email address." : "Enter a valid 10-digit Indian mobile number." };
+
+  const recent = await db.otpCode.count({ where: { ...where(method, to), createdAt: { gt: new Date(Date.now() - 3600_000) } } });
+  if (recent >= MAX_CODES_PER_HOUR) return { step: "start", method, error: "Too many codes requested. Try again in an hour." };
 
   const code = newOtp();
-  await db.otpCode.create({ data: { phone, codeHash: hashOtp(phone, code), expiresAt: new Date(Date.now() + OTP_TTL_MS) } });
-
-  if (process.env.OTP_DEV_MODE === "1") {
-    console.log(`[dev] OTP for ${phone}: ${code}`);
-    return { step: "verify", phone, devCode: code };
-  }
-  if (isTestMode("SMS")) return { step: "phone", error: "SMS delivery is not configured yet." };
-  const r = await deliver({ channel: "SMS", to: phone, kind: "OTP", lang: "en", params: [code], subject: "", body: `${code} is your login code. It expires in 10 minutes.` });
-  return r.ok ? { step: "verify", phone } : { step: "phone", error: "Couldn’t send the code. Please try again." };
+  await db.otpCode.create({ data: { ...where(method, to), codeHash: hashOtp(keyFor(method, to), code), expiresAt: new Date(Date.now() + OTP_TTL_MS) } });
+  const sent = await sendCode(method, to, code);
+  return sent.ok ? { step: "verify", method, to, devCode: sent.devCode } : { step: "start", method, error: sent.error };
 }
 
 /** Single entry point for the login form: requests a code, or verifies one if `code` is present. */
 export async function login(prev: OtpState, form: FormData): Promise<OtpState> {
-  return form.has("code") ? verifyOtp(prev, form) : requestOtp(prev, form);
+  return form.has("code") ? verifyOtp(prev, form) : requestOtp(form);
+}
+
+/** Checks a code and consumes it. Returns an error message, or null when the code was right. */
+async function checkCode(method: Method, to: string, code: string): Promise<string | null> {
+  const otp = await db.otpCode.findFirst({ where: { ...where(method, to), consumedAt: null, expiresAt: { gt: new Date() } }, orderBy: { createdAt: "desc" } });
+  if (!otp || otp.attempts >= MAX_ATTEMPTS) return "Code expired. Request a new one.";
+  if (otp.codeHash !== hashOtp(keyFor(method, to), code)) {
+    await db.otpCode.update({ where: { id: otp.id }, data: { attempts: { increment: 1 } } });
+    return "Incorrect code.";
+  }
+  await db.otpCode.update({ where: { id: otp.id }, data: { consumedAt: new Date() } });
+  return null;
 }
 
 async function verifyOtp(prev: OtpState, form: FormData): Promise<OtpState> {
-  const phone = normalizeIndianMobile(String(form.get("phone") ?? ""));
+  const method: Method = form.get("method") === "email" ? "email" : "phone";
+  const to = clean(method, String(form.get("to") ?? ""));
   const code = String(form.get("code") ?? "").trim();
-  if (!phone) return { step: "phone" };
+  if (!to) return { step: "start", method };
 
-  const otp = await db.otpCode.findFirst({
-    where: { phone, consumedAt: null, expiresAt: { gt: new Date() } },
-    orderBy: { createdAt: "desc" },
-  });
-  if (!otp || otp.attempts >= MAX_ATTEMPTS) return { step: "phone", error: "Code expired. Request a new one." };
+  const bad = await checkCode(method, to, code);
+  if (bad === "Incorrect code.") return { ...prev, step: "verify", method, to, error: bad };
+  if (bad) return { step: "start", method, error: bad };
 
-  if (otp.codeHash !== hashOtp(phone, code)) {
-    await db.otpCode.update({ where: { id: otp.id }, data: { attempts: { increment: 1 } } });
-    return { ...prev, step: "verify", phone, error: "Incorrect code." };
+  const user = method === "email"
+    ? await db.user.upsert({ where: { email: to }, update: { emailVerifiedAt: new Date() }, create: { email: to, emailVerifiedAt: new Date() } })
+    : await db.user.upsert({ where: { phone: to }, update: {}, create: { phone: to } });
+  return signInUser(user.id);
+}
+
+// ── Adding another way to sign in (Settings → You & your security) ───────────
+
+export type LinkState = { step: "start" | "verify"; email?: string; devCode?: string; error?: string; ok?: boolean };
+
+export async function linkEmail(prev: LinkState, form: FormData): Promise<LinkState> {
+  const { user } = await requireUser();
+  if (form.has("code")) {
+    const email = normalizeEmail(String(prev.email ?? ""));
+    if (!email) return { step: "start" };
+    const bad = await checkCode("email", email, String(form.get("code") ?? "").trim());
+    if (bad === "Incorrect code.") return { ...prev, step: "verify", error: bad };
+    if (bad) return { step: "start", error: bad };
+    const taken = await db.user.findUnique({ where: { email } });
+    if (taken && taken.id !== user.id) return { step: "start", error: "That email already belongs to another account." };
+    await db.user.update({ where: { id: user.id }, data: { email, emailVerifiedAt: new Date() } });
+    revalidatePath("/settings/security");
+    return { step: "start", ok: true };
   }
-  await db.otpCode.update({ where: { id: otp.id }, data: { consumedAt: new Date() } });
+  const email = normalizeEmail(String(form.get("to") ?? ""));
+  if (!email) return { step: "start", error: "Enter a valid email address." };
+  const taken = await db.user.findUnique({ where: { email } });
+  if (taken && taken.id !== user.id) return { step: "start", error: "That email already belongs to another account." };
+  const recent = await db.otpCode.count({ where: { email, createdAt: { gt: new Date(Date.now() - 3600_000) } } });
+  if (recent >= MAX_CODES_PER_HOUR) return { step: "start", error: "Too many codes requested. Try again in an hour." };
+  const code = newOtp();
+  await db.otpCode.create({ data: { email, codeHash: hashOtp(keyFor("email", email), code), expiresAt: new Date(Date.now() + OTP_TTL_MS) } });
+  const sent = await sendCode("email", email, code);
+  return sent.ok ? { step: "verify", email, devCode: sent.devCode } : { step: "start", error: sent.error };
+}
 
-  const user = await db.user.upsert({ where: { phone }, update: {}, create: { phone } });
-  const first = await db.membership.findFirst({ where: { userId: user.id }, orderBy: { createdAt: "asc" } });
-  await startSession(user.id, first?.businessId);
-  redirect(first ? "/dashboard" : "/onboarding");
+/** Removes a way of signing in, as long as at least one other remains. */
+export async function unlinkMethod(form: FormData): Promise<void> {
+  const { user } = await requireUser();
+  const which = String(form.get("which") ?? "");
+  const left = [user.phone, user.email, user.googleSub].filter(Boolean).length;
+  if (left < 2) return;
+  if (which === "google") await db.user.update({ where: { id: user.id }, data: { googleSub: null } });
+  revalidatePath("/settings/security");
 }
 
 export async function logout() {

@@ -3,6 +3,8 @@ import { readSession } from "@/lib/session";
 import { db } from "@/lib/db";
 import { logout } from "@/app/actions/auth";
 import { UnlockForm } from "./unlock-form";
+import { userLabel } from "@/lib/identity";
+import { Icon } from "@/components/icon";
 
 export const metadata = { title: "Locked" };
 
@@ -13,9 +15,9 @@ export default async function Lock() {
   const user = await db.user.findUnique({ where: { id: s.uid } });
   return (
     <main className="mx-auto flex min-h-screen max-w-xs flex-col justify-center px-4 text-center">
-      <p className="text-4xl" aria-hidden>🔒</p>
-      <h1 className="mt-2 text-xl font-bold">Locked</h1>
-      <p className="mb-6 text-sm text-muted">{user?.name ?? `+${user?.phone}`}, enter your PIN to continue.</p>
+      <span className="mx-auto mb-4 flex size-14 items-center justify-center rounded-full bg-brand-soft text-brand"><Icon name="lock" size={26} /></span>
+      <h1 className="text-xl font-semibold tracking-tight">Locked</h1>
+      <p className="mb-6 mt-1 text-sm text-muted">{userLabel(user)}, enter your PIN to continue.</p>
       <UnlockForm />
       <form action={logout} className="mt-6">
         <button className="text-sm text-muted underline">Sign out instead</button>

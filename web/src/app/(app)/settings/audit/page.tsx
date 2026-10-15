@@ -3,6 +3,7 @@ import { requireBusiness } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { verifyAudit } from "@/lib/audit";
 import { Card, PageHeader, Select, fmtDate } from "@/components/ui";
+import { userLabel } from "@/lib/identity";
 
 export const metadata = { title: "Who changed what" };
 
@@ -52,7 +53,7 @@ export default async function Audit({ searchParams }: PageProps<"/settings/audit
     verifyAudit(ctx.business.id),
     db.auditEvent.count({ where: { businessId: ctx.business.id, seq: null } }),
   ]);
-  const who = new Map(members.map((m) => [m.userId, m.user.name ?? `+${m.user.phone}`]));
+  const who = new Map(members.map((m) => [m.userId, userLabel(m.user)]));
   const time = (d: Date) => d.toLocaleTimeString("en-IN", { timeZone: "Asia/Kolkata", hour: "2-digit", minute: "2-digit" });
   const last = events.at(-1)?.seq;
 

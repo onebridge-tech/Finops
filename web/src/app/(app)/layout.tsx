@@ -11,8 +11,10 @@ import { BRAND } from "@/lib/brand";
 import { CommandPalette } from "@/components/command-palette";
 import { OfflineRegister } from "@/components/offline-register";
 import { SignOutButton } from "@/components/sign-out-button";
+import { isPlatformAdmin } from "@/lib/platform-auth";
 import { BottomNav, SideNav, type NavGroup, type NavItem } from "./nav-links";
 import { BranchSwitcher, BusinessSwitcher, IdleLock, LockButton } from "./header-controls";
+import { userLabel } from "@/lib/identity";
 
 const GROUP_TITLE = { Sell: "Selling", Stock: "Items & stock", Money: "Money", Field: "On the road", Business: "Your shop" } as const;
 
@@ -41,7 +43,8 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
     const items = visible.filter((m) => m.group === g).map((m): NavItem => ({ href: m.href, label: m.label, icon: m.icon as NavItem["icon"] }));
     if (items.length) groups.push({ title: GROUP_TITLE[g], items });
   }
-  const name = user.name ?? `+${user.phone}`;
+  const name = userLabel(user);
+  if (isPlatformAdmin(user)) groups.push({ title: "Platform", items: [{ href: "/platform", label: "Platform admin", icon: "chart" }] });
 
   return (
     <I18nProvider lang={user.uiLanguage} mode={user.uiMode}>

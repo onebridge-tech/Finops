@@ -7,6 +7,7 @@ import { fmtDate } from "@/lib/format";
 import { liveVisits, teamProgress, attendanceRows, METRIC_LABEL, isMoney } from "@/lib/field-team";
 import { Card, PageHeader } from "@/components/ui";
 import { TargetForm } from "./target-form";
+import { userLabel } from "@/lib/identity";
 
 export const metadata = { title: "Staff & targets" };
 
@@ -23,7 +24,7 @@ export default async function Team() {
     db.membership.findMany({ where: { businessId: ctx.business.id }, include: { user: true } }),
   ]);
   const fmt = (m: string, n: number) => (isMoney(m) ? formatINR(n) : String(n));
-  const names = members.map((m) => ({ id: m.userId, name: m.user.name ?? `+${m.user.phone}` }));
+  const names = members.map((m) => ({ id: m.userId, name: userLabel(m.user) }));
   return (
     <>
       <PageHeader title="Staff & targets" sub={`Live view for ${fmtDate(new Date())}`} action={<Link href="/field/beats" className="text-sm text-brand underline">Daily routes</Link>} />

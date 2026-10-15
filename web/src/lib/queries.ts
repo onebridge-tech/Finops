@@ -3,6 +3,7 @@ import type { Prisma } from "@prisma/client";
 import { db } from "./db";
 import { istDay, ageing, balanceOf, openByEntry, openDues, overdueAmount } from "./ledger";
 import { docWhere, partyWhere, type Ctx } from "./auth";
+import { userLabel } from "@/lib/identity";
 
 /** Bill-wise allocations for a business, grouped by party (CP-10). */
 export async function allocationsByParty(businessId: string, partyIds?: string[]) {
@@ -97,7 +98,7 @@ export async function dashboard(ctx: Ctx) {
   const activity = [...byUser.entries()].map(([userId, rows]) => {
     const m = members.find((x) => x.userId === userId);
     return {
-      userId, name: m ? (m.user.name ?? `+${m.user.phone}`) : "Former member", role: m?.role ?? "",
+      userId, name: m ? (userLabel(m.user)) : "Former member", role: m?.role ?? "",
       entries: rows.length, gave: sum(rows.filter((r) => r.direction === "GAVE")), collected: sum(rows.filter((r) => r.direction === "GOT" && r.paymentMode)),
     };
   }).sort((a, b) => b.collected - a.collected);

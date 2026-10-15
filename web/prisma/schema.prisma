@@ -12,7 +12,11 @@ datasource db {
 
 model User {
   id           String       @id @default(cuid())
-  phone        String       @unique
+  // A person signs in with a phone code, an email code or Google. At least one of these is set.
+  phone        String?      @unique
+  email        String?      @unique
+  googleSub    String?      @unique
+  emailVerifiedAt DateTime?
   name         String?
   // App lock (SE-03): scrypt hash of a 4–6 digit PIN; lock after this many idle minutes.
   pinHash      String?
@@ -65,7 +69,8 @@ model Branch {
 
 model OtpCode {
   id         String    @id @default(cuid())
-  phone      String
+  phone      String? // a code is sent either to a phone ...
+  email      String? // ... or to an email address
   codeHash   String
   expiresAt  DateTime
   attempts   Int       @default(0)
@@ -73,6 +78,19 @@ model OtpCode {
   createdAt  DateTime  @default(now())
 
   @@index([phone, createdAt])
+  @@index([email, createdAt])
+}
+
+// What platform admins looked at or changed (separate from each shop's own audit trail).
+model PlatformAudit {
+  id        String   @id @default(cuid())
+  actorId   String
+  action    String
+  target    String?
+  data      String?
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
 }
 
 model Business {

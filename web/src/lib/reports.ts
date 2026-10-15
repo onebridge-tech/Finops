@@ -6,6 +6,7 @@ import { voucherType } from "./accounting";
 import { STATES } from "./gstin";
 import { changePct, monthKey, rangeDates, type Period } from "./period";
 import { istDay } from "./ledger";
+import { userLabel } from "@/lib/identity";
 
 // ── Result shape shared by every report, the report page and the exports ─────
 
@@ -21,7 +22,7 @@ async function names(ctx: Ctx) {
     db.membership.findMany({ where: { businessId: ctx.business.id }, include: { user: true } }),
     db.branch.findMany({ where: { businessId: ctx.business.id } }),
   ]);
-  const user = new Map(members.map((m) => [m.userId, m.user.name ?? `+${m.user.phone}`]));
+  const user = new Map(members.map((m) => [m.userId, userLabel(m.user)]));
   const branch = new Map(branches.map((b) => [b.id, b.name]));
   return {
     user: (id: string | null | undefined) => (id ? (user.get(id) ?? "Former member") : "Unassigned"),

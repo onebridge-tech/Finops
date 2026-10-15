@@ -1,6 +1,10 @@
 import { requireBusiness } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { revokeSession } from "@/app/actions/auth";
+import { revokeSession, unlinkMethod } from "@/app/actions/auth";
+import { googleEnabled } from "@/lib/google";
+import { isPlatformAdmin } from "@/lib/platform-auth";
+import { Badge } from "@/components/ui";
+import { EmailLink } from "./email-link";
 import { Card, PageHeader, fmtDate } from "@/components/ui";
 import { NameForm, PinForm, PreferencesForm } from "./forms";
 
@@ -14,8 +18,11 @@ function device(ua: string | null): string {
   return `${browser} on ${os}`;
 }
 
-export default async function Security() {
+export default async function Security({ searchParams }: PageProps<"/settings/security">) {
+  const sp = await searchParams;
   const { user, session } = await requireBusiness();
+  const methods = [user.phone, user.email, user.googleSub].filter(Boolean).length;
+  const admin = isPlatformAdmin(user);
   const sessions = await db.session.findMany({
     where: { userId: user.id, revokedAt: null, expiresAt: { gt: new Date() } },
     orderBy: { lastActiveAt: "desc" },
@@ -25,6 +32,41 @@ export default async function Security() {
   return (
     <>
       <PageHeader title="You & your security" sub="Your name, language, how screens look, app lock and devices." />
+      {sp.linked === "google" && <p role="status" className="mb-4 rounded-lg bg-got/10 px-3 py-2.5 text-sm text-got">Google is now connected. You can sign in with it.</p>}
+      {sp.error === "google_taken" && <p role="alert" className="mb-4 rounded-lg bg-gave/10 px-3 py-2.5 text-sm text-gave">That Google account is already used by another person here.</p>}
+      {sp.admin === "1" && <p role="alert" className="mb-4 rounded-lg border border-warn/30 bg-warn/10 px-3 py-2.5 text-sm text-warn">Set an app lock PIN below to use the platform admin area.</p>}
+
+      <Card className="mb-6 space-y-4">
+        <div>
+          <h2 className="text-base font-semibold tracking-tight">How you sign in</h2>
+          <p className="text-sm text-muted">Add more than one way, so you can always get back in.</p>
+        </div>
+        <ul className="divide-y divide-line">
+          <li className="flex flex-wrap items-center justify-between gap-2 py-3">
+            <span><span className="block font-medium">Mobile number</span><span className="text-sm text-muted">{user.phone ? `+${user.phone}` : "Not added"}</span></span>
+            {user.phone && <Badge tone="good">Verified</Badge>}
+          </li>
+          <li className="space-y-2 py-3">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <span><span className="block font-medium">Email</span><span className="text-sm text-muted">{user.email ?? "Not added"}</span></span>
+              {user.email && <Badge tone="good">Verified</Badge>}
+            </div>
+            {!user.email && <EmailLink />}
+          </li>
+          <li className="flex flex-wrap items-center justify-between gap-2 py-3">
+            <span><span className="block font-medium">Google</span><span className="text-sm text-muted">{user.googleSub ? "Connected" : googleEnabled() ? "Not connected" : "Not switched on yet"}</span></span>
+            {user.googleSub ? (
+              methods > 1 && (
+                <form action={unlinkMethod}><input type="hidden" name="which" value="google" /><button className="text-sm text-muted underline hover:text-gave">Disconnect</button></form>
+              )
+            ) : googleEnabled() ? (
+              <a href="/api/auth/google?link=1" className="inline-flex min-h-9 items-center rounded-lg border border-line bg-card px-3 text-sm font-medium shadow-sm hover:bg-bg">Connect Google</a>
+            ) : null}
+          </li>
+        </ul>
+        {admin && <p className="text-sm text-muted">You are a platform admin. <a className="text-brand underline" href="/platform">Open the admin area</a></p>}
+      </Card>
+
       <div className="grid gap-6 lg:grid-cols-2">
         <Card className="space-y-3">
           <h2 className="text-base font-semibold tracking-tight">Your name</h2>

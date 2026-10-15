@@ -4,6 +4,7 @@ import { CREDIT_PACKS } from "@/lib/credits";
 import { daysAgo } from "@/lib/format";
 import { Card, PageHeader, fmtDate } from "@/components/ui";
 import { BuyCredits } from "./buy-credits";
+import { userLabel } from "@/lib/identity";
 
 export const metadata = { title: "Message credits" };
 
@@ -24,7 +25,7 @@ export default async function Credits() {
   const who = (id: string | null) => {
     if (!id) return "Automatic";
     const m = members.find((x) => x.userId === id);
-    return m ? (m.user.name ?? `+${m.user.phone}`) : "Former member";
+    return m ? (userLabel(m.user)) : "Former member";
   };
 
   return (

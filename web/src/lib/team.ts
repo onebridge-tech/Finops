@@ -1,6 +1,7 @@
 import "server-only";
 import { db } from "./db";
 import type { Ctx } from "./auth";
+import { userLabel } from "@/lib/identity";
 
 /**
  * Options for the "Assigned to" and "Branch" pickers on the party form, or null
@@ -13,7 +14,7 @@ export async function partyFormOptions(ctx: Ctx) {
     db.priceList.findMany({ where: { businessId: ctx.business.id, archivedAt: null }, select: { id: true, name: true }, orderBy: { name: "asc" } }),
   ]);
   return {
-    owners: members?.map((m) => ({ id: m.userId, name: m.user.name ?? `+${m.user.phone}` })) ?? null,
+    owners: members?.map((m) => ({ id: m.userId, name: userLabel(m.user) })) ?? null,
     branches: branches?.map((b) => ({ id: b.id, name: b.name })) ?? null,
     priceLists,
   };
@@ -22,5 +23,5 @@ export async function partyFormOptions(ctx: Ctx) {
 /** Everyone on the team, for "assign to" pickers. */
 export async function teamOptions(businessId: string) {
   const members = await db.membership.findMany({ where: { businessId }, include: { user: true }, orderBy: { createdAt: "asc" } });
-  return members.map((m) => ({ id: m.userId, name: m.user.name ?? `+${m.user.phone}` }));
+  return members.map((m) => ({ id: m.userId, name: userLabel(m.user) }));
 }

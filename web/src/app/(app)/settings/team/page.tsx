@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { removeMember } from "@/app/actions/team";
 import { Card, PageHeader, fmtDate } from "@/components/ui";
 import { InviteForm, MemberForm } from "./forms";
+import { userContact, userLabel } from "@/lib/identity";
 
 export const metadata = { title: "Your staff" };
 
@@ -31,10 +32,10 @@ export default async function Team() {
             <details key={m.id} className="group px-4 py-3">
               <summary className="flex cursor-pointer list-none flex-wrap items-center justify-between gap-2">
                 <span>
-                  <span className="font-medium">{m.user.name ?? `+${m.user.phone}`}</span>
+                  <span className="font-medium">{userLabel(m.user)}</span>
                   {m.userId === ctx.user.id && <span className="ml-2 text-xs text-muted">(you)</span>}
                   <span className="block text-xs text-muted">
-                    +{m.user.phone} · {r?.name ?? m.role}
+                    {userContact(m.user)} · {r?.name ?? m.role}
                     {m.branchId && ` · ${branchName.get(m.branchId) ?? "branch"} only`}
                     {m.partyScope === "ASSIGNED" && " · assigned parties only"}
                     {m.maxDiscountBp !== null && ` · discount up to ${m.maxDiscountBp / 100}%`}
