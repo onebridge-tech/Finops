@@ -2,7 +2,7 @@
 
 Test site: https://business-ledger-gx5j.onrender.com (free Render plan: the first page after a quiet period takes about a minute to wake up).
 
-**Sign in.** Type a mobile number. The 6-digit code is shown on the screen (test mode, no SMS is sent).
+**Sign in.** Use Email or Mobile number. The 6-digit code is shown on the screen (test mode, nothing is sent). "Continue with Google" appears once Google keys are set (see below).
 Ready-made test shop "Sri Test Tea Stall": owner **7075196267** (yours), owner **9000000001**, field rep **9000000003**.
 Everything WhatsApp / SMS / email / online payment runs in **test mode**: it is recorded and shown as delivered, but nothing leaves the server and no money moves.
 
@@ -52,6 +52,20 @@ Tick each line when the result matches.
 - [ ] Settings → You & your security → set language Telugu. → Menus switch (not every screen is translated yet; see below).
 - [ ] Set "Accountant view". → Bills show a GST register, balances show Dr / Cr. Switch back to Simple.
 - [ ] Connect to Tally → make a key. → Key shown once. (The Tally agent needs a real Tally; not tested with one.)
+
+## 9. Sign-in methods
+- [ ] Sign in with an email address (any). A new account opens "Set up your shop". Sign in again with the same email in capitals → same account.
+- [ ] Settings → You & your security → "How you sign in": add an email to a phone account (code shown on screen). An address used by another account is refused.
+- [ ] Sign out, then sign in with the email you just added → you land in the same shop.
+
+## 10. Platform admin (only for the numbers/emails in PLATFORM_ADMIN_PHONES / PLATFORM_ADMIN_EMAILS)
+- [ ] Anyone else opening /platform gets "page not found".
+- [ ] An admin must first set an app-lock PIN (Settings → You & your security), then /platform opens.
+- [ ] Overview numbers match the Shops and People lists. Opening a shop adds a line to "Admin log".
+- [ ] No customer names or amounts owed appear anywhere in /platform.
+
+## Setting up Google sign-in
+In Google Cloud Console create an OAuth client (Web application), add the redirect URI `https://<your-site>/api/auth/google/callback`, then set `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` on Render. The button appears by itself. Not yet tried with real Google keys.
 
 ## Known gaps
 - Telugu, Hindi, Tamil, Kannada text is partly machine-written and covers only the main screens; newer screens show English.
