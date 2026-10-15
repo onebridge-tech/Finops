@@ -42,6 +42,7 @@ export async function requireBusiness(permission?: Permission) {
     }
     redirect("/onboarding");
   }
+  if (membership.business.suspendedAt) redirect("/suspended");
   const role = membership.role as Role;
   if (permission && !can(role, permission)) forbidden();
   const branchId = membership.branchId ?? session.brid ?? null;

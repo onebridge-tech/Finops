@@ -17,7 +17,7 @@ export default async function PlatformHome() {
       <PageHeader title="Platform overview" sub="How many shops and people use the app, and what they are doing. Counts only; no customer or money details are shown here." />
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <StatCard icon="shop" label="Shops" value={String(d.shops)} hint={`${d.shopsNew7} new this week · ${d.shopsNew30} this month`} href="/platform/shops" />
+        <StatCard icon="shop" label="Shops" value={String(d.shops)} hint={`${d.shopsNew7} new this week · ${d.shopsNew30} this month${d.paused ? ` · ${d.paused} paused` : ""}`} href="/platform/shops" />
         <StatCard icon="users" label="People" value={String(d.users)} hint={`${d.usersNew7} joined this week`} href="/platform/users" />
         <StatCard icon="trend" label="Active shops (7 days)" value={String(d.active.week.shops)} tone="got" hint={`${d.active.day.shops} today · ${d.active.month.shops} in 30 days`} />
         <StatCard icon="clock" label="Active people (7 days)" value={String(d.active.week.users)} hint={`${d.active.day.users} today · ${d.active.month.users} in 30 days`} />

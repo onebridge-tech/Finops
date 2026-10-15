@@ -53,6 +53,7 @@ export async function startPayment(_prev: PayState, form: FormData): Promise<Pay
   if (recent >= 10) return { error: "Too many attempts. Please try again later." };
 
   const [business, party] = await Promise.all([db.business.findUniqueOrThrow({ where: { id: businessId } }), db.party.findUniqueOrThrow({ where: { id: partyId } })]);
+  if (business.suspendedAt) return { error: "Online payment is not available for this shop right now." };
   const payToken = newShareToken();
   let created;
   try {

@@ -8,7 +8,7 @@ import { userLabel } from "@/lib/identity";
 
 export const metadata = { title: "Message credits" };
 
-const REASON: Record<string, string> = { WELCOME: "Welcome credits", TOPUP: "Top-up", MESSAGE: "Message sent", REFUND: "Refund (not delivered)" };
+const REASON: Record<string, string> = { WELCOME: "Welcome credits", TOPUP: "Top-up", MESSAGE: "Message sent", REFUND: "Refund (not delivered)", GRANT: "Added by FinOps support" };
 
 export default async function Credits() {
   const { business, role } = await requireBusiness();

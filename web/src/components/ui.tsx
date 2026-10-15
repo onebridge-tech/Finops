@@ -12,13 +12,13 @@ export function Card({ className = "", ...p }: ComponentProps<"div">) {
   return <div className={`rounded-xl border border-line bg-card shadow-[var(--shadow)] ${flush ? "overflow-hidden" : "p-4 sm:p-5"} ${className}`} {...p} />;
 }
 
-export function PageHeader({ title, action, sub, leading }: { title: string; sub?: ReactNode; action?: ReactNode; leading?: ReactNode }) {
+export function PageHeader({ title, action, sub, leading, badge }: { title: string; sub?: ReactNode; action?: ReactNode; leading?: ReactNode; badge?: ReactNode }) {
   return (
     <div className="mb-6 flex flex-wrap items-center justify-between gap-x-4 gap-y-3">
       <div className="flex min-w-0 items-center gap-3">
         {leading}
         <div className="min-w-0">
-          <h1 className="truncate text-xl font-semibold tracking-tight">{title}</h1>
+          <h1 className="flex items-center gap-2 text-xl font-semibold tracking-tight"><span className="truncate">{title}</span>{badge}</h1>
           {sub && <div className="mt-0.5 text-sm text-muted">{sub}</div>}
         </div>
       </div>

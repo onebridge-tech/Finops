@@ -6,6 +6,7 @@ import { userLabel } from "@/lib/identity";
 import { formatINR } from "@/lib/money";
 import { Avatar, Badge, Card, PageHeader, SectionTitle, StatCard } from "@/components/ui";
 import { Bars, since } from "../../bars";
+import { GiveCredits, SuspendControls } from "./admin-actions";
 
 export const metadata = { title: "Shop · Platform admin" };
 export const dynamic = "force-dynamic";
@@ -27,6 +28,7 @@ export default async function ShopPage({ params }: PageProps<"/platform/shops/[i
       <PageHeader
         leading={<Avatar name={b.name} size={44} />}
         title={b.name}
+        badge={b.suspendedAt ? <Badge tone="warn">Paused</Badge> : undefined}
         sub={`Joined ${b.createdAt.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric", timeZone: "Asia/Kolkata" })} · last active ${since(d.lastActive)}`}
         action={<Link href="/platform/shops" className="text-sm text-muted hover:text-ink">← All shops</Link>}
       />
@@ -36,6 +38,12 @@ export default async function ShopPage({ params }: PageProps<"/platform/shops/[i
         <StatCard icon="bill" label="Bills" value={String(d.counts.invoices)} hint={`${d.counts.quotes} quotes · ${d.counts.orders} orders`} />
         <StatCard icon="note" label="Entries written" value={String(d.counts.entries)} />
         <StatCard icon="box" label="Items" value={String(d.counts.items)} />
+      </div>
+
+      <SectionTitle>Admin actions</SectionTitle>
+      <div className="grid gap-4 lg:grid-cols-2">
+        <SuspendControls businessId={b.id} suspended={!!b.suspendedAt} reason={b.suspendedReason} since={b.suspendedAt ? b.suspendedAt.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric", timeZone: "Asia/Kolkata" }) : null} />
+        <GiveCredits businessId={b.id} balance={b.creditBalance} />
       </div>
 
       <SectionTitle>Last 14 days</SectionTitle>
@@ -90,6 +98,22 @@ export default async function ShopPage({ params }: PageProps<"/platform/shops/[i
                 ))}
               </ul>
             )}
+          </Card>
+        </section>
+
+        <section>
+          <SectionTitle>Credit history</SectionTitle>
+          <Card className="divide-y divide-line p-0 sm:p-0">
+            {d.creditLog.length === 0 && <p className="px-4 py-3 text-sm text-muted">No credit changes yet.</p>}
+            {d.creditLog.map((c) => (
+              <div key={c.id} className="flex items-center justify-between gap-3 px-4 py-2.5">
+                <span>
+                  <span className="block text-sm font-medium">{{ GRANT: "Given by support", TOPUP: "Bought", WELCOME: "Welcome credits", REFUND: "Refund" }[c.reason] ?? c.reason}</span>
+                  <span className="block text-xs text-muted">{since(c.createdAt)}{c.note ? ` · ${c.note}` : ""}</span>
+                </span>
+                <span className={`font-semibold tabular-nums ${c.delta > 0 ? "text-got" : "text-gave"}`}>{c.delta > 0 ? "+" : ""}{c.delta}</span>
+              </div>
+            ))}
           </Card>
         </section>
 

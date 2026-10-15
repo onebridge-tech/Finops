@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { PAGE_SIZE, shopsList } from "@/lib/platform";
-import { Avatar, Card, EmptyState, PageHeader } from "@/components/ui";
+import { Avatar, Badge, Card, EmptyState, PageHeader } from "@/components/ui";
 import { Icon } from "@/components/icon";
 import { since } from "../bars";
 
@@ -46,7 +46,7 @@ export default async function Shops({ searchParams }: PageProps<"/platform/shops
               {rows.map((r) => (
                 <tr key={r.id} className="transition hover:bg-bg/60">
                   <td className="px-4 py-2.5">
-                    <Link href={`/platform/shops/${r.id}`} className="flex items-center gap-2.5 font-medium hover:underline"><Avatar name={r.name} size={30} />{r.name}</Link>
+                    <Link href={`/platform/shops/${r.id}`} className="flex items-center gap-2.5 font-medium hover:underline"><Avatar name={r.name} size={30} />{r.name}{r.suspended && <Badge tone="warn">Paused</Badge>}</Link>
                   </td>
                   <td className="px-4 py-2.5">{r.owner !== "—" && <span className="block">{r.owner}</span>}<span className={r.owner !== "—" ? "text-xs text-muted" : ""}>{r.ownerPhone ? `+${r.ownerPhone}` : r.ownerEmail ?? "—"}</span></td>
                   <td className="whitespace-nowrap px-4 py-2.5 text-muted">{r.createdAt.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric", timeZone: "Asia/Kolkata" })}</td>

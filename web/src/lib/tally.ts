@@ -35,7 +35,7 @@ export async function businessForKey(request: Request) {
   if (!m) return null;
   const h = hash(m[1]!);
   const b = await db.business.findFirst({ where: { tallyKeyHash: h } });
-  if (!b?.tallyKeyHash) return null;
+  if (!b?.tallyKeyHash || b.suspendedAt) return null;
   const x = Buffer.from(b.tallyKeyHash);
   const y = Buffer.from(h);
   return x.length === y.length && timingSafeEqual(x, y) ? b : null;

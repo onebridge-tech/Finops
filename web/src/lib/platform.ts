@@ -23,13 +23,14 @@ function fill(rows: { day: Date; n: bigint }[], days: number): Series {
 export async function overview() {
   const since30 = ago(30);
   const since14 = ago(14);
-  const [shops, users, shopsNew7, shopsNew30, usersNew7, sessions] = await Promise.all([
+  const [shops, users, shopsNew7, shopsNew30, usersNew7, sessions, paused] = await Promise.all([
     db.business.count(),
     db.user.count(),
     db.business.count({ where: { createdAt: { gte: ago(7) } } }),
     db.business.count({ where: { createdAt: { gte: since30 } } }),
     db.user.count({ where: { createdAt: { gte: ago(7) } } }),
     db.session.findMany({ where: { lastActiveAt: { gte: since30 } }, select: { businessId: true, userId: true, lastActiveAt: true } }),
+    db.business.count({ where: { suspendedAt: { not: null } } }),
   ]);
 
   const within = (days: number) => sessions.filter((s) => s.lastActiveAt >= ago(days));
@@ -54,7 +55,7 @@ export async function overview() {
   const funnel = await signupFunnel(shopsFirst.map((s) => s.id));
 
   return {
-    shops, users, shopsNew7, shopsNew30, usersNew7,
+    shops, users, shopsNew7, shopsNew30, usersNew7, paused,
     active: { day: active(1), week: active(7), month: active(30) },
     signups: fill(signups, 14), entriesSeries: fill(entries, 14), billsSeries: fill(bills, 14),
     entries7, entriesPrev7, bills7,
@@ -80,7 +81,7 @@ export const PAGE_SIZE = 25;
 
 export type ShopRow = {
   id: string; name: string; createdAt: Date; owner: string; ownerPhone: string | null; ownerEmail: string | null;
-  lastActive: Date | null; parties: number; bills: number; entries: number; credits: number; members: number;
+  lastActive: Date | null; parties: number; bills: number; entries: number; credits: number; members: number; suspended: boolean;
 };
 
 export async function shopsList(opts: { q: string; sort: "new" | "active" | "busy" | "name"; page: number }) {
@@ -89,7 +90,7 @@ export async function shopsList(opts: { q: string; sort: "new" | "active" | "bus
     where: q
       ? { OR: [{ name: { contains: q, mode: "insensitive" } }, { memberships: { some: { user: { OR: [{ phone: { contains: q.replace(/\D/g, "") || "x" } }, { email: { contains: q, mode: "insensitive" } }, { name: { contains: q, mode: "insensitive" } }] } } } }] }
       : {},
-    select: { id: true, name: true, createdAt: true, creditBalance: true, memberships: { select: { role: true, createdAt: true, user: { select: { name: true, phone: true, email: true } } } } },
+    select: { id: true, name: true, createdAt: true, creditBalance: true, suspendedAt: true, memberships: { select: { role: true, createdAt: true, user: { select: { name: true, phone: true, email: true } } } } },
     take: 2000,
   });
   const ids = businesses.map((b) => b.id);
@@ -107,7 +108,7 @@ export async function shopsList(opts: { q: string; sort: "new" | "active" | "bus
     const owner = b.memberships.filter((x) => x.role === "OWNER").sort((a, c) => a.createdAt.getTime() - c.createdAt.getTime())[0]?.user;
     return {
       id: b.id, name: b.name, createdAt: b.createdAt, owner: owner?.name ?? "—", ownerPhone: owner?.phone ?? null, ownerEmail: owner?.email ?? null,
-      lastActive: seenBy.get(b.id) ?? null, parties: pc.get(b.id) ?? 0, bills: bc.get(b.id) ?? 0, entries: ec.get(b.id) ?? 0, credits: b.creditBalance, members: b.memberships.length,
+      lastActive: seenBy.get(b.id) ?? null, parties: pc.get(b.id) ?? 0, bills: bc.get(b.id) ?? 0, entries: ec.get(b.id) ?? 0, credits: b.creditBalance, members: b.memberships.length, suspended: !!b.suspendedAt,
     };
   });
   const cmp: Record<typeof opts.sort, (a: ShopRow, b: ShopRow) => number> = {
@@ -128,7 +129,7 @@ export async function shopDetail(id: string) {
   });
   if (!b) return null;
   const since14 = ago(14);
-  const [parties, suppliers, invoices, quotes, orders, items, entries, msgs, failed, pays, sessions, entSeries, billSeries, referred, branches] = await Promise.all([
+  const [parties, suppliers, invoices, quotes, orders, items, entries, msgs, failed, pays, sessions, entSeries, billSeries, referred, branches, creditLog] = await Promise.all([
     db.party.count({ where: { businessId: id, type: { in: ["CUSTOMER", "BOTH"] } } }),
     db.party.count({ where: { businessId: id, type: { in: ["SUPPLIER", "BOTH"] } } }),
     db.invoice.count({ where: { businessId: id } }),
@@ -144,12 +145,14 @@ export async function shopDetail(id: string) {
     db.$queryRaw<{ day: Date; n: bigint }[]>`SELECT date_trunc('day', "createdAt" AT TIME ZONE 'Asia/Kolkata') AS day, count(*) AS n FROM "Invoice" WHERE "businessId" = ${id} AND "createdAt" >= ${since14} GROUP BY 1`,
     db.business.count({ where: { referredById: id } }),
     db.branch.count({ where: { businessId: id, archivedAt: null } }),
+    db.creditTxn.findMany({ where: { businessId: id, reason: { in: ["GRANT", "TOPUP", "WELCOME", "REFUND"] } }, orderBy: { createdAt: "desc" }, take: 8 }),
   ]);
   const lastBy = new Map(sessions.map((s) => [s.userId, s._max.lastActiveAt]));
   return {
     business: b,
     members: b.memberships.map((m) => ({ role: m.role, user: m.user, lastActive: lastBy.get(m.userId) ?? null })),
     counts: { parties, suppliers, invoices, quotes, orders, items, entries, branches, referred },
+    creditLog,
     messages: Object.fromEntries(msgs.map((m) => [m.status, m._count])) as Record<string, number>,
     failed,
     payments: pays.map((p) => ({ status: p.status, count: p._count, paise: Number(p._sum.amountPaise ?? 0n) })),

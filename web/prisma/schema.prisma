@@ -96,6 +96,10 @@ model PlatformAudit {
 model Business {
   id                     String         @id @default(cuid())
   name                   String
+  // Set by a platform admin. While set, nobody can use the shop and nothing is sent on its behalf.
+  suspendedAt            DateTime?
+  suspendedReason        String?
+  suspendedById          String?
   gstin                  String?
   stateCode              String // 2-digit GST state code
   address                String?

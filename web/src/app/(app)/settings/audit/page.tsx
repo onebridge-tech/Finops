@@ -88,7 +88,7 @@ export default async function Audit({ searchParams }: PageProps<"/settings/audit
               <span className="block">{e.seq ? `#${e.seq}` : "unchained"}</span>
             </span>
             <span>
-              <span className="font-medium">{who.get(e.actorId) ?? "Former member"}</span> {e.action.replace(/_/g, " ")} <span className="text-muted">{e.entity}</span>
+              <span className="font-medium">{who.get(e.actorId) ?? (e.actorId === "platform" ? "FinOps support" : "Former member")}</span> {e.action.replace(/_/g, " ")} <span className="text-muted">{e.entity}</span>
               <Changes data={e.data} />
             </span>
           </div>

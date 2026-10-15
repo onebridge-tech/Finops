@@ -26,7 +26,7 @@ export async function runDigests(now = new Date(), opts: { force?: boolean; busi
   if (!opts.force && hourIST(now) < 8) return sent;
   const today = istDay(now);
   const startOfToday = new Date(`${today}T00:00:00+05:30`);
-  const businesses = await db.business.findMany({ where: { digestFrequency: { in: opts.force ? ["DAILY", "WEEKLY", "OFF"] : ["DAILY", "WEEKLY"] }, ...(opts.businessId ? { id: opts.businessId } : {}) } });
+  const businesses = await db.business.findMany({ where: { suspendedAt: null, digestFrequency: { in: opts.force ? ["DAILY", "WEEKLY", "OFF"] : ["DAILY", "WEEKLY"] }, ...(opts.businessId ? { id: opts.businessId } : {}) } });
   for (const b of businesses) {
     if (!opts.force && b.digestFrequency === "WEEKLY" && weekdayIST(now) !== 1) continue;
     const already = await db.message.count({ where: { businessId: b.id, kind: "DIGEST", createdAt: { gte: startOfToday } } });
@@ -63,7 +63,7 @@ export async function runDigests(now = new Date(), opts: { force?: boolean; busi
  */
 export async function runInactiveScan(now = new Date(), businessId?: string) {
   const result = { inactive: 0, upsell: 0 };
-  const businesses = await db.business.findMany({ where: businessId ? { id: businessId } : {} });
+  const businesses = await db.business.findMany({ where: { suspendedAt: null, ...(businessId ? { id: businessId } : {}) } });
   for (const b of businesses) {
     const owner = await db.membership.findFirst({ where: { businessId: b.id, role: "OWNER" }, orderBy: { createdAt: "asc" } });
     if (!owner) continue;
