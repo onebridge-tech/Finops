@@ -80,3 +80,39 @@ body {
   .no-print { display: none !important; }
   body { background: #fff; color: #000; }
 }
+
+/* Landing page motion. Everything here stops for people who ask their device for less movement. */
+.lp-reveal { opacity: 0; transform: translateY(20px); transition: opacity 0.7s ease, transform 0.7s cubic-bezier(0.2, 0.7, 0.2, 1); }
+.lp-reveal.lp-in { opacity: 1; transform: none; }
+.lp-swap { animation: lp-swap 0.45s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+.lp-float { animation: lp-float 5s ease-in-out infinite; }
+.lp-float-slow { animation: lp-float 6.5s ease-in-out infinite 0.8s; }
+.lp-pop { animation: lp-pop 0.45s cubic-bezier(0.2, 1.4, 0.4, 1) both; }
+.lp-ripple { animation: lp-ripple 0.9s ease-out both; }
+.lp-caret { display: inline-block; width: 2px; height: 1em; margin-left: 1px; vertical-align: -2px; background: currentColor; animation: lp-blink 0.7s steps(1) infinite; }
+.lp-marquee { animation: lp-marquee 32s linear infinite; }
+.lp-marquee:hover { animation-play-state: paused; }
+.lp-bar { transform-origin: bottom; animation: lp-grow 0.8s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+.lp-progress { animation: lp-progress 5.5s linear both; }
+.lp-draw { stroke-dasharray: 100; stroke-dashoffset: 100; animation: lp-draw 1.2s ease-out 0.2s forwards; }
+.lp-cta { animation: lp-nudge 3.2s ease-in-out infinite 2s; }
+.lp-faq summary::-webkit-details-marker { display: none; }
+.lp-faq[open] .lp-chev { transform: rotate(90deg); }
+
+@keyframes lp-swap { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+@keyframes lp-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-9px); } }
+@keyframes lp-pop { 0% { transform: scale(0.5); opacity: 0; } 70% { transform: scale(1.12); } 100% { transform: scale(1); opacity: 1; } }
+@keyframes lp-ripple { from { transform: translate(-50%, -50%) scale(0.4); opacity: 1; } to { transform: translate(-50%, -50%) scale(4); opacity: 0; } }
+@keyframes lp-blink { 50% { opacity: 0; } }
+@keyframes lp-marquee { to { transform: translateX(-50%); } }
+@keyframes lp-grow { from { transform: scaleY(0); } to { transform: scaleY(1); } }
+@keyframes lp-progress { from { width: 0; } to { width: 100%; } }
+@keyframes lp-draw { to { stroke-dashoffset: 0; } }
+@keyframes lp-nudge { 0%, 88%, 100% { transform: translateY(0); } 92% { transform: translateY(-3px); } 96% { transform: translateY(0); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .lp-reveal { opacity: 1; transform: none; transition: none; }
+  .lp-swap, .lp-float, .lp-float-slow, .lp-pop, .lp-ripple, .lp-caret, .lp-marquee, .lp-bar, .lp-progress, .lp-draw, .lp-cta { animation: none !important; }
+  .lp-draw { stroke-dashoffset: 0; }
+  html { scroll-behavior: auto; }
+}
