@@ -15,6 +15,12 @@ export async function register() {
       await db.$executeRawUnsafe(sql).catch((e) => console.error("[startup] index failed", e instanceof Error ? e.message : e));
     }
   }
+  // Connections set by a platform admin (keys for AI, SMS, email, payments…) are put in place at start and refreshed every minute,
+  // so a change made on one server instance reaches the others too.
+  const { applyConnections } = await import("./lib/integrations");
+  await applyConnections();
+  setInterval(() => void applyConnections(), 60_000);
+
   const every = (ms: number, job: () => Promise<unknown>) => {
     setInterval(job, ms);
     setTimeout(job, 30_000);

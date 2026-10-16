@@ -108,3 +108,24 @@ export async function saveSiteInfo(_prev: AdminState, form: FormData): Promise<A
   for (const path of ["/platform/settings", "/", "/terms", "/privacy", "/refund-policy", "/acceptable-use", "/cookies", "/grievance"]) revalidatePath(path);
   return { ok: "Saved. The legal pages now show these details." };
 }
+
+/** Saves the settings of one outside service (keys are stored encrypted). Values are never written to the admin log, only which settings changed. */
+export async function saveConnectionSettings(_prev: AdminState, form: FormData): Promise<AdminState> {
+  const admin = await requirePlatformAdmin();
+  const { saveConnection } = await import("@/lib/integrations");
+  const id = text(form, "id");
+  const r = await saveConnection(id, form, admin.id);
+  if (!r.ok) return { error: r.error };
+  await platformAudit(admin.id, "save_connection", id, { changed: r.changed });
+  for (const p of ["/platform/integrations", "/paper-notes", "/login"]) revalidatePath(p);
+  return { ok: r.changed.length ? "Saved. It is in use now." : "Nothing changed." };
+}
+
+/** Tries the chosen service with a one-line question (no photo and no customer data). */
+export async function testConnection(_prev: AdminState, form: FormData): Promise<AdminState> {
+  await requirePlatformAdmin();
+  if (text(form, "id") !== "ai") return { error: "This connection cannot be tested here." };
+  const { testNoteAi } = await import("@/lib/note-ai");
+  const r = await testNoteAi();
+  return r.ok ? { ok: r.message } : { error: r.message };
+}
