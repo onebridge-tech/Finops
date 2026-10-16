@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { requireBusiness } from "@/lib/auth";
 import { audit } from "@/lib/audit";
-import { parseRupees } from "@/lib/money";
+import { parseRupees, roundHalfUp } from "@/lib/money";
 import { GST_RATES_BP } from "@/lib/gst";
 import { isValidGstin, normalizeGstin, STATES } from "@/lib/gstin";
 import { isInterStateBill, PURCHASE_KINDS, splitTax, type PurchaseKind, type Tax } from "@/lib/purchase";
@@ -34,7 +34,14 @@ export async function addPurchaseBill(_prev: PurchaseState, form: FormData): Pro
   if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return { error: "Pick the bill date" };
   if (date > today()) return { error: "The bill date can’t be in the future" };
 
-  const taxable = parseRupees(field(form, "taxable"));
+  let taxable = parseRupees(field(form, "taxable"));
+  const totalIn = field(form, "total") ? parseRupees(field(form, "total")) : null;
+  if (!taxable && totalIn) {
+    // Only the total on the bill is known (for example from a bank line): take the GST out of it.
+    const bp = Math.round(Number(field(form, "rate")) * 100);
+    if (!GST_RATES_BP.includes(bp)) return { error: "Choose the GST rate" };
+    taxable = roundHalfUp((totalIn * 10000) / (10000 + bp));
+  }
   if (!taxable) return { error: "Enter the taxable value (the amount before GST)" };
 
   const stateCode = gstin ? gstin.slice(0, 2) : supplier?.stateCode ?? (field(form, "state") in STATES ? field(form, "state") : null);
@@ -74,6 +81,8 @@ export async function addPurchaseBill(_prev: PurchaseState, form: FormData): Pro
         },
       });
       expenseId = e.id;
+      const txnId = field(form, "txnId");
+      if (txnId) await tx.bankTxn.updateMany({ where: { id: txnId, businessId: business.id, expenseId: null, entryId: null }, data: { expenseId: e.id } });
       await audit(tx, { businessId: business.id, actorId: user.id, action: "create", entity: "Expense", entityId: e.id, data: e });
     }
     const b = await tx.purchaseBill.create({

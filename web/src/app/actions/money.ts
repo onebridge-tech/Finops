@@ -10,7 +10,11 @@ import { buildTxns, counterparty, FIELDS, findHeaderRow, guessMapping, txnHash, 
 import { categorize, categoryInfo, kindOf } from "@/lib/categorize";
 import { monthBounds } from "@/lib/finance";
 import { istDay } from "@/lib/ledger";
-import { formatINR } from "@/lib/money";
+import { formatINR, roundHalfUp } from "@/lib/money";
+import { issueReceipt } from "@/lib/receipts";
+import { issueInvoice } from "@/lib/doc-core";
+import { GST_RATES_BP } from "@/lib/gst";
+import type { Prisma } from "@prisma/client";
 
 export type StatementPreview = {
   error?: string;
@@ -198,7 +202,23 @@ export async function addToExpenses(form: FormData): Promise<void> {
   revalidatePath("/expenses");
 }
 
-/** Money that came in from a customer is written in that customer's account, so what they owe goes down. */
+type Txn_ = { id: string; date: Date; amountPaise: bigint; description: string };
+
+/** Writes one bank line as a customer's payment, with its numbered receipt, inside a transaction. Returns the ledger entry. */
+async function payFromStatement(tx: Prisma.TransactionClient, ctx: Awaited<ReturnType<typeof requireBusiness>>, t: Txn_, party: { id: string; branchId: string | null }) {
+  const mode = /\bupi\b|@/i.test(t.description) ? "UPI" : "BANK";
+  const e = await tx.ledgerEntry.create({
+    data: {
+      businessId: ctx.business.id, partyId: party.id, branchId: ctx.branchId ?? party.branchId, direction: "GOT", amountPaise: t.amountPaise, date: t.date,
+      note: `From bank statement: ${t.description}`.slice(0, 200), paymentMode: mode, createdById: ctx.user.id,
+    },
+  });
+  await issueReceipt(tx, ctx.business.id, e);
+  await tx.bankTxn.update({ where: { id: t.id }, data: { entryId: e.id, category: "Customer payments", manual: true } });
+  return e;
+}
+
+/** Money that came in from a customer is written in that customer's account, so what they owe goes down. A receipt is made too. */
 export async function recordCustomerPayment(form: FormData): Promise<void> {
   const ctx = await requireBusiness("cash:manage");
   const id = String(form.get("id") ?? "");
@@ -206,15 +226,66 @@ export async function recordCustomerPayment(form: FormData): Promise<void> {
   const party = await findParty(ctx, String(form.get("partyId") ?? ""));
   if (!t || !party) return;
   await db.$transaction(async (tx) => {
-    const e = await tx.ledgerEntry.create({
-      data: {
-        businessId: ctx.business.id, partyId: party.id, branchId: ctx.branchId ?? party.branchId, direction: "GOT", amountPaise: t.amountPaise, date: t.date,
-        note: `From bank statement: ${t.description}`.slice(0, 200), paymentMode: "BANK", createdById: ctx.user.id,
-      },
-    });
-    await tx.bankTxn.update({ where: { id: t.id }, data: { entryId: e.id, category: "Customer payments", manual: true } });
+    const e = await payFromStatement(tx, ctx, t, party);
     await audit(tx, { businessId: ctx.business.id, actorId: ctx.user.id, action: "statement_to_payment", entity: "LedgerEntry", entityId: e.id, data: { partyId: party.id } });
   });
   revalidatePath("/money");
   revalidatePath(`/parties/${party.id}`);
+}
+
+export type MatchState = { error?: string; ok?: string };
+
+/**
+ * Many bank lines at once: each picked line is written as that customer's payment with a receipt. With "make bills" the
+ * payment is also a sale that was never billed: a GST bill is made for the amount and the payment settles it. That step
+ * needs the owner to say these are real sales, because a bill is a tax document.
+ */
+export async function matchStatementPayments(_prev: MatchState, form: FormData): Promise<MatchState> {
+  const ctx = await requireBusiness("cash:manage");
+  const picks = form.getAll("pick").map(String);
+  if (picks.length === 0) return { error: "Tick the lines you want to record" };
+  if (picks.length > 200) return { error: "Do at most 200 lines at a time" };
+  const makeBills = form.get("mode") === "BILL";
+  const description = String(form.get("billItem") ?? "").trim().slice(0, 120) || "Goods supplied";
+  const gst = Math.round(Number(String(form.get("billGst") ?? "18")) * 100);
+  const hsn = String(form.get("billHsn") ?? "").trim();
+  if (makeBills) {
+    if (form.get("confirmSales") !== "on") return { error: "Tick the box to say these were real sales that have not been billed" };
+    if (!GST_RATES_BP.includes(gst)) return { error: "Choose the GST rate" };
+    if (hsn && !/^\d{4,8}$/.test(hsn)) return { error: "HSN/SAC should be 4 to 8 digits" };
+  }
+  const txns = await db.bankTxn.findMany({ where: { id: { in: picks }, businessId: ctx.business.id, direction: "IN", expenseId: null, entryId: null } });
+  let done = 0;
+  const missing: string[] = [];
+  for (const t of txns) {
+    const party = await findParty(ctx, String(form.get(`party_${t.id}`) ?? ""));
+    if (!party) { missing.push(t.description.slice(0, 30)); continue; }
+    await db.$transaction(async (tx) => {
+      let invoiceEntryId: string | null = null;
+      if (makeBills) {
+        const total = Number(t.amountPaise);
+        const taxable = gst === 0 ? total : roundHalfUp((total * 10000) / (10000 + gst));
+        const inv = await issueInvoice(tx, {
+          businessId: ctx.business.id, userId: ctx.user.id, partyId: party.id, branchId: ctx.branchId ?? party.branchId, date: t.date, dueDate: null,
+          placeOfSupply: party.stateCode ?? ctx.business.stateCode, notes: "Made from a bank statement payment",
+          lines: [{ itemId: null, description, hsn: hsn || null, qtyMilli: 1000, unit: "nos", ratePaise: taxable, taxRateBp: gst, discountBp: 0 }],
+        });
+        invoiceEntryId = (await tx.ledgerEntry.findFirst({ where: { invoiceId: inv.id, source: "INVOICE" }, select: { id: true } }))?.id ?? null;
+      }
+      const e = await payFromStatement(tx, ctx, t, party);
+      if (invoiceEntryId) {
+        const inv = await tx.ledgerEntry.findUniqueOrThrow({ where: { id: invoiceEntryId }, select: { amountPaise: true } });
+        const amount = inv.amountPaise < t.amountPaise ? inv.amountPaise : t.amountPaise;
+        await tx.allocation.create({ data: { businessId: ctx.business.id, partyId: party.id, receiptEntryId: e.id, invoiceEntryId, amountPaise: amount, createdById: ctx.user.id } });
+      }
+      await audit(tx, { businessId: ctx.business.id, actorId: ctx.user.id, action: makeBills ? "statement_to_bill_and_payment" : "statement_to_payment", entity: "LedgerEntry", entityId: e.id, data: { partyId: party.id, bankLine: t.id } });
+    });
+    done++;
+  }
+  revalidatePath("/money");
+  revalidatePath("/money/match");
+  revalidatePath("/invoices");
+  revalidatePath("/parties");
+  if (done === 0) return { error: missing.length ? "Choose a customer for each line you ticked" : "Those lines are already recorded" };
+  return { ok: `${done} payment${done === 1 ? "" : "s"} recorded${makeBills ? " with bills" : ""}, each with a receipt.${missing.length ? ` ${missing.length} line${missing.length === 1 ? " was" : "s were"} left because no customer was chosen.` : ""}` };
 }

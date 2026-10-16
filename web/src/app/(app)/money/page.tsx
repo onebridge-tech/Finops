@@ -5,6 +5,7 @@ import { formatINR } from "@/lib/money";
 import { categoriesFor, categoryInfo, kindOf } from "@/lib/categorize";
 import { isMonth, monthLabel, monthsWithStatements, moneySummary, monthBounds, shiftMonth } from "@/lib/finance";
 import { istDay } from "@/lib/ledger";
+import { suggestParty } from "@/lib/match-party";
 import { deleteStatement, addToExpenses } from "@/app/actions/money";
 import { Badge, Card, EmptyState, LinkButton, PageHeader, SectionTitle, StatCard, buttonClass } from "@/components/ui";
 import { Icon } from "@/components/icon";
@@ -69,19 +70,22 @@ export default async function Money({ searchParams }: PageProps<"/money">) {
   }
 
   const where = { businessId: ctx.business.id, date: { gte, lte }, ...(dir ? { direction: dir } : {}), ...(cat ? { category: cat } : {}), ...(q ? { description: { contains: q, mode: "insensitive" as const } } : {}) };
-  const [s, txns, total, parties, unrecorded] = await Promise.all([
+  const [s, txns, total, parties, unrecorded, unmatched] = await Promise.all([
     moneySummary(ctx.business.id, m),
     db.bankTxn.findMany({ where, orderBy: [{ date: "desc" }, { createdAt: "desc" }], skip: (page - 1) * PAGE, take: PAGE }),
     db.bankTxn.count({ where }),
     db.party.findMany({ where: { ...partyWhere(ctx), archivedAt: null, type: { in: ["CUSTOMER", "BOTH", "LEAD"] } }, select: { id: true, name: true }, orderBy: { name: "asc" } }),
     db.bankTxn.findMany({ where: { businessId: ctx.business.id, date: { gte, lte }, direction: "OUT", expenseId: null, entryId: null }, select: { category: true, amountPaise: true } }),
+    db.bankTxn.findMany({ where: { businessId: ctx.business.id, date: { gte, lte }, direction: "IN", expenseId: null, entryId: null }, select: { category: true, amountPaise: true } }),
   ]);
+  const toMatch = unmatched.filter((t) => kindOf(t.category) === "income");
+  const toMatchTotal = toMatch.reduce((a, t) => a + Number(t.amountPaise), 0);
   const loose = unrecorded.filter((t) => kindOf(t.category) === "spend");
   const looseTotal = loose.reduce((a, t) => a + Number(t.amountPaise), 0);
   const maxDay = Math.max(1, ...s.daily.flatMap((d) => [d.in, d.out]));
   const pages = Math.max(1, Math.ceil(total / PAGE));
   const href = (o: Record<string, string | number | null>) => `/money?${new URLSearchParams(Object.entries({ m, dir, cat, q, page: null, ...o }).filter(([, v]) => v !== null && v !== "" && v !== undefined) as [string, string][])}`;
-  const suggest = (name: string | null) => (name ? (parties.find((p) => p.name.toLowerCase().includes(name.toLowerCase()) || name.toLowerCase().includes(p.name.toLowerCase()))?.id ?? null) : null);
+  const suggest = (name: string | null) => suggestParty(name, parties)?.id ?? null;
   const imported = Number(one(sp.imported));
   const dup = Number(one(sp.dup));
   const allCats = [...categoriesFor("IN"), ...categoriesFor("OUT")].map((c) => c.name);
@@ -163,6 +167,15 @@ export default async function Money({ searchParams }: PageProps<"/money">) {
             </section>
           </div>
 
+          {manage && toMatch.length > 0 && (
+            <Card className="mt-8 flex flex-wrap items-center justify-between gap-3 border-brand/30 bg-brand-soft">
+              <div>
+                <p className="font-semibold">{toMatch.length} payment{toMatch.length === 1 ? "" : "s"} ({formatINR(toMatchTotal)}) not in any customer’s account yet</p>
+                <p className="text-sm text-muted">Match them to customers in one go. Each gets a receipt, and you can make bills for sales you never billed.</p>
+              </div>
+              <LinkButton href={`/money/match?m=${m}`}>Match payments to customers</LinkButton>
+            </Card>
+          )}
           {manage && loose.length > 0 && (
             <Card className="mt-8 flex flex-wrap items-center justify-between gap-3 border-brand/30 bg-brand-soft">
               <div>
@@ -206,7 +219,7 @@ export default async function Money({ searchParams }: PageProps<"/money">) {
                   {manage && !linked ? <CategorySelect id={t.id} value={t.category} options={categoriesFor(t.direction as "IN" | "OUT").map((c) => c.name)} /> : <span className="text-sm text-muted">{categoryInfo(t.category) ? t.category : t.category}</span>}
                 </div>
                 <div className={`w-28 text-right text-sm font-semibold tabular-nums ${t.direction === "IN" ? "text-got" : "text-gave"}`}>{t.direction === "IN" ? "+" : "−"}{formatINR(t.amountPaise)}</div>
-                <div className="w-44 text-right">{manage && !linked && kind !== "transfer" && <TxnActions id={t.id} direction={t.direction as "IN" | "OUT"} parties={parties} suggestion={suggest(t.counterparty)} />}</div>
+                <div className="w-44 text-right">{manage && !linked && kind !== "transfer" && <TxnActions id={t.id} direction={t.direction as "IN" | "OUT"} parties={parties} suggestion={suggest(t.counterparty)} billHref={`/purchases?${new URLSearchParams({ txn: t.id, date: istDay(t.date), supplier: t.counterparty ?? "", total: (Number(t.amountPaise) / 100).toFixed(2) })}`} />}</div>
               </div>
             );
           })}

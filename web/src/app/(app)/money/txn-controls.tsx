@@ -22,13 +22,16 @@ export function CategorySelect({ id, value, options, disabled }: { id: string; v
 }
 
 /** What can be done with one line: put spending into expenses, or write a customer's payment. */
-export function TxnActions({ id, direction, parties, suggestion }: { id: string; direction: "IN" | "OUT"; parties: { id: string; name: string }[]; suggestion: string | null }) {
+export function TxnActions({ id, direction, parties, suggestion, billHref }: { id: string; direction: "IN" | "OUT"; parties: { id: string; name: string }[]; suggestion: string | null; billHref?: string }) {
   if (direction === "OUT") {
     return (
-      <form action={addToExpenses}>
-        <input type="hidden" name="id" value={id} />
-        <button className="text-sm font-medium text-brand hover:underline">Add to expenses</button>
-      </form>
+      <div className="flex flex-col items-end gap-1">
+        <form action={addToExpenses}>
+          <input type="hidden" name="id" value={id} />
+          <button className="text-sm font-medium text-brand hover:underline">Add to expenses</button>
+        </form>
+        {billHref && <a href={billHref} className="text-xs text-muted underline hover:text-ink">I have the supplier’s bill</a>}
+      </div>
     );
   }
   return (

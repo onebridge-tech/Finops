@@ -15,6 +15,7 @@ const one = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v) 
 export default async function Purchases({ searchParams }: PageProps<"/purchases">) {
   const sp = await searchParams;
   const ctx = await requireBusiness("invoice:write");
+  const prefill = one(sp.txn) ? { txnId: one(sp.txn), date: /^\d{4}-\d{2}-\d{2}$/.test(one(sp.date)) ? one(sp.date) : "", supplier: one(sp.supplier).slice(0, 120), total: /^\d+(\.\d{1,2})?$/.test(one(sp.total)) ? one(sp.total) : "" } : null;
   const today = todayIST();
   const period = resolvePeriod({ period: one(sp.period) || "month", from: one(sp.from), to: one(sp.to) }, today);
   const { gte, lte } = rangeDates(period.from, period.to);
@@ -46,7 +47,7 @@ export default async function Purchases({ searchParams }: PageProps<"/purchases"
         <StatCard icon="check" label="GST you can claim back" value={formatINR(credit)} tone="got" hint="Input tax credit, on bills with a supplier GSTIN" />
         <StatCard icon="warning" label="Cannot be claimed" value={formatINR(gst - credit)} hint="No GSTIN, or marked not eligible" />
       </div>
-      <AddPanel title="Add a supplier bill" open={bills.length === 0}><PurchaseForm today={today} suppliers={suppliers} businessState={ctx.business.stateCode} /></AddPanel>
+      <AddPanel title="Add a supplier bill" open={bills.length === 0 || !!prefill}><PurchaseForm today={today} suppliers={suppliers} businessState={ctx.business.stateCode} prefill={prefill} /></AddPanel>
 
       <form className="mb-4 flex flex-wrap items-end gap-3 text-sm">
         <Field label="Period"><Select name="period" defaultValue={period.preset}><option value="today">Today</option><option value="7d">Last 7 days</option><option value="month">This month</option><option value="lastmonth">Last month</option><option value="quarter">This quarter</option><option value="fy">This financial year</option><option value="lastfy">Last financial year</option><option value="custom">Custom</option></Select></Field>

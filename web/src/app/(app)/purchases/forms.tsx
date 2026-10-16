@@ -11,7 +11,9 @@ import { PURCHASE_KINDS, PURCHASE_KIND_LABEL } from "@/lib/purchase";
 
 type Supplier = { id: string; name: string };
 
-export function PurchaseForm({ today, suppliers, businessState }: { today: string; suppliers: Supplier[]; businessState: string }) {
+export type Prefill = { txnId: string; date: string; supplier: string; total: string } | null;
+
+export function PurchaseForm({ today, suppliers, businessState, prefill }: { today: string; suppliers: Supplier[]; businessState: string; prefill?: Prefill }) {
   const [state, action, pending] = useActionState(addPurchaseBill, {});
   const form = useRef<HTMLFormElement>(null);
   const [partyId, setPartyId] = useState("");
@@ -24,7 +26,7 @@ export function PurchaseForm({ today, suppliers, businessState }: { today: strin
       </Field>
       {!partyId ? (
         <>
-          <Field label="Supplier name"><Input name="supplierName" maxLength={120} /></Field>
+          <Field label="Supplier name"><Input name="supplierName" maxLength={120} defaultValue={prefill?.supplier} /></Field>
           <Field label="Supplier GSTIN" hint="From the bill. Needed to claim the tax back."><Input name="gstin" maxLength={15} className="uppercase" /></Field>
           <Field label="Supplier state" hint="Used if there is no GSTIN.">
             <Select name="state" defaultValue={businessState}>{Object.entries(STATES).map(([c, n]) => <option key={c} value={c}>{c} · {n}</option>)}</Select>
@@ -32,8 +34,15 @@ export function PurchaseForm({ today, suppliers, businessState }: { today: strin
         </>
       ) : <div className="hidden sm:col-span-3 sm:block" />}
       <Field label="Bill number" hint="The number printed on the supplier’s bill."><Input name="number" required maxLength={40} /></Field>
-      <Field label="Bill date"><Input name="date" type="date" defaultValue={today} max={today} required /></Field>
-      <Field label="Taxable value (₹)" hint="The amount before GST."><Input name="taxable" inputMode="decimal" required /></Field>
+      <Field label="Bill date"><Input name="date" type="date" defaultValue={prefill?.date || today} max={today} required /></Field>
+      {prefill ? (
+        <>
+          <input type="hidden" name="txnId" value={prefill.txnId} />
+          <Field label="Total on the bill (₹)" hint="From your bank statement. We take the GST out for you."><Input name="total" inputMode="decimal" defaultValue={prefill.total} required /></Field>
+        </>
+      ) : (
+        <Field label="Taxable value (₹)" hint="The amount before GST."><Input name="taxable" inputMode="decimal" required /></Field>
+      )}
       {!exact ? (
         <Field label="GST rate" hint="We work out CGST, SGST or IGST for you.">
           <Select name="rate" defaultValue="18">{[0, 0.25, 3, 5, 12, 18, 28].map((r) => <option key={r} value={r}>{r}%</option>)}</Select>
