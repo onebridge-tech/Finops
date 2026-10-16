@@ -272,6 +272,9 @@ model Business {
   tallyKeyHash       String? // connector API key (IN-01), stored hashed
   tallyLastSyncAt    DateTime?
   expenses           Expense[]
+  purchaseBills      PurchaseBill[]
+  cashSales          CashSale[]
+  noteScans          NoteScan[]
   cashAdjustments    CashAdjustment[]
   dayCloses          DayClose[]
   orders             Order[]
@@ -717,6 +720,80 @@ model Expense {
   business    Business  @relation(fields: [businessId], references: [id])
 
   @@index([businessId, date])
+}
+
+// A bill from a supplier, kept so the input tax credit (ITC) can be claimed and the GST return can be prepared.
+// It is a tax record: it does not move money. "expenseId" links the expense that counts it in profit, if any.
+model PurchaseBill {
+  id            String    @id @default(cuid())
+  businessId    String
+  branchId      String?
+  partyId       String? // supplier in the party list, if chosen
+  supplierName  String
+  supplierGstin String?
+  number        String // the supplier's bill number
+  date          DateTime
+  stateCode     String? // supplier's state (place of supply for the bill)
+  interState    Boolean   @default(false)
+  taxablePaise  BigInt
+  cgstPaise     BigInt    @default(0)
+  sgstPaise     BigInt    @default(0)
+  igstPaise     BigInt    @default(0)
+  totalPaise    BigInt
+  kind          String    @default("GOODS") // GOODS | SERVICES | CAPITAL
+  itcEligible   Boolean   @default(true)
+  note          String?
+  expenseId     String?
+  voidedAt      DateTime?
+  voidReason    String?
+  createdById   String
+  createdAt     DateTime  @default(now())
+  business      Business  @relation(fields: [businessId], references: [id])
+
+  @@index([businessId, date])
+  @@index([businessId, supplierGstin, number])
+}
+
+// A sale with no customer name, typed in or read from a photo of a paper note (cash sale, "walk-in").
+model CashSale {
+  id          String    @id @default(cuid())
+  businessId  String
+  branchId    String?
+  date        DateTime
+  item        String
+  qtyMilli    Int?
+  amountPaise BigInt
+  paymentMode String    @default("CASH")
+  partyId     String? // filled when the sale is later given to a customer
+  source      String    @default("MANUAL") // MANUAL | NOTE_PHOTO | IMPORT
+  noteScanId  String?
+  voidedAt    DateTime?
+  voidReason  String?
+  createdById String
+  createdAt   DateTime  @default(now())
+  business    Business  @relation(fields: [businessId], references: [id])
+
+  @@index([businessId, date])
+  @@index([noteScanId])
+}
+
+// One photo of a paper note that was read by the AI, kept so it is never read or saved twice.
+model NoteScan {
+  id          String    @id @default(cuid())
+  businessId  String
+  fileId      String? // the stored photo
+  imageHash   String
+  status      String    @default("READ") // READ | SAVED | FAILED
+  rowsJson    String?
+  rowsSaved   Int       @default(0)
+  error       String?
+  createdById String
+  createdAt   DateTime  @default(now())
+  savedAt     DateTime?
+  business    Business  @relation(fields: [businessId], references: [id])
+
+  @@index([businessId, createdAt])
+  @@index([businessId, imageHash])
 }
 
 model CashAdjustment {

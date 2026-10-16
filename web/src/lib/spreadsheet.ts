@@ -53,3 +53,22 @@ export async function writeTable(format: TableFormat, sheet: string, header: str
   const buf = await wb.xlsx.writeBuffer();
   return { body: new Uint8Array(buf as ArrayBuffer), type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", ext: "xlsx" };
 }
+
+export type Sheet = { name: string; header: string[]; rows: (string | number | null)[][]; note?: string };
+
+/** One Excel file with several sheets (used for GST returns and the year-end pack). */
+export async function writeWorkbook(sheets: Sheet[]): Promise<Uint8Array<ArrayBuffer>> {
+  const wb = new ExcelJS.Workbook();
+  for (const s of sheets) {
+    const ws = wb.addWorksheet(s.name.replace(/[\/?*[\]:]/g, " ").slice(0, 31));
+    if (s.note) {
+      ws.addRow([s.note]).font = { italic: true, color: { argb: "FF5B6678" } };
+      ws.addRow([]);
+    }
+    ws.addRow(s.header).font = { bold: true };
+    for (const r of s.rows) ws.addRow(r);
+    ws.columns.forEach((col) => { col.width = Math.min(44, Math.max(10, ...(col.values ?? []).map((v) => String(v ?? "").length + 2).slice(0, 200))); });
+  }
+  const buf = await wb.xlsx.writeBuffer();
+  return new Uint8Array(buf as ArrayBuffer);
+}
