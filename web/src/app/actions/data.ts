@@ -9,14 +9,24 @@ import { MAX_IMPORT_ROWS, readTable } from "@/lib/spreadsheet";
 import { checkUpload, saveUpload } from "@/lib/files";
 import { checkItemRow, checkPartyRow, FIELDS, guessMapping, type ImportKind } from "@/lib/import-rows";
 import { runBackup } from "@/lib/backup";
+import { MORE_KINDS, type MoreKind } from "@/lib/import-more";
+import { commitMore } from "@/lib/import-commit";
+
+const KINDS: ImportKind[] = ["parties", "items", ...(Object.keys(MORE_KINDS) as MoreKind[])];
+const kindOf = (v: FormDataEntryValue | null): ImportKind => (KINDS.includes(v as ImportKind) ? (v as ImportKind) : "parties");
+const permissionFor = (k: ImportKind) => (k === "parties" ? "party:write" : k === "items" ? "item:write" : MORE_KINDS[k].permission);
+const PATHS: Record<ImportKind, string[]> = {
+  parties: ["/parties"], items: ["/items"], purchases: ["/purchases"], expenses: ["/expenses", "/cashbook"], payments: ["/parties", "/dashboard"],
+  invoices: ["/invoices", "/parties"], stock: ["/stock", "/items"], cashsales: ["/cashbook"], pricelists: ["/price-lists"],
+};
 
 export type PreviewState = { error?: string; header?: string[]; rows?: string[][]; mapping?: Record<string, number> };
 export type CommitState = { error?: string; imported?: number; skipped?: { row: number; name: string; reason: string }[] };
 
 /** Step 1 of the import wizard: read the file and guess which column is which. */
 export async function previewImport(_prev: PreviewState, form: FormData): Promise<PreviewState> {
-  await requireBusiness(form.get("kind") === "items" ? "item:write" : "party:write");
-  const kind = form.get("kind") === "items" ? "items" : "parties";
+  const kind = kindOf(form.get("kind"));
+  await requireBusiness(permissionFor(kind));
   const file = form.get("file");
   if (!(file instanceof File) || file.size === 0) return { error: "Choose a file" };
   if (file.size > 5_000_000) return { error: "File is too large (max 5 MB)" };
@@ -37,8 +47,8 @@ export async function previewImport(_prev: PreviewState, form: FormData): Promis
  * valid ones. Rows that fail or already exist are reported back, not imported.
  */
 export async function commitImport(_prev: CommitState, form: FormData): Promise<CommitState> {
-  const kind: ImportKind = form.get("kind") === "items" ? "items" : "parties";
-  const ctx = await requireBusiness(kind === "items" ? "item:write" : "party:write");
+  const kind = kindOf(form.get("kind"));
+  const ctx = await requireBusiness(permissionFor(kind));
   const { user, business } = ctx;
   let rows: string[][];
   let mapping: Record<string, number>;
@@ -56,7 +66,11 @@ export async function commitImport(_prev: CommitState, form: FormData): Promise<
   let imported = 0;
   const today = new Date(`${new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" })}T12:00:00+05:30`);
 
-  if (kind === "parties") {
+  if (kind !== "parties" && kind !== "items") {
+    const r = await commitMore(kind, ctx, rows, cell, { postToLedger: form.get("postToLedger") === "on", stockMode: form.get("stockMode") === "set" ? "set" : "add" });
+    imported = r.imported;
+    skipped.push(...r.skipped);
+  } else if (kind === "parties") {
     const existing = await db.party.findMany({ where: { businessId: business.id, archivedAt: null }, select: { name: true, phone: true } });
     const names = new Set(existing.map((p) => p.name.toLowerCase()));
     const phones = new Set(existing.map((p) => p.phone).filter(Boolean));
@@ -107,8 +121,8 @@ export async function commitImport(_prev: CommitState, form: FormData): Promise<
       imported++;
     }
   }
-  await db.$transaction((tx) => audit(tx, { businessId: business.id, actorId: user.id, action: "import", entity: kind === "items" ? "Item" : "Party", entityId: business.id, data: { imported, skipped: skipped.length } }));
-  revalidatePath(kind === "items" ? "/items" : "/parties");
+  await db.$transaction((tx) => audit(tx, { businessId: business.id, actorId: user.id, action: "import", entity: kind === "items" ? "Item" : kind === "parties" ? "Party" : `Import:${kind}`, entityId: business.id, data: { imported, skipped: skipped.length } }));
+  for (const p of PATHS[kind]) revalidatePath(p);
   return { imported, skipped };
 }
 

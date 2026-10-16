@@ -3,10 +3,12 @@ import { parseRupees } from "./money";
 import { isValidGstin, normalizeGstin, STATES } from "./gstin";
 import { normalizeIndianMobile } from "./share";
 import { GST_RATES_BP } from "./gst";
+import { MORE_FIELDS, type MoreKind } from "./import-more";
 
-export type ImportKind = "parties" | "items";
+export type ImportKind = "parties" | "items" | MoreKind;
 
 export const FIELDS: Record<ImportKind, { key: string; label: string; required?: boolean; aliases: string[] }[]> = {
+  ...MORE_FIELDS,
   parties: [
     { key: "name", label: "Name", required: true, aliases: ["name", "party", "party name", "customer", "customer name", "ledger", "ledger name"] },
     { key: "phone", label: "Mobile", aliases: ["phone", "mobile", "mobile no", "phone number", "contact", "whatsapp"] },

@@ -7,6 +7,9 @@ import { Card, ErrorText, Select, buttonClass } from "@/components/ui";
 import { SubmitButton } from "@/components/submit-button";
 import { FIELDS, guessMapping, type ImportKind } from "@/lib/import-rows";
 import { toCsv } from "@/lib/csv";
+import { MORE_KINDS, type MoreKind } from "@/lib/import-more";
+
+const NOUN = (kind: ImportKind) => (kind === "items" ? "items" : kind === "parties" ? "customers and suppliers" : MORE_KINDS[kind as MoreKind].noun);
 
 type Table = { header: string[]; rows: string[][]; mapping: Record<string, number> };
 
@@ -48,7 +51,9 @@ export function ImportWizard({ kind }: { kind: ImportKind }) {
         <p className="text-xs text-muted">
           Excel (.xlsx) or CSV with a header row, up to 5,000 rows. {kind === "parties"
             ? "Columns like Name, Mobile, GSTIN, State, Type, Credit days, Opening balance and Dr/Cr are recognised — Tally and Khatabook exports work as they are. A Dr balance (or a plain positive amount) means the party owes you."
-            : "Columns like Item name, Sale price, Purchase price, GST %, HSN, Unit and SKU are recognised."}
+            : kind === "items"
+              ? "Columns like Item name, Sale price, Purchase price, GST %, HSN, Unit and SKU are recognised."
+              : MORE_KINDS[kind as MoreKind].about}
         </p>
         <ErrorText>{preview.error ?? contactsError}</ErrorText>
       </Card>
@@ -75,7 +80,7 @@ function MapAndImport({ kind, table }: { kind: ImportKind; table: Table }) {
   if (result.imported !== undefined) {
     return (
       <Card className="space-y-3 text-sm">
-        <p className="text-sm font-semibold text-got">Imported {result.imported} {kind === "items" ? "items" : "parties"}.</p>
+        <p className="text-sm font-semibold text-got">Imported {result.imported} {NOUN(kind)}.</p>
         {(result.skipped?.length ?? 0) > 0 && (
           <>
             <p>{result.skipped!.length} rows were not imported:</p>
@@ -134,9 +139,24 @@ function MapAndImport({ kind, table }: { kind: ImportKind; table: Table }) {
         </table>
         {table.rows.length > sample.length && <p className="px-3 py-2 text-xs text-muted">Showing the first {sample.length} of {table.rows.length} rows.</p>}
       </Card>
+      {kind === "invoices" && (
+        <label className="flex items-start gap-2 text-sm">
+          <input type="checkbox" name="postToLedger" className="mt-0.5 size-4 accent-[var(--brand)]" />
+          <span>Also add each bill to the customer’s account<span className="block text-xs text-muted">Leave this off if the customer’s balance already includes these bills, for example from an opening balance. Otherwise they would be counted twice.</span></span>
+        </label>
+      )}
+      {kind === "stock" && (
+        <label className="block max-w-sm space-y-1 text-sm">
+          <span className="font-medium">What do the numbers mean?</span>
+          <Select name="stockMode" defaultValue="set">
+            <option value="set">This is how many I have now (set the count)</option>
+            <option value="add">Add these to what I already have</option>
+          </Select>
+        </label>
+      )}
       <ErrorText>{result.error}</ErrorText>
       <SubmitButton>Import {table.rows.length} rows</SubmitButton>
-      <p className="text-xs text-muted">Rows with problems, and parties or items that already exist, are skipped and listed so you can fix them.</p>
+      <p className="text-xs text-muted">Rows with problems, and rows that already exist, are skipped and listed so you can fix them. Nothing is overwritten.</p>
     </ActionForm>
   );
 }

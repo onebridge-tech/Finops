@@ -46,24 +46,13 @@ export { isoDate };
 const yes = (v: string) => /^(y|yes|true|1|eligible)/i.test(v.trim());
 const no = (v: string) => /^(n|no|false|0|ineligible|blocked)/i.test(v.trim());
 
-/**
- * One row of a spreadsheet of purchase bills. Tax can be given as a GST % (split for you), as CGST/SGST/IGST amounts,
- * or as a total from which the tax is worked out.
- */
-export function checkPurchaseRow(get: (key: string) => string, businessState: string | null): Checked<PurchaseRow> {
-  const supplierName = get("supplier").trim();
-  if (!supplierName) return { ok: false, error: "Supplier name is missing" };
-  const number = get("number").trim();
-  if (!number) return { ok: false, error: "Bill number is missing" };
-  const date = isoDate(get("date"));
-  if (!date) return { ok: false, error: `Date "${get("date")}" is not a date` };
-  const gstinRaw = normalizeGstin(get("gstin"));
-  if (gstinRaw && !isValidGstin(gstinRaw)) return { ok: false, error: `GSTIN "${gstinRaw}" is not valid` };
-  const stateRaw = get("state").trim();
-  const stateCode = gstinRaw ? gstinRaw.slice(0, 2) : stateRaw && /^\d{1,2}$/.test(stateRaw) ? stateRaw.padStart(2, "0") : Object.entries(STATES).find(([, n]) => norm(n) === norm(stateRaw))?.[0] ?? null;
-  if (stateRaw && !stateCode) return { ok: false, error: `Unknown state "${stateRaw}"` };
-  const inter = isInterStateBill(businessState, stateCode);
+export type TaxColumns = { taxable: number; tax: Tax; total: number };
 
+/**
+ * Reads the amount columns of a bill row. Tax can be given as a GST % (split for you), as CGST/SGST/IGST amounts,
+ * or worked out from a total. Shared by purchase bills and imported sales invoices.
+ */
+export function readTaxColumns(get: (key: string) => string, inter: boolean): Checked<TaxColumns> {
   const amt = (key: string): number | null | undefined => {
     const v = get(key).trim();
     if (!v) return undefined;
@@ -103,6 +92,30 @@ export function checkPurchaseRow(get: (key: string) => string, businessState: st
   if (tax.cgst < 0 || tax.sgst < 0 || tax.igst < 0) return { ok: false, error: "Tax cannot be negative" };
   const total = taxable + tax.cgst + tax.sgst + tax.igst;
   if (totalIn !== undefined && Math.abs(totalIn! - total) > 100) return { ok: false, error: `Total ₹${(totalIn! / 100).toFixed(2)} does not match taxable value plus tax (₹${(total / 100).toFixed(2)})` };
+  return { ok: true, value: { taxable, tax, total } };
+}
+
+/**
+ * One row of a spreadsheet of purchase bills. Tax can be given as a GST % (split for you), as CGST/SGST/IGST amounts,
+ * or as a total from which the tax is worked out.
+ */
+export function checkPurchaseRow(get: (key: string) => string, businessState: string | null): Checked<PurchaseRow> {
+  const supplierName = get("supplier").trim();
+  if (!supplierName) return { ok: false, error: "Supplier name is missing" };
+  const number = get("number").trim();
+  if (!number) return { ok: false, error: "Bill number is missing" };
+  const date = isoDate(get("date"));
+  if (!date) return { ok: false, error: `Date "${get("date")}" is not a date` };
+  const gstinRaw = normalizeGstin(get("gstin"));
+  if (gstinRaw && !isValidGstin(gstinRaw)) return { ok: false, error: `GSTIN "${gstinRaw}" is not valid` };
+  const stateRaw = get("state").trim();
+  const stateCode = gstinRaw ? gstinRaw.slice(0, 2) : stateRaw && /^\d{1,2}$/.test(stateRaw) ? stateRaw.padStart(2, "0") : Object.entries(STATES).find(([, n]) => norm(n) === norm(stateRaw))?.[0] ?? null;
+  if (stateRaw && !stateCode) return { ok: false, error: `Unknown state "${stateRaw}"` };
+  const inter = isInterStateBill(businessState, stateCode);
+
+  const taxCols = readTaxColumns(get, inter);
+  if (!taxCols.ok) return taxCols;
+  const { taxable, tax, total } = taxCols.value;
 
   const k = norm(get("kind"));
   const kind: PurchaseKind | null = !k || /good|stock|material|purchase/.test(k) ? "GOODS" : /service|expense|rent|repair/.test(k) ? "SERVICES" : /capital|machine|equip|asset/.test(k) ? "CAPITAL" : null;
