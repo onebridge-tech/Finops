@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { audit } from "@/lib/audit";
+import { SITE_FIELDS } from "@/lib/site-fields";
 import { platformAudit, requirePlatformAdmin } from "@/lib/platform-auth";
 
 export type AdminState = { error?: string; ok?: string };
@@ -84,4 +85,26 @@ export async function reopenError(form: FormData): Promise<void> {
   await db.errorLog.updateMany({ where: { id }, data: { resolvedAt: null } });
   await platformAudit(admin.id, "reopen_error", id);
   revalidatePath("/platform/errors");
+}
+
+/** Saves the company details shown on the legal pages and the landing page. Empty boxes clear that detail, so the pages leave it out. */
+export async function saveSiteInfo(_prev: AdminState, form: FormData): Promise<AdminState> {
+  const admin = await requirePlatformAdmin();
+  const changes: Record<string, string> = {};
+  for (const f of SITE_FIELDS) {
+    const v = text(form, f.key).slice(0, f.kind === "textarea" ? 400 : 160);
+    if (f.kind === "email" && v && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)) return { error: `${f.label}: that does not look like an email address.` };
+    if (f.kind === "number" && v && !(Number.isInteger(Number(v)) && Number(v) >= 1 && Number(v) <= 365)) return { error: `${f.label}: enter a whole number of days from 1 to 365.` };
+    changes[f.key] = v;
+  }
+  await db.$transaction(
+    Object.entries(changes).map(([key, value]) =>
+      value
+        ? db.siteSetting.upsert({ where: { key }, update: { value, updatedById: admin.id }, create: { key, value, updatedById: admin.id } })
+        : db.siteSetting.deleteMany({ where: { key } }),
+    ),
+  );
+  await platformAudit(admin.id, "save_site_info", undefined, { filled: Object.entries(changes).filter(([, v]) => v).map(([k]) => k) });
+  for (const path of ["/platform/settings", "/", "/terms", "/privacy", "/refund-policy", "/acceptable-use", "/cookies", "/grievance"]) revalidatePath(path);
+  return { ok: "Saved. The legal pages now show these details." };
 }

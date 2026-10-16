@@ -1,12 +1,13 @@
 import Link from "next/link";
-import { LegalPage, Section } from "@/components/legal-page";
+import { LegalPage, Mail, Section } from "@/components/legal-page";
+import { getSite } from "@/lib/site-settings";
 import { BRAND } from "@/lib/brand";
-import { LEGAL } from "@/lib/legal";
 
 export const metadata = { title: "Privacy Policy", description: `How ${BRAND.NAME} collects, uses and protects personal data.` };
 
-export default function Privacy() {
-  const { COMPANY: C } = LEGAL;
+export default async function Privacy() {
+  const site = await getSite();
+  const C = site.company || BRAND.NAME;
   return (
     <LegalPage
       title="Privacy Policy"
@@ -73,7 +74,7 @@ export default function Privacy() {
       <Section title="6. How long we keep it">
         <ul>
           <li>While your shop is active, we keep your records so the app can work.</li>
-          <li>If you ask us in writing to delete your shop, we close it and permanently erase its data within {LEGAL.DELETE_GRACE_DAYS} days of confirming the request is yours, unless the law requires us to keep something longer. Backups that contain it are removed as they expire.</li>
+          <li>If you ask us in writing to delete your shop, we close it and permanently erase its data within {site.deleteDaysNum} days of confirming the request is yours, unless the law requires us to keep something longer. Backups that contain it are removed as they expire.</li>
           <li>Some records may have to be kept for the period tax and company laws require (for example, GST records for several years). We keep only what is needed and only for that purpose.</li>
           <li>Sign-in codes expire within minutes. Security and error logs are kept for a limited time.</li>
         </ul>
@@ -98,7 +99,7 @@ export default function Privacy() {
           <li>take up a complaint about how it is handled; and</li>
           <li>name someone to exercise these rights for you if you cannot.</li>
         </ul>
-        <p>Shop users can see and fix most of this inside the app and download everything from <b>Excel &amp; backup</b>. For anything else write to <a href={`mailto:${LEGAL.PRIVACY_EMAIL}`}>{LEGAL.PRIVACY_EMAIL}</a>. We may need to check who you are first. We reply within {LEGAL.REPLY_DAYS} days. If you are unhappy with the answer, you can go to the Data Protection Board of India once it is in place.</p>
+        <p>Shop users can see and fix most of this inside the app and download everything from <b>Excel &amp; backup</b>. For anything else {site.privacyEmail ? <>write to <Mail to={site.privacyEmail} /></> : <>use <Link href="/grievance">Contact &amp; Grievance</Link></>}. We may need to check who you are first. We reply within {site.replyDaysNum} days. If you are unhappy with the answer, you can go to the Data Protection Board of India once it is in place.</p>
       </Section>
 
       <Section title="9. Children">
@@ -114,7 +115,7 @@ export default function Privacy() {
       </Section>
 
       <Section title="12. Contact">
-        <p>{C}, {LEGAL.ADDRESS}. Privacy questions: <a href={`mailto:${LEGAL.PRIVACY_EMAIL}`}>{LEGAL.PRIVACY_EMAIL}</a>. Complaints: <Link href="/grievance">Contact &amp; Grievance</Link>.</p>
+        <p>{C}{site.address ? `, ${site.address}` : ""}.{site.privacyEmail ? <> Privacy questions: <Mail to={site.privacyEmail} />.</> : null} Complaints: <Link href="/grievance">Contact &amp; Grievance</Link>.</p>
       </Section>
     </LegalPage>
   );

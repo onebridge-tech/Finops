@@ -1,11 +1,12 @@
 import Link from "next/link";
-import { LegalPage, Section } from "@/components/legal-page";
+import { LegalPage, Mail, Section } from "@/components/legal-page";
+import { getSite } from "@/lib/site-settings";
 import { BRAND } from "@/lib/brand";
-import { LEGAL } from "@/lib/legal";
 
 export const metadata = { title: "Acceptable Use", description: `What is and is not allowed when using ${BRAND.NAME}.` };
 
-export default function AcceptableUse() {
+export default async function AcceptableUse() {
+  const site = await getSite();
   return (
     <LegalPage
       title="Acceptable Use"
@@ -35,7 +36,7 @@ export default function AcceptableUse() {
       </Section>
 
       <Section title="If something goes wrong">
-        <p>We may remove content, limit features or pause an account that breaks these rules, and where the law requires we may report it to the authorities. We try to warn you first when it is safe to do so. If you think we got it wrong, write to <a className="font-medium text-brand underline" href={`mailto:${LEGAL.SUPPORT_EMAIL}`}>{LEGAL.SUPPORT_EMAIL}</a>.</p>
+        <p>We may remove content, limit features or pause an account that breaks these rules, and where the law requires we may report it to the authorities. We try to warn you first when it is safe to do so. If you think we got it wrong, {site.supportEmail ? <>write to <Mail className="font-medium text-brand underline" to={site.supportEmail} /></> : <>use <Link className="font-medium text-brand underline" href="/grievance">Contact &amp; Grievance</Link></>}.</p>
         <p>To report misuse of {BRAND.NAME}, for example a message you received from a shop that you did not agree to, use <Link className="font-medium text-brand underline" href="/grievance">Contact &amp; Grievance</Link>.</p>
       </Section>
     </LegalPage>

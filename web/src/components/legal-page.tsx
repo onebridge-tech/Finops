@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { BRAND } from "@/lib/brand";
 import { LEGAL, LEGAL_PAGES } from "@/lib/legal";
+import { getSite } from "@/lib/site-settings";
 import { Logo } from "@/components/icon";
 
 /** Small footer with every legal page, used on public pages. */
@@ -14,7 +15,8 @@ export function LegalLinks({ className = "" }: { className?: string }) {
 }
 
 /** Shared frame for the legal documents: a plain, readable page with the list of the other documents on the side. */
-export function LegalPage({ title, intro, children }: { title: string; intro?: ReactNode; children: ReactNode }) {
+export async function LegalPage({ title, intro, children }: { title: string; intro?: ReactNode; children: ReactNode }) {
+  const site = await getSite();
   return (
     <div className="min-h-screen bg-bg">
       <header className="border-b border-line bg-card">
@@ -40,12 +42,17 @@ export function LegalPage({ title, intro, children }: { title: string; intro?: R
       </div>
       <footer className="border-t border-line bg-card">
         <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-3 px-5 py-5">
-          <span className="text-xs text-muted">© {new Date().getFullYear()} {LEGAL.COMPANY}. {BRAND.NAME} is a product of {LEGAL.COMPANY}.</span>
+          <span className="text-xs text-muted">© {new Date().getFullYear()} {site.company || BRAND.NAME}.{site.company ? ` ${BRAND.NAME} is a product of ${site.company}.` : ""}</span>
           <LegalLinks />
         </div>
       </footer>
     </div>
   );
+}
+
+/** An email link, or nothing when the address has not been filled in. */
+export function Mail({ to, className = "" }: { to: string; className?: string }) {
+  return to ? <a className={className} href={`mailto:${to}`}>{to}</a> : null;
 }
 
 export function Section({ title, children }: { title: string; children: ReactNode }) {

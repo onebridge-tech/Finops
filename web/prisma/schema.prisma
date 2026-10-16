@@ -178,6 +178,14 @@ model JobRun {
 }
 
 // What platform admins looked at or changed (separate from each shop's own audit trail).
+// Settings the platform admin fills in from the admin area (for example the company details shown on the legal pages).
+model SiteSetting {
+  key         String   @id
+  value       String
+  updatedAt   DateTime @updatedAt
+  updatedById String?
+}
+
 model PlatformAudit {
   id        String   @id @default(cuid())
   actorId   String

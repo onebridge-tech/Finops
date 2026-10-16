@@ -1,11 +1,12 @@
 import Link from "next/link";
-import { LegalPage, Section } from "@/components/legal-page";
+import { LegalPage, Mail, Section } from "@/components/legal-page";
+import { getSite } from "@/lib/site-settings";
 import { BRAND } from "@/lib/brand";
-import { LEGAL } from "@/lib/legal";
 
 export const metadata = { title: "Refunds & Cancellation", description: `How cancellation and refunds work in ${BRAND.NAME}.` };
 
-export default function Refunds() {
+export default async function Refunds() {
+  const site = await getSite();
   return (
     <LegalPage
       title="Refunds & Cancellation"
@@ -39,8 +40,8 @@ export default function Refunds() {
 
       <Section title="5. How to ask for a refund">
         <ol>
-          <li>Write to <a href={`mailto:${LEGAL.SUPPORT_EMAIL}`}>{LEGAL.SUPPORT_EMAIL}</a> from the email or phone number on your account, with the date and amount of the payment.</li>
-          <li>We reply within {LEGAL.REPLY_DAYS} days. If the refund is approved, it goes back to the original payment method (UPI, card or bank) and normally reaches you in 5 to 10 working days, depending on your bank.</li>
+          <li>{site.supportEmail ? <>Write to <Mail to={site.supportEmail} /></> : <>Use <Link href="/grievance">Contact &amp; Grievance</Link></>} from the email or phone number on your account, with the date and amount of the payment.</li>
+          <li>We reply within {site.replyDaysNum} days. If the refund is approved, it goes back to the original payment method (UPI, card or bank) and normally reaches you in 5 to 10 working days, depending on your bank.</li>
         </ol>
         <p>Payments you make to your own customers or suppliers, or that they make to you, are between you and them. We do not hold that money and cannot refund it.</p>
       </Section>

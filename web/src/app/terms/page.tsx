@@ -1,16 +1,18 @@
 import Link from "next/link";
-import { LegalPage, Section } from "@/components/legal-page";
-import { BRAND } from "@/lib/brand";
+import { LegalPage, Mail, Section } from "@/components/legal-page";
+import { getSite } from "@/lib/site-settings";
 import { LEGAL } from "@/lib/legal";
+import { BRAND } from "@/lib/brand";
 
 export const metadata = { title: "Terms of Use", description: `The rules for using ${BRAND.NAME}.` };
 
-export default function Terms() {
-  const { COMPANY: C, SUPPORT_EMAIL: mail } = LEGAL;
+export default async function Terms() {
+  const site = await getSite();
+  const C = site.company || BRAND.NAME;
   return (
     <LegalPage
       title="Terms of Use"
-      intro={<>These are the rules for using {BRAND.NAME}. By signing in or using the app you agree to them. If you do not agree, please do not use it. Questions? Write to <a className="font-medium text-brand underline" href={`mailto:${mail}`}>{mail}</a>.</>}
+      intro={<>These are the rules for using {BRAND.NAME}. By signing in or using the app you agree to them. If you do not agree, please do not use it. {site.supportEmail ? <>Questions? Write to <Mail className="font-medium text-brand underline" to={site.supportEmail} />.</> : <>Questions? See <Link className="font-medium text-brand underline" href="/grievance">Contact &amp; Grievance</Link>.</>}</>}
     >
       <Section title="1. Who we are and what FinOps is">
         <p>{BRAND.NAME} (“the Service”) is a web app run by {C} (“we”, “us”) at {LEGAL.SITE}. It helps a shop write down credit given and payments received, make GST bills, send reminders, keep stock, and see money in and out.</p>
@@ -105,11 +107,11 @@ export default function Terms() {
       </Section>
 
       <Section title="15. Law and disputes">
-        <p>These Terms are governed by the laws of India. Please write to us first at <a href={`mailto:${LEGAL.GRIEVANCE_EMAIL}`}>{LEGAL.GRIEVANCE_EMAIL}</a> and give us {LEGAL.REPLY_DAYS} days to put things right. If we cannot settle it, the courts at {LEGAL.COURT_CITY} have exclusive jurisdiction, subject to any right you have under consumer law.</p>
+        <p>These Terms are governed by the laws of India. Please write to us first{site.grievanceEmail ? <> at <Mail to={site.grievanceEmail} /></> : <> through <Link href="/grievance">Contact &amp; Grievance</Link></>} and give us {site.replyDaysNum} days to put things right. If we cannot settle it, {site.courtCity ? `the courts at ${site.courtCity}` : "the courts in India that have jurisdiction"} will decide, subject to any right you have under consumer law.</p>
       </Section>
 
       <Section title="16. Contact">
-        <p>{C}, {LEGAL.ADDRESS}. Email <a href={`mailto:${mail}`}>{mail}</a>. See also <Link href="/grievance">Contact &amp; Grievance</Link>.</p>
+        <p>{C}{site.address ? `, ${site.address}` : ""}.{site.supportEmail ? <> Email <Mail to={site.supportEmail} />.</> : null} See also <Link href="/grievance">Contact &amp; Grievance</Link>.</p>
       </Section>
     </LegalPage>
   );

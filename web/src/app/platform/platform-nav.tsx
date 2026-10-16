@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-const TABS = [["/platform", "Overview"], ["/platform/shops", "Shops"], ["/platform/users", "People"], ["/platform/growth", "Growth"], ["/platform/health", "Health"], ["/platform/errors", "Errors"], ["/platform/audit", "Admin log"]] as const;
+const TABS = [["/platform", "Overview"], ["/platform/shops", "Shops"], ["/platform/users", "People"], ["/platform/growth", "Growth"], ["/platform/health", "Health"], ["/platform/errors", "Errors"], ["/platform/audit", "Admin log"], ["/platform/settings", "Company info"]] as const;
 
 export function PlatformNav() {
   const path = usePathname();

@@ -2,7 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { readSession } from "@/lib/session";
 import { BRAND } from "@/lib/brand";
-import { LEGAL } from "@/lib/legal";
+import { getSite } from "@/lib/site-settings";
 import { Icon, Logo, type IconName } from "@/components/icon";
 import { LegalLinks } from "@/components/legal-page";
 import { Hero } from "./_landing/hero";
@@ -49,6 +49,7 @@ const FAQ: [string, string][] = [
 
 export default async function Home() {
   if (await readSession()) redirect("/dashboard");
+  const site = await getSite();
   return (
     <div className="min-h-screen overflow-x-clip">
       <noscript><style>{".lp-reveal{opacity:1!important;transform:none!important}"}</style></noscript>
@@ -200,7 +201,7 @@ export default async function Home() {
         <div className="mx-auto flex max-w-6xl flex-col gap-4 px-5 py-8 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <span className="flex items-center gap-2 font-semibold"><Logo size={26} />{BRAND.NAME}</span>
-            <p className="mt-1 text-xs text-muted">© {new Date().getFullYear()} {LEGAL.COMPANY}. {BRAND.TAGLINE}</p>
+            <p className="mt-1 text-xs text-muted">© {new Date().getFullYear()} {site.company || BRAND.NAME}. {BRAND.TAGLINE}</p>
           </div>
           <LegalLinks />
         </div>
