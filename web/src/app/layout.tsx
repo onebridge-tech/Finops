@@ -16,6 +16,10 @@ export const metadata: Metadata = {
   title: { default: `${BRAND.NAME} — ${BRAND.TAGLINE}`, template: `%s · ${BRAND.NAME}` },
   description: BRAND.ABOUT,
   manifest: "/manifest.webmanifest",
+  applicationName: BRAND.NAME,
+  openGraph: { type: "website", siteName: BRAND.NAME, locale: "en_IN", title: `${BRAND.NAME} — ${BRAND.TAGLINE}`, description: BRAND.ABOUT },
+  twitter: { card: "summary_large_image", title: `${BRAND.NAME} — ${BRAND.TAGLINE}`, description: BRAND.ABOUT },
+  appleWebApp: { capable: true, title: BRAND.NAME, statusBarStyle: "default" },
 };
 
 export const viewport: Viewport = { themeColor: "#4f46e5", width: "device-width", initialScale: 1 };

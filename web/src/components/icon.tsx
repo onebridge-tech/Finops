@@ -1,4 +1,5 @@
 import type { ComponentProps } from "react";
+import { MarkSvg } from "@/lib/brand-mark";
 
 // One small icon set (24px, drawn with a 2px line) so every screen speaks the same visual language.
 const PATHS = {
@@ -52,11 +53,7 @@ export function Icon({ name, size = 22, ...p }: { name: IconName; size?: number 
   );
 }
 
-/** The app mark: a small cash-box tile. */
+/** The app mark: the same rupee tile used for the browser icon and home-screen icons (see lib/brand-mark.tsx). */
 export function Logo({ size = 28 }: { size?: number }) {
-  return (
-    <span className="inline-flex items-center justify-center rounded-lg bg-brand font-bold text-brand-ink" style={{ width: size, height: size, fontSize: size * 0.6 }} aria-hidden>
-      ₹
-    </span>
-  );
+  return <MarkSvg size={size} rounded={0.22} style={{ display: "block", flexShrink: 0 }} />;
 }
