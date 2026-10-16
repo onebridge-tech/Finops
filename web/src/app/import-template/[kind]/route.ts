@@ -3,7 +3,7 @@ import { MORE_KINDS, type MoreKind } from "@/lib/import-more";
 import { writeTable } from "@/lib/spreadsheet";
 
 const BASE: Record<string, { label: string; example: string[][] }> = {
-  parties: { label: "Customers and suppliers", example: [["Name", "Mobile", "GSTIN", "State", "Type", "Credit days", "Opening balance", "Dr/Cr"], ["Lakshmi General Stores", "9848012345", "", "Telangana", "customer", "30", "12000", "Dr"], ["Sri Sai Wholesale", "9000011111", "36AAACB1234C1Z5", "Telangana", "supplier", "", "8000", "Cr"]] },
+  parties: { label: "Customers and suppliers", example: [["Name", "Mobile", "GSTIN", "State", "Type", "Credit days", "Opening balance", "Dr/Cr"], ["Lakshmi General Stores", "9848012345", "", "Telangana", "customer", "30", "12000", "Dr"], ["Sri Sai Wholesale", "9000011111", "36AAACB1234C1ZG", "Telangana", "supplier", "", "8000", "Cr"]] },
   items: { label: "Items", example: [["Item name", "Sale price", "Purchase price", "GST %", "HSN", "Unit", "SKU"], ["Tea Powder", "420", "360", "5", "0902", "kg", "TP-1"]] },
 };
 
