@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { beforeAll, describe, expect, it } from "vitest";
 import { db } from "../src/lib/db";
 import { loadGst } from "../src/lib/gst-data";

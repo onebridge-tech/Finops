@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { beforeAll, describe, expect, it, vi } from "vitest";
 
 const holder: { ctx: any } = { ctx: null };
