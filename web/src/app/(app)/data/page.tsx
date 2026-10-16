@@ -62,7 +62,7 @@ export default async function DataPage({ searchParams }: PageProps<"/data">) {
           <Card className="mt-4 flex flex-wrap items-center gap-3 text-sm">
             <Icon name="note" size={18} className="text-brand" />
             <span className="min-w-0 flex-1"><span className="font-medium">Paper notes?</span> <span className="text-muted">Take a photo and we read the items and amounts for you.</span></span>
-            <Link href="/notes-photo" className="font-medium text-brand underline">Read a paper note</Link>
+            <Link href="/paper-notes" className="font-medium text-brand underline">Read a paper note</Link>
           </Card>
         </>
       )}

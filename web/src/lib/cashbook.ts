@@ -18,11 +18,12 @@ type Scope = { branchId: string | null }; // null = every branch the member can 
 async function allMoves(ctx: Ctx, scope: Scope, until: Date): Promise<(CashMove & { day: string })[]> {
   const biz = ctx.business.id;
   const branch = scope.branchId ? { branchId: scope.branchId } : {};
-  const [cashEntries, expenses, adj, parties] = await Promise.all([
+  const [cashEntries, expenses, adj, parties, cashSales] = await Promise.all([
     db.ledgerEntry.findMany({ where: { businessId: biz, ...branch, paymentMode: "CASH", date: { lte: until } } }),
     db.expense.findMany({ where: { businessId: biz, ...branch, paymentMode: "CASH", voidedAt: null, date: { lte: until } } }),
     db.cashAdjustment.findMany({ where: { businessId: biz, ...branch, voidedAt: null, date: { lte: until } } }),
     db.party.findMany({ where: { businessId: biz }, select: { id: true, name: true } }),
+    db.cashSale.findMany({ where: { businessId: biz, ...branch, paymentMode: "CASH", voidedAt: null, date: { lte: until } } }),
   ]);
   const pn = new Map(parties.map((p) => [p.id, p.name]));
   const reversals = cashEntries.length
@@ -43,6 +44,7 @@ async function allMoves(ctx: Ctx, scope: Scope, until: Date): Promise<(CashMove 
     if (orig) add(r.date, orig.direction === "GOT" ? "OUT" : "IN", r.amountPaise, `Reversed: ${orig.direction === "GOT" ? "receipt from" : "payment to"} ${pn.get(orig.partyId) ?? "party"}`, `/parties/${orig.partyId}`);
   }
   for (const x of expenses) add(x.date, "OUT", x.amountPaise, `Expense · ${x.category}${x.note ? " · " + x.note : ""}`, "/expenses");
+  for (const x of cashSales) add(x.date, "IN", x.amountPaise, `Cash sale · ${x.item}`, "/cash-sales");
   for (const x of adj) add(x.date, x.direction as "IN" | "OUT", x.amountPaise, `Cash adjustment · ${x.note}`);
   return moves;
 }

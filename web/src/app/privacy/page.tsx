@@ -33,6 +33,7 @@ export default async function Privacy() {
           <li>Customers and suppliers: name, mobile number, email, address, GSTIN, credit terms, notes, and whether they agreed to receive messages.</li>
           <li>Money records: credit given, payments, bills, quotes, orders, items, stock, expenses, cash book and attachments such as bill photos, PDFs and voice notes.</li>
           <li>Bank or UPI statements you upload for “Money in &amp; out”: dates, amounts, descriptions, names of payers and payees, and balances, read from the file.</li>
+          <li>Photos of paper notes that you upload to be read, and the lines read from them.</li>
           <li>Field work, if you use it: visits, check-in times and, only if your phone allows it and you start a visit, the location where you checked in.</li>
         </ul>
         <p><b>Created while you use the app</b></p>
@@ -62,6 +63,7 @@ export default async function Privacy() {
         <ul>
           <li><b>Hosting and database providers</b> that store and process data for us.</li>
           <li><b>Message providers</b> for SMS, email and OTP delivery, when you use those features. WhatsApp reminders are opened on your own phone and sent through your own WhatsApp account; WhatsApp’s own privacy policy applies to that.</li>
+          <li><b>An AI reading service</b>, only when you use “Paper notes”: the photo you upload is sent to it so it can be read, and is not used by us for anything else. Please do not photograph pages that have other people’s personal details if you do not want that.</li>
           <li><b>Google</b>, if you choose to sign in with it.</li>
           <li><b>Payment partners</b>, if you use online payment links, so that payments can be taken and matched.</li>
           <li><b>Your shop</b>: owners and staff see what their role allows. A customer who opens a statement link sees only their own account with that shop.</li>

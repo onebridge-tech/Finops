@@ -48,7 +48,7 @@ export async function loadYearEnd(ctx: Ctx, startYear: number) {
   const purchTotal = purchases.filter((b) => !b.voidedAt).reduce((s, b) => s + Number(b.taxablePaise), 0);
   const itc = purchases.filter((b) => !b.voidedAt && b.itcEligible).reduce((s, b) => s + Number(b.cgstPaise + b.sgstPaise + b.igstPaise), 0);
   const expTotal = expenses.reduce((s, e) => s + Number(e.amountPaise), 0);
-  const profit = pls.reduce((s, p) => s + p.netProfit, 0) + cash;
+  const profit = pls.reduce((s, p) => s + p.netProfit, 0); // already includes cash sales
   const allReceipts = receipts.reduce((s, e) => s + Number(e.amountPaise), 0) + cash;
   const digitalReceipts = receipts.filter((e) => DIGITAL.has(e.paymentMode ?? "")).reduce((s, e) => s + Number(e.amountPaise), 0) + cashSales.filter((c) => DIGITAL.has(c.paymentMode)).reduce((s, c) => s + Number(c.amountPaise), 0);
   const tax = estimateTax({ turnoverPaise: turnover, digitalReceiptsPaise: digitalReceipts, allReceiptsPaise: allReceipts, bookProfitPaise: profit });

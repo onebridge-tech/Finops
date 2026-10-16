@@ -82,11 +82,13 @@ export type MonthPL = {
 export async function profitAndLoss(ctx: Ctx, ym: string): Promise<MonthPL> {
   const { gte, lte } = monthBounds(ym);
   const bid = ctx.business.id;
-  const [inv, notes, lines, expenses] = await Promise.all([
+  const [inv, notes, lines, expenses, cash] = await Promise.all([
     db.invoice.aggregate({ where: { ...docWhere(ctx), status: "ISSUED", date: { gte, lte } }, _sum: { taxablePaise: true }, _count: true }),
     db.note.aggregate({ where: { businessId: bid, kind: "CREDIT", status: "ISSUED", date: { gte, lte } }, _sum: { taxablePaise: true } }),
     db.invoiceLine.findMany({ where: { invoice: { ...docWhere(ctx), status: "ISSUED", date: { gte, lte } } }, select: { itemId: true, qtyMilli: true, taxablePaise: true } }),
     db.expense.findMany({ where: { businessId: bid, voidedAt: null, date: { gte, lte }, ...(ctx.branchId ? { branchId: ctx.branchId } : {}) }, select: { category: true, amountPaise: true } }),
+    // Sales written without a customer name (cash sales, paper notes). Their GST is not known, so they count as they are.
+    db.cashSale.aggregate({ where: { businessId: bid, voidedAt: null, date: { gte, lte }, ...(ctx.branchId ? { branchId: ctx.branchId } : {}) }, _sum: { amountPaise: true } }),
   ]);
   const items = await db.item.findMany({ where: { businessId: bid, id: { in: [...new Set(lines.map((l) => l.itemId).filter((x): x is string => !!x))] } }, select: { id: true, purchasePricePaise: true } });
   const cost = new Map(items.filter((i) => i.purchasePricePaise !== null).map((i) => [i.id, Number(i.purchasePricePaise)]));
@@ -97,7 +99,8 @@ export async function profitAndLoss(ctx: Ctx, ym: string): Promise<MonthPL> {
     const c = l.itemId ? cost.get(l.itemId) : undefined;
     if (c !== undefined) { cogs += Math.round((c * l.qtyMilli) / 1000); known += t; }
   }
-  const sales = Number(inv._sum.taxablePaise ?? 0n);
+  const cashSales = Number(cash._sum.amountPaise ?? 0n);
+  const sales = Number(inv._sum.taxablePaise ?? 0n) + cashSales;
   const returns = Number(notes._sum.taxablePaise ?? 0n);
   const by = new Map<string, number>();
   let purchases = 0;
