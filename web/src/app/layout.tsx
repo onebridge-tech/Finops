@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Inter, Noto_Sans_Telugu, Noto_Sans_Devanagari, Noto_Sans_Tamil, Noto_Sans_Kannada } from "next/font/google";
 import "./globals.css";
 import { BRAND } from "@/lib/brand";
+import { LEGAL } from "@/lib/legal";
 
 const inter = Inter({ variable: "--font-inter", subsets: ["latin"], display: "swap" });
 // Telugu letters are not in Inter; this keeps them crisp instead of falling back to a system font.
@@ -11,6 +12,7 @@ const tamil = Noto_Sans_Tamil({ variable: "--font-tamil", subsets: ["tamil"], di
 const kannada = Noto_Sans_Kannada({ variable: "--font-kannada", subsets: ["kannada"], display: "swap" });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(LEGAL.SITE),
   title: { default: `${BRAND.NAME} — ${BRAND.TAGLINE}`, template: `%s · ${BRAND.NAME}` },
   description: BRAND.ABOUT,
   manifest: "/manifest.webmanifest",

@@ -3,6 +3,7 @@ import { can, requireBusiness } from "@/lib/auth";
 import { MENU } from "@/lib/menu";
 import { Card, PageHeader } from "@/components/ui";
 import { Icon, isIconName } from "@/components/icon";
+import { LegalLinks } from "@/components/legal-page";
 
 export const metadata = { title: "More" };
 
@@ -34,6 +35,7 @@ export default async function More() {
             </section>
           );
         })}
+        <LegalLinks className="border-t border-line pt-4" />
       </div>
     </>
   );

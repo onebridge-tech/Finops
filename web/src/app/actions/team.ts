@@ -186,6 +186,15 @@ export async function updatePreferences(_prev: TeamState, form: FormData): Promi
   return { ok: true, info: "Saved" };
 }
 
+/** Changes only the app language, from the language picker in the top bar. */
+export async function setLanguage(form: FormData): Promise<void> {
+  const { user } = await requireUser();
+  const lang = field(form, "uiLanguage");
+  if (!(lang in UI_LANGUAGES)) return;
+  await db.user.update({ where: { id: user.id }, data: { uiLanguage: lang } });
+  revalidatePath("/", "layout");
+}
+
 /** Saves which dashboard tiles this member sees, in order (IR-01). */
 export async function saveDashboardTiles(_prev: TeamState, form: FormData): Promise<TeamState> {
   const ctx = await requireBusiness();

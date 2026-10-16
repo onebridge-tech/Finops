@@ -15,7 +15,7 @@ import { OfflineRegister } from "@/components/offline-register";
 import { SignOutButton } from "@/components/sign-out-button";
 import { isPlatformAdmin } from "@/lib/platform-auth";
 import { BottomNav, SideNav, type NavGroup, type NavItem } from "./nav-links";
-import { BranchSwitcher, BusinessSwitcher, IdleLock, LockButton } from "./header-controls";
+import { BranchSwitcher, BusinessSwitcher, IdleLock, LanguageSwitcher, LockButton } from "./header-controls";
 import { userLabel } from "@/lib/identity";
 
 const GROUP_TITLE = { Sell: "Selling", Stock: "Items & stock", Money: "Money", Field: "On the road", Business: "Your shop" } as const;
@@ -94,6 +94,7 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
                 <kbd className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 rounded border border-line bg-card px-1.5 text-[11px] text-muted">Ctrl K</kbd>
               </form>
               <div className="ml-auto flex items-center gap-1 lg:ml-0">
+                <LanguageSwitcher current={user.uiLanguage} />
                 <Link href="/search" aria-label={t("nav.search")} className="flex size-9 items-center justify-center rounded-lg text-muted hover:bg-bg lg:hidden"><Icon name="search" size={18} /></Link>
                 {user.pinHash && <span className="lg:hidden"><LockButton /></span>}
                 <SignOutButton action={logout} label={t("nav.signout")} className="flex size-9 items-center justify-center rounded-lg text-muted hover:bg-bg hover:text-ink lg:hidden">

@@ -4,6 +4,8 @@ import { BRAND } from "@/lib/brand";
 import { Icon, Logo, type IconName } from "@/components/icon";
 import { Avatar, LinkButton } from "@/components/ui";
 import { UI_LANGUAGES } from "@/lib/i18n";
+import { LegalLinks } from "@/components/legal-page";
+import { LEGAL } from "@/lib/legal";
 
 const STEPS: [IconName, string, string][] = [
   ["note", "Write it down", "Add a customer and type what they took on credit. It takes a few seconds."],
@@ -74,8 +76,10 @@ export default async function Home() {
         </ol>
       </section>
 
-      <footer className="border-t border-line py-6 text-sm text-muted">
-        Available in {Object.values(UI_LANGUAGES).join(" · ")}.
+      <footer className="space-y-3 border-t border-line py-6 text-sm text-muted">
+        <p>Available in {Object.values(UI_LANGUAGES).join(" · ")}.</p>
+        <LegalLinks />
+        <p className="text-xs">© {new Date().getFullYear()} {LEGAL.COMPANY}</p>
       </footer>
     </main>
   );

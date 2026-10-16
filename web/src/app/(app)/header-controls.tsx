@@ -3,6 +3,8 @@
 import { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { lockNow, switchBranch, switchBusiness } from "@/app/actions/auth";
+import { setLanguage } from "@/app/actions/team";
+import { UI_LANGUAGES } from "@/lib/i18n";
 import { Icon } from "@/components/icon";
 
 /** Business picker (LG-12). The last option goes to onboarding to add another business. */
@@ -75,6 +77,26 @@ export function LockButton() {
   return (
     <form action={lockNow}>
       <button title="Lock the app" aria-label="Lock the app" className="flex size-9 items-center justify-center rounded-lg text-muted hover:bg-bg hover:text-ink"><Icon name="lock" size={18} /></button>
+    </form>
+  );
+}
+
+/** Always-visible language picker. Names are written in their own script so a person who cannot read the current language can still find theirs. */
+export function LanguageSwitcher({ current }: { current: string }) {
+  return (
+    <form action={setLanguage} translate="no" className="relative">
+      <Icon name="globe" size={16} className="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 text-muted" />
+      <select
+        key={current}
+        name="uiLanguage"
+        defaultValue={current}
+        aria-label="Language / భాష / भाषा / மொழி / ಭಾಷೆ"
+        title="Language / భాష / भाषा / மொழி / ಭಾಷೆ"
+        className="h-9 cursor-pointer rounded-lg border border-line bg-card py-0 pl-7 pr-1.5 text-sm font-medium shadow-sm outline-none hover:bg-bg focus-visible:border-brand"
+        onChange={(e) => e.currentTarget.form?.requestSubmit()}
+      >
+        {Object.entries(UI_LANGUAGES).map(([code, name]) => <option key={code} value={code}>{name}</option>)}
+      </select>
     </form>
   );
 }
