@@ -33,7 +33,7 @@ export default async function PayPage({ params }: PageProps<"/pay/[token]">) {
         <form action={completeTestPayment} className="mt-6 rounded-xl border border-dashed border-line bg-card p-5">
           <input type="hidden" name="token" value={token} />
           <p className="mb-3 text-sm text-muted">Test mode: no money is taken.</p>
-          <button className="rounded-lg bg-brand px-4 py-2 font-semibold text-white">Pay {formatINR(Number(pay.amountPaise))} (test)</button>
+          <button className="rounded-lg bg-brand px-4 py-2 font-semibold text-brand-ink">Pay {formatINR(Number(pay.amountPaise))} (test)</button>
         </form>
       ) : (
         <p className="mt-6 rounded-xl border border-line bg-card p-5 text-sm text-muted">Waiting for your payment to be confirmed. Refresh this page in a moment.</p>

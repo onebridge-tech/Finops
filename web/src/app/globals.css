@@ -1,20 +1,24 @@
 @import "tailwindcss";
 
-/* One palette for the whole app. Indigo is the brand; green and red are reserved for money. */
+/* One palette for the whole app, from the OneBridge logo: orange (#FF8000) and charcoal (#3B3C3B).
+   Orange fills buttons and highlights with charcoal text on it; text links use a deeper orange so they stay readable.
+   Green and red are reserved for money. */
 :root {
-  --bg: #f5f6fa;
+  --bg: #f7f6f4;
   --card: #ffffff;
-  --ink: #0f172a;
-  --muted: #5b6678;
-  --line: #e4e7ee;
-  --brand: #4f46e5;
-  --brand-ink: #ffffff;
-  --brand-soft: #eef0ff;
+  --ink: #1f2020;
+  --muted: #5d605f;
+  --line: #e7e4e0;
+  --brand: #ff8000;
+  --brand-ink: #1f2020;
+  --brand-soft: #fff1e2;
+  --brand-text: #b85a00;
+  --charcoal: #3b3c3b;
   --gave: #d92d20; /* money still to come in (red) */
   --got: #067647; /* money received (green) */
   --warn: #b54708;
-  --shadow: 0 1px 2px rgb(16 24 40 / 0.04), 0 1px 3px rgb(16 24 40 / 0.06);
-  --shadow-lg: 0 12px 32px rgb(16 24 40 / 0.12);
+  --shadow: 0 1px 2px rgb(31 32 32 / 0.04), 0 1px 3px rgb(31 32 32 / 0.06);
+  --shadow-lg: 0 12px 32px rgb(31 32 32 / 0.12);
 }
 
 @theme inline {
@@ -26,6 +30,7 @@
   --color-brand: var(--brand);
   --color-brand-ink: var(--brand-ink);
   --color-brand-soft: var(--brand-soft);
+  --color-charcoal: var(--charcoal);
   --color-gave: var(--gave);
   --color-got: var(--got);
   --color-warn: var(--warn);
@@ -34,14 +39,16 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #0b1020;
-    --card: #121a2e;
-    --ink: #e8ecf6;
-    --muted: #97a3ba;
-    --line: #243049;
-    --brand: #8b93ff;
-    --brand-ink: #0b1020;
-    --brand-soft: #1c2447;
+    --bg: #151616;
+    --card: #1f2020;
+    --ink: #f2f0ed;
+    --muted: #a6a8a6;
+    --line: #333534;
+    --brand: #ff8a1a;
+    --brand-ink: #1a1a1a;
+    --brand-soft: #3a2614;
+    --brand-text: #ffa14a;
+    --charcoal: #2a2b2a;
     --gave: #f97066;
     --got: #32d583;
     --warn: #fdb022;
@@ -54,9 +61,9 @@ html { scroll-behavior: smooth; }
 
 /* Bills, quotes and receipts always look like paper, even when the app is in dark mode. */
 .paper {
-  --card: #ffffff; --ink: #0f172a; --muted: #5b6678; --line: #e4e7ee; --bg: #f5f6fa;
+  --card: #ffffff; --ink: #1f2020; --muted: #5d605f; --line: #e7e4e0; --bg: #f7f6f4; --brand-text: #b85a00;
   --gave: #d92d20; --got: #067647;
-  background: #ffffff; color: #0f172a; color-scheme: light;
+  background: #ffffff; color: #1f2020; color-scheme: light;
 }
 
 body {
@@ -115,4 +122,9 @@ body {
   .lp-swap, .lp-float, .lp-float-slow, .lp-pop, .lp-ripple, .lp-caret, .lp-marquee, .lp-bar, .lp-progress, .lp-draw, .lp-cta { animation: none !important; }
   .lp-draw { stroke-dashoffset: 0; }
   html { scroll-behavior: auto; }
+}
+
+/* Orange text on white is hard to read, so text and icons in the brand colour use the deeper shade. */
+@layer utilities {
+  .text-brand, .hover\:text-brand:hover, .group:hover .group-hover\:text-brand { color: var(--brand-text); }
 }

@@ -11,16 +11,16 @@ export const contentType = "image/png";
 export default function OpenGraph() {
   return new ImageResponse(
     (
-      <div style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", justifyContent: "space-between", background: "#0b1020", color: "#e8ecf6", padding: 72 }}>
+      <div style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", justifyContent: "space-between", background: "#1f2020", color: "#f2f0ed", padding: 72 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
           <MarkSvg size={72} />
           <span style={{ fontSize: 44, fontWeight: 700 }}>{BRAND.NAME}</span>
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
           <span style={{ fontSize: 76, fontWeight: 700, lineHeight: 1.1, maxWidth: 980 }}>{BRAND.TAGLINE}</span>
-          <span style={{ fontSize: 32, color: "#97a3ba", maxWidth: 900 }}>Credit book, WhatsApp reminders and GST bills for small shops.</span>
+          <span style={{ fontSize: 32, color: "#a6a8a6", maxWidth: 900 }}>Credit book, WhatsApp reminders and GST bills for small shops.</span>
         </div>
-        <div style={{ display: "flex", gap: 14, fontSize: 26, color: "#8b93ff" }}>
+        <div style={{ display: "flex", gap: 14, fontSize: 26, color: "#ff8a1a" }}>
           <span>Free to start</span><span>·</span><span>Works on any phone</span><span>·</span><span>English, Telugu, Hindi, Tamil, Kannada</span>
         </div>
       </div>

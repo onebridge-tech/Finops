@@ -22,7 +22,7 @@ export const metadata: Metadata = {
   appleWebApp: { capable: true, title: BRAND.NAME, statusBarStyle: "default" },
 };
 
-export const viewport: Viewport = { themeColor: "#4f46e5", width: "device-width", initialScale: 1 };
+export const viewport: Viewport = { themeColor: "#ff8000", width: "device-width", initialScale: 1 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (

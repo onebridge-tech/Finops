@@ -1,8 +1,8 @@
 import type { CSSProperties } from "react";
 
-// The FinOps mark: a rupee sign on an indigo tile. One drawing is used for the in-app logo, the browser icon,
+// The FinOps mark: a charcoal rupee sign on an orange tile, in the OneBridge logo colours. One drawing is used for the in-app logo, the browser icon,
 // the home-screen icons and the share image, so they always match.
-export const MARK = { bg: "#4f46e5", fg: "#ffffff", path: "M7 5h10M7 9h10M7 5c5 0 7 1.5 7 4s-2 4-7 4l8 6" } as const;
+export const MARK = { bg: "#ff8000", fg: "#2b2c2b", path: "M7 5h10M7 9h10M7 5c5 0 7 1.5 7 4s-2 4-7 4l8 6" } as const;
 
 /**
  * The mark as an SVG element. `rounded` is the corner radius as a share of the tile (0 = square, for icons
