@@ -21,6 +21,10 @@ export async function register() {
   await applyConnections();
   setInterval(() => void applyConnections(), 60_000);
 
+  // Keeps a free-plan server from falling asleep between visitors (see lib/keep-awake.ts).
+  const { startKeepAwake } = await import("./lib/keep-awake");
+  startKeepAwake();
+
   const every = (ms: number, job: () => Promise<unknown>) => {
     setInterval(job, ms);
     setTimeout(job, 30_000);

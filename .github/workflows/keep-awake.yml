@@ -1,0 +1,21 @@
+# Backup for the server's own keep-awake ping: if the server ever falls asleep (after a restart or a quiet night),
+# this wakes it. GitHub runs scheduled jobs roughly on time, sometimes a few minutes late.
+# Set a repository variable APP_URL (Settings → Secrets and variables → Actions → Variables) to change the address.
+name: Keep server awake
+
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Ping the health check
+        run: |
+          url="${APP_URL:-https://finops.onebridgeinfotech.com}"
+          curl --silent --show-error --fail --max-time 90 --retry 2 --retry-delay 10 "${url%/}/api/health" || echo "::warning::server did not answer"
+        env:
+          APP_URL: ${{ vars.APP_URL }}
