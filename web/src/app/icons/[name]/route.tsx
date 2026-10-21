@@ -6,6 +6,7 @@ import { MarkSvg } from "@/lib/brand-mark";
 const ICONS: Record<string, { px: number; rounded: number; inset: number }> = {
   "192.png": { px: 192, rounded: 0.22, inset: 0 },
   "512.png": { px: 512, rounded: 0.22, inset: 0 },
+  "maskable-192.png": { px: 192, rounded: 0, inset: 0.1 },
   "maskable-512.png": { px: 512, rounded: 0, inset: 0.1 },
 };
 
