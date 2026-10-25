@@ -28,6 +28,13 @@ export function authUrl(state: string, challenge: string): string {
 
 export type GoogleProfile = { sub: string; email: string; name: string | null };
 
+/** Writes why a Google sign-in failed to the server log (never codes, tokens or the secret) and returns null. */
+export function logGoogleFailure(reason: string): null {
+  console.warn(`[google-signin] ${reason}`);
+  return null;
+}
+const fail = logGoogleFailure;
+
 /** Trades the one-time code for the person's verified Google profile, or returns null. */
 export async function profileFromCode(code: string, verifier: string): Promise<GoogleProfile | null> {
   const res = await fetch("https://oauth2.googleapis.com/token", {
@@ -38,15 +45,22 @@ export async function profileFromCode(code: string, verifier: string): Promise<G
       redirect_uri: redirectUri(), grant_type: "authorization_code", code_verifier: verifier,
     }),
   });
-  if (!res.ok) return null;
+  if (!res.ok) {
+    // e.g. invalid_client (wrong secret), redirect_uri_mismatch (APP_URL differs from Google's list), invalid_grant (code reused or expired)
+    const e = (await res.json().catch(() => ({}))) as { error?: string; error_description?: string };
+    return fail(`token exchange ${res.status}: ${e.error ?? "unknown"}${e.error_description ? ` (${e.error_description})` : ""} · redirect_uri=${redirectUri()}`);
+  }
   const { id_token } = (await res.json()) as { id_token?: string };
-  if (!id_token) return null;
+  if (!id_token) return fail("token exchange returned no id_token");
   // Google checks the signature and expiry of its own token for us.
   const check = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${encodeURIComponent(id_token)}`);
-  if (!check.ok) return null;
+  if (!check.ok) return fail(`tokeninfo ${check.status}`);
   const t = (await check.json()) as { aud?: string; iss?: string; sub?: string; email?: string; email_verified?: string | boolean; name?: string };
   const issuerOk = t.iss === "https://accounts.google.com" || t.iss === "accounts.google.com";
   const verified = t.email_verified === true || t.email_verified === "true";
-  if (t.aud !== process.env.GOOGLE_CLIENT_ID || !issuerOk || !verified || !t.sub || !t.email) return null;
+  if (t.aud !== process.env.GOOGLE_CLIENT_ID) return fail("token was issued for a different client ID");
+  if (!issuerOk) return fail(`unexpected issuer ${t.iss}`);
+  if (!verified || !t.email) return fail("Google account has no verified email");
+  if (!t.sub) return fail("token has no account id");
   return { sub: t.sub, email: t.email.toLowerCase(), name: t.name ?? null };
 }

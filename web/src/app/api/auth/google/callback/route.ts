@@ -1,6 +1,6 @@
 import { cookies } from "next/headers";
 import { db } from "@/lib/db";
-import { googleEnabled, profileFromCode } from "@/lib/google";
+import { googleEnabled, logGoogleFailure, profileFromCode } from "@/lib/google";
 import { readSession } from "@/lib/session";
 import { signInUser } from "@/lib/signin";
 
@@ -17,10 +17,17 @@ export async function GET(request: Request) {
   const saved = jar.get("g_oauth")?.value;
   jar.delete("g_oauth");
   let flow: { state: string; verifier: string; link: boolean };
-  try { flow = JSON.parse(saved ?? ""); } catch { return fail("google_failed"); }
+  try { flow = JSON.parse(saved ?? ""); } catch {
+    // Usually APP_URL differs from the address the person started on, so the browser did not send the cookie back.
+    logGoogleFailure(`no sign-in cookie on return (callback reached at ${url.host}; APP_URL=${process.env.APP_URL ?? "unset"})`);
+    return fail("google_failed");
+  }
 
   const code = url.searchParams.get("code");
-  if (url.searchParams.get("error") || !code || url.searchParams.get("state") !== flow.state) return fail("google_failed");
+  const gErr = url.searchParams.get("error");
+  if (gErr) { logGoogleFailure(`Google returned error=${gErr}`); return fail("google_failed"); }
+  if (!code) { logGoogleFailure("Google returned no code"); return fail("google_failed"); }
+  if (url.searchParams.get("state") !== flow.state) { logGoogleFailure("state did not match"); return fail("google_failed"); }
   const profile = await profileFromCode(code, flow.verifier);
   if (!profile) return fail("google_failed");
 
