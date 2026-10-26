@@ -127,6 +127,32 @@ export function buildTxns(rows: string[][], map: Mapping, firstRow = 2): Parsed 
   return { txns, errors };
 }
 
+export type BalanceCheck = { checked: number; order: "oldest-first" | "newest-first"; mismatches: { date: string; description: string; amountPaise: number; direction: Direction; expectedPaise: number; shownPaise: number }[] };
+
+/**
+ * Proof the rows were read right: each balance must equal the one before it plus money in, minus money out. A row
+ * that was missed or an amount that was misread breaks the chain at that row. Statements list oldest or newest
+ * first; the order that fits more rows is used. Null when the statement has no balance column to check against.
+ */
+export function checkBalances(txns: Txn[]): BalanceCheck | null {
+  const withBal = txns.filter((t) => t.balancePaise !== null);
+  if (withBal.length < 2 || withBal.length < txns.length) return null;
+  const signed = (t: Txn) => (t.direction === "IN" ? t.amountPaise : -t.amountPaise);
+  const run = (list: Txn[]) => {
+    const bad: BalanceCheck["mismatches"] = [];
+    for (let i = 1; i < list.length; i++) {
+      const expected = list[i - 1]!.balancePaise! + signed(list[i]!);
+      if (expected !== list[i]!.balancePaise) bad.push({ date: list[i]!.date, description: list[i]!.description, amountPaise: list[i]!.amountPaise, direction: list[i]!.direction, expectedPaise: expected, shownPaise: list[i]!.balancePaise! });
+    }
+    return bad;
+  };
+  const asc = run(withBal);
+  const desc = run([...withBal].reverse());
+  return desc.length < asc.length
+    ? { checked: withBal.length - 1, order: "newest-first", mismatches: desc }
+    : { checked: withBal.length - 1, order: "oldest-first", mismatches: asc };
+}
+
 /** The same transaction in two overlapping statements has the same fingerprint, so it is only counted once. */
 export function txnHash(t: Txn): string {
   return createHash("sha1").update([t.date, t.direction, t.amountPaise, t.balancePaise ?? "", t.description.toLowerCase().replace(/[^a-z0-9]+/g, "")].join("|")).digest("hex");

@@ -28,7 +28,7 @@ export const MENU: MenuItem[] = [
   { href: "/settings/tally", icon: "link", label: "Connect to Tally", about: "Send your bills to your accountant’s Tally", group: "Business", permission: "settings:write" },
   { href: "/settings/team", icon: "users", label: "Staff & access", about: "Add your people and choose what each one can see and do", group: "Business", permission: "team:manage" },
   { href: "/settings/branches", icon: "shop", label: "Shop branches", about: "More than one shop or godown? Keep each one’s bills separate", group: "Business", permission: "settings:write" },
-  { href: "/settings/security", icon: "lock", label: "Security & sign-in", about: "Your PIN lock, how you sign in, language and signing out devices", group: "Business" },
+  { href: "/settings/security", icon: "lock", label: "Security & sign-in", about: "Your PIN lock, how you sign in, language, signing out devices and deleting your account", group: "Business" },
   { href: "/settings/audit", icon: "clock", label: "Who changed what", about: "A record of every change, with who did it and when", group: "Business", permission: "reports:view" },
   { href: "/settings/templates", icon: "note", label: "Message wording", about: "Change the words your customers get on WhatsApp", group: "Business", permission: "settings:write" },
   { href: "/settings/credits", icon: "card", label: "Message credits", about: "SMS costs one credit each. WhatsApp is free", group: "Business", permission: "settings:write" },

@@ -19,6 +19,11 @@ const num = (v: string, fallback: number) => {
 /** Everything the admin has filled in, with defaults for the few values that have one. Never throws, so public pages still open if the database is busy. */
 export const getSite = cache(async (): Promise<SiteInfo> => {
   await connection(); // always read the current details, never a copy made at build time
+  return readSite();
+});
+
+/** The same, for work done outside a page or action (scheduled jobs), where there is no request to wait for. */
+export async function readSite(): Promise<SiteInfo> {
   const stored = new Map<string, string>();
   try {
     for (const r of await db.siteSetting.findMany()) stored.set(r.key, r.value);
@@ -30,4 +35,4 @@ export const getSite = cache(async (): Promise<SiteInfo> => {
   out.replyDaysNum = num(out.replyDays, 15);
   out.deleteDaysNum = num(out.deleteDays, 30);
   return out;
-});
+}

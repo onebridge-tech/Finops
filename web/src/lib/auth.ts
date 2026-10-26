@@ -12,12 +12,14 @@ export { can, ROLES, ROLE_LABEL, type Permission, type Role } from "./roles";
 const session = cache(readSession);
 
 /** Signed-in, unlocked user, or redirect to login / the lock screen. */
-export async function requireUser() {
+export async function requireUser(o: { closedAccountOk?: boolean } = {}) {
   const s = await session();
   if (!s) redirect("/login");
   if (s.locked) redirect("/lock");
   const user = await db.user.findUnique({ where: { id: s.uid } });
   if (!user) redirect("/login");
+  // An account waiting to be erased opens nothing but the page where it can be kept (lib/erase.ts).
+  if (user.deletionRequestedAt && !o.closedAccountOk) redirect("/account/delete");
   return { user, session: s };
 }
 
@@ -43,7 +45,7 @@ export async function requireBusiness(permission?: Permission) {
     }
     redirect(isPlatformAdmin(user) ? "/platform" : "/onboarding");
   }
-  if (membership.business.suspendedAt) redirect("/suspended");
+  if (membership.business.suspendedAt || membership.business.closingAt) redirect("/suspended");
   const role = membership.role as Role;
   if (permission && !can(role, permission)) forbidden();
   const branchId = membership.branchId ?? session.brid ?? null;

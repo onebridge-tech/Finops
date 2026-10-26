@@ -62,7 +62,7 @@ export default async function Grievance() {
 
       <Section title="Delete my data">
         <p>
-          To close your shop and erase its data, write to {s.privacyEmail ? <Mail className={linkClass} to={s.privacyEmail} /> : s.supportEmail ? <Mail className={linkClass} to={s.supportEmail} /> : "us"} from the email or phone number on the account with the subject “Delete my FinOps data”. Download your records first from <b>Excel &amp; backup</b>. We finish within {s.deleteDaysNum} days of confirming that the request is yours. What we may have to keep by law is explained in the <Link className={linkClass} href="/privacy">Privacy Policy</Link>.
+          You can delete your account yourself: sign in, open <b>Security &amp; sign-in</b> and choose <b>Delete my account</b>. It closes at once and is erased after {s.deleteDaysNum} days, together with any shop of which you are the only owner; until then you can cancel. Or write to {s.privacyEmail ? <Mail className={linkClass} to={s.privacyEmail} /> : s.supportEmail ? <Mail className={linkClass} to={s.supportEmail} /> : "us"} from the email or phone number on the account with the subject “Delete my FinOps data”. Either way, download your records first from <b>Excel &amp; backup</b>. We finish within {s.deleteDaysNum} days of confirming that the request is yours. What we may have to keep by law is explained in the <Link className={linkClass} href="/privacy">Privacy Policy</Link>.
         </p>
       </Section>
 

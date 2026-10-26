@@ -21,7 +21,7 @@ const field = (f: FormData, k: string) => String(f.get(k) ?? "");
  */
 export async function placeCatalogueOrder(_prev: CatalogueOrderState, form: FormData): Promise<CatalogueOrderState> {
   if (field(form, "website")) return { ok: true, number: "—" }; // honeypot: bots fill every field
-  const business = await db.business.findFirst({ where: { catalogToken: field(form, "token"), catalogEnabled: true, suspendedAt: null } });
+  const business = await db.business.findFirst({ where: { catalogToken: field(form, "token"), catalogEnabled: true, suspendedAt: null, closingAt: null } });
   if (!business) return { error: "This catalogue is not available." };
 
   const name = field(form, "name").trim().slice(0, 80);

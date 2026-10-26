@@ -83,7 +83,7 @@ export default async function Terms() {
 
       <Section title="11. Suspension and ending">
         <ul>
-          <li>You can stop using the Service at any time and ask us to delete your shop (see the <Link href="/privacy">Privacy Policy</Link>).</li>
+          <li>You can stop using the Service at any time and delete your account yourself from <b>Security &amp; sign-in → Delete my account</b>. Your account closes at once and is erased, with any shop of which you are the only owner, after the waiting time stated in the <Link href="/privacy">Privacy Policy</Link>. You are responsible for downloading and keeping the records the law asks you to keep (for example under GST and income-tax law) before that.</li>
           <li>We may pause or end an account if you break these Terms, if the law requires it, if payments are unpaid, or to protect other people or the Service. Where possible we will tell you why and give you time to download Your Data, except where this would be unsafe or unlawful.</li>
           <li>While a shop is paused, its records are kept safe and are not deleted.</li>
         </ul>

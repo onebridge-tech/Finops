@@ -2,6 +2,7 @@ import Link from "next/link";
 import { LegalPage, Mail, Section } from "@/components/legal-page";
 import { getSite } from "@/lib/site-settings";
 import { BRAND } from "@/lib/brand";
+import { BACKUP_KEEP as BACKUP_DAYS } from "@/lib/backup-keep";
 
 export const metadata = { title: "Privacy Policy", description: `How ${BRAND.NAME} collects, uses and protects personal data.` };
 
@@ -32,7 +33,7 @@ export default async function Privacy() {
           <li>Shop details: name, address, GSTIN, UPI ID, bank details you choose to print on bills, logo and signature.</li>
           <li>Customers and suppliers: name, mobile number, email, address, GSTIN, credit terms, notes, and whether they agreed to receive messages.</li>
           <li>Money records: credit given, payments, bills, quotes, orders, items, stock, expenses, cash book and attachments such as bill photos, PDFs and voice notes.</li>
-          <li>Bank or UPI statements you upload for “Money in &amp; out”: dates, amounts, descriptions, names of payers and payees, and balances, read from the file.</li>
+          <li>Bank or UPI statements you add for “Money in &amp; out”: dates, amounts, descriptions, names of payers and payees, and balances, read from the file. The statement file itself is not kept. A <b>PDF statement is opened on your own device</b>: the PDF is never uploaded to us, and if it is locked, the password you type is used only to open it there. It is never sent to us or saved anywhere. Only the transactions you check and add reach us.</li>
           <li>Photos of paper notes that you upload to be read, and the lines read from them.</li>
           <li>Field work, if you use it: visits, check-in times and, only if your phone allows it and you start a visit, the location where you checked in.</li>
         </ul>
@@ -76,7 +77,10 @@ export default async function Privacy() {
       <Section title="6. How long we keep it">
         <ul>
           <li>While your shop is active, we keep your records so the app can work.</li>
-          <li>If you ask us in writing to delete your shop, we close it and permanently erase its data within {site.deleteDaysNum} days of confirming the request is yours, unless the law requires us to keep something longer. Backups that contain it are removed as they expire.</li>
+          <li><b>You can delete your account yourself</b>, any time: <b>Security &amp; sign-in → Delete my account</b>. The page explains what will happen before anything is done. Your account closes straight away and you are signed out everywhere; it is permanently erased {site.deleteDaysNum} days later, together with every shop of which you are the only owner. Until then you can change your mind by signing in and choosing “Keep my account”. A shop that has other owners stays with them; you are only removed from it.</li>
+          <li>You can also ask us in writing to delete your account or your shop. We do the same within {site.deleteDaysNum} days of confirming the request is yours.</li>
+          <li>Our daily backups that still contain erased data are replaced within {BACKUP_DAYS} days after it is erased.</li>
+          <li>After erasure we keep only a note that an account was deleted and when, without your name, email or phone number, so we can show the request was carried out, and records of payments you made to us for as long as tax law requires.</li>
           <li>Some records may have to be kept for the period tax and company laws require (for example, GST records for several years). We keep only what is needed and only for that purpose.</li>
           <li>Verification codes expire within 10 minutes. Security and error logs are kept for a limited time.</li>
         </ul>
@@ -97,11 +101,12 @@ export default async function Privacy() {
         <ul>
           <li>tell you what personal data we hold about you and how it is used;</li>
           <li>correct or complete it;</li>
-          <li>erase it, when it is no longer needed and the law does not require us to keep it;</li>
+          <li>erase it, when it is no longer needed and the law does not require us to keep it. You can do this yourself with <b>Delete my account</b> (see section 6);</li>
+          <li>withdraw a consent you gave, as easily as you gave it (for example, a customer can stop messages with one tap);</li>
           <li>take up a complaint about how it is handled; and</li>
           <li>name someone to exercise these rights for you if you cannot.</li>
         </ul>
-        <p>Shop users can see and fix most of this inside the app and download everything from <b>Excel &amp; backup</b>. For anything else {site.privacyEmail ? <>write to <Mail to={site.privacyEmail} /></> : <>use <Link href="/grievance">Contact &amp; Grievance</Link></>}. We may need to check who you are first. We reply within {site.replyDaysNum} days. If you are unhappy with the answer, you can go to the Data Protection Board of India once it is in place.</p>
+        <p>Wherever the app asks for personal details, a short “Why we ask” note next to the form says why it is needed, how long it is kept and who sees it. Shop users can see and fix most of this inside the app and download everything from <b>Excel &amp; backup</b>. For anything else {site.privacyEmail ? <>write to <Mail to={site.privacyEmail} /></> : <>use <Link href="/grievance">Contact &amp; Grievance</Link></>}. We may need to check who you are first. We reply within {site.replyDaysNum} days. If you are unhappy with the answer, you can go to the Data Protection Board of India once it is in place.</p>
       </Section>
 
       <Section title="9. Children">

@@ -22,7 +22,7 @@ export async function runAutoReminders(opts: { now?: Date; businessId?: string; 
   const summary: RunSummary = { checked: 0, sent: 0, skipped: 0, failed: 0 };
   if (!opts.ignoreHours && !withinSendingHours(now)) return { ...summary, outsideHours: true };
 
-  const businesses = await db.business.findMany({ where: { suspendedAt: null, ...(opts.businessId ? { id: opts.businessId } : {}) } });
+  const businesses = await db.business.findMany({ where: { suspendedAt: null, closingAt: null, ...(opts.businessId ? { id: opts.businessId } : {}) } });
   for (const business of businesses) {
     const parties = await db.party.findMany({
       where: {

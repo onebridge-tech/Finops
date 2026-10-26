@@ -2,7 +2,7 @@
 // platform admin under Platform admin > Company info and read through getSite() in lib/site-settings.ts.
 export const LEGAL = {
   /** Date these documents were last changed. Update it whenever the text changes. */
-  UPDATED: "17 October 2026",
+  UPDATED: "26 October 2026",
   SITE: "https://finops.onebridgeinfotech.com",
 } as const;
 

@@ -1,6 +1,6 @@
 import "server-only";
 import { createHmac, randomBytes, timingSafeEqual } from "node:crypto";
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { db } from "./db";
 
@@ -20,6 +20,12 @@ export async function getObject(key: string): Promise<Buffer> {
   const file = path.resolve(ROOT, key);
   if (!file.startsWith(path.resolve(ROOT))) throw new Error("Bad key");
   return readFile(file);
+}
+
+/** Every file a shop uploaded (they are all kept under its id), for erasing the shop. */
+export async function removeBusinessFiles(businessId: string) {
+  if (!/^[A-Za-z0-9_-]+$/.test(businessId)) throw new Error("Bad business id");
+  await rm(path.join(ROOT, businessId), { recursive: true, force: true });
 }
 
 export type FileKind = "LOGO" | "SIGNATURE" | "ITEM_IMAGE" | "ATTACHMENT";
