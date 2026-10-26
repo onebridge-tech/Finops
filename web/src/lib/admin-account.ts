@@ -9,10 +9,15 @@ import { hashPassword, passwordProblem, verifyPassword } from "./password";
 // At every start the account is created if missing, marked verified, and given that password. To change the
 // password, change it on the server and restart; it can't be changed from inside the app.
 
-export async function ensureAdminAccount(env: Record<string, string | undefined> = process.env): Promise<"off" | "weak" | "created" | "updated" | "same"> {
-  const email = normalizeEmail(env.PLATFORM_ADMIN_EMAIL ?? "");
+export async function ensureAdminAccount(env: Record<string, string | undefined> = process.env): Promise<"off" | "bad-email" | "weak" | "created" | "updated" | "same"> {
+  const rawEmail = (env.PLATFORM_ADMIN_EMAIL ?? "").trim();
   const password = env.PLATFORM_ADMIN_PASSWORD ?? "";
-  if (!email || !password) return "off";
+  if (!rawEmail || !password) return "off";
+  const email = normalizeEmail(rawEmail);
+  if (!email) {
+    console.error("[admin] PLATFORM_ADMIN_EMAIL is not a valid email address (remove any quotes or spaces)");
+    return "bad-email";
+  }
   const problem = passwordProblem(password, email);
   if (problem || password.length < 12) {
     console.error(`[admin] PLATFORM_ADMIN_PASSWORD not used: ${problem ?? "use at least 12 characters for the admin"}`);

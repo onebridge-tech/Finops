@@ -25,7 +25,9 @@ export async function register() {
     // The platform admin's email + password from the server settings (see lib/admin-account.ts).
     const { ensureAdminAccount } = await import("./lib/admin-account");
     await ensureAdminAccount()
-      .then((r) => r !== "off" && console.log(`[admin] admin account: ${r}`))
+      .then((r) => console.log(r === "off"
+        ? `[admin] no server admin login: PLATFORM_ADMIN_EMAIL is ${process.env.PLATFORM_ADMIN_EMAIL?.trim() ? "set" : "missing"}, PLATFORM_ADMIN_PASSWORD is ${process.env.PLATFORM_ADMIN_PASSWORD ? "set" : "missing"}`
+        : `[admin] admin account for ${process.env.PLATFORM_ADMIN_EMAIL?.trim().toLowerCase()}: ${r}`))
       .catch((e) => console.error("[admin] could not set up the admin account", e instanceof Error ? e.message : e));
   }
   // Connections set by a platform admin (keys for AI, SMS, email, payments…) are put in place at start and refreshed every minute,
