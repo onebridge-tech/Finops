@@ -10,5 +10,5 @@ export async function GET(_req: Request, ctx: RouteContext<"/join/[code]">) {
   if (/^[a-z0-9]{8}$/.test(code) && (await db.business.count({ where: { referralCode: code } }))) {
     (await cookies()).set(REF_COOKIE, code, { httpOnly: true, sameSite: "lax", secure: process.env.NODE_ENV === "production", path: "/", maxAge: 30 * 86400 });
   }
-  redirect("/login?invited=1");
+  redirect("/register");
 }

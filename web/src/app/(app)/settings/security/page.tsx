@@ -6,7 +6,7 @@ import { isPlatformAdmin } from "@/lib/platform-auth";
 import { Badge } from "@/components/ui";
 import { EmailLink } from "./email-link";
 import { Card, PageHeader, fmtDate } from "@/components/ui";
-import { NameForm, PinForm, PreferencesForm } from "./forms";
+import { NameForm, PasswordForm, PinForm, PreferencesForm } from "./forms";
 
 export const metadata = { title: "You & your security" };
 
@@ -21,7 +21,8 @@ function device(ua: string | null): string {
 export default async function Security({ searchParams }: PageProps<"/settings/security">) {
   const sp = await searchParams;
   const { user, session } = await requireBusiness();
-  const methods = [user.phone, user.email, user.googleSub].filter(Boolean).length;
+  // Google can be disconnected only while there is another way back in: a verified email with a password.
+  const methods = (user.googleSub ? 1 : 0) + (user.emailVerifiedAt && user.passwordHash ? 1 : 0);
   const admin = isPlatformAdmin(user);
   const sessions = await db.session.findMany({
     where: { userId: user.id, revokedAt: null, expiresAt: { gt: new Date() } },
@@ -39,19 +40,31 @@ export default async function Security({ searchParams }: PageProps<"/settings/se
       <Card className="mb-6 space-y-4">
         <div>
           <h2 className="text-base font-semibold tracking-tight">How you sign in</h2>
-          <p className="text-sm text-muted">Add more than one way, so you can always get back in.</p>
+          <p className="text-sm text-muted">You sign in with your email and password{googleEnabled() ? ", or with Google" : ""}.</p>
         </div>
+        {sp.password === "1" && !user.passwordHash && <p role="alert" className="rounded-lg border border-warn/30 bg-warn/10 px-3 py-2.5 text-sm text-warn">Set a password below. Phone sign-in has been switched off, so you will need your email and password next time.</p>}
         <ul className="divide-y divide-line">
-          <li className="flex flex-wrap items-center justify-between gap-2 py-3">
-            <span><span className="block font-medium">Mobile number</span><span className="text-sm text-muted">{user.phone ? `+${user.phone}` : "Not added"}</span></span>
-            {user.phone && <Badge tone="good">Verified</Badge>}
-          </li>
           <li className="space-y-2 py-3">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <span><span className="block font-medium">Email</span><span className="text-sm text-muted">{user.email ?? "Not added"}</span></span>
-              {user.email && <Badge tone="good">Verified</Badge>}
+              {user.email && user.emailVerifiedAt && <Badge tone="good">Verified</Badge>}
             </div>
-            {!user.email && <EmailLink />}
+            {!(user.email && user.emailVerifiedAt) && <EmailLink />}
+          </li>
+          <li className="space-y-3 py-3">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <span>
+                <span className="block font-medium">Password</span>
+                <span className="text-sm text-muted">{user.passwordHash ? `Set${user.passwordChangedAt ? ` · changed ${fmtDate(user.passwordChangedAt)}` : ""}` : "Not set yet"}</span>
+              </span>
+              {!user.passwordHash && <Badge tone="warn">Needed</Badge>}
+            </div>
+            {user.email && user.emailVerifiedAt
+              ? <PasswordForm hasPassword={!!user.passwordHash} />
+              : <p className="text-sm text-muted">Add your email above first, then set a password.</p>}
+          </li>
+          <li className="flex flex-wrap items-center justify-between gap-2 py-3">
+            <span><span className="block font-medium">Mobile number</span><span className="text-sm text-muted">{(user.mobile ?? user.phone) ? `+${user.mobile ?? user.phone}` : "Not added"}</span></span>
           </li>
           <li className="flex flex-wrap items-center justify-between gap-2 py-3">
             <span><span className="block font-medium">Google</span><span className="text-sm text-muted">{user.googleSub ? "Connected" : googleEnabled() ? "Not connected" : "Not switched on yet"}</span></span>

@@ -2,7 +2,9 @@
 
 import { useActionState } from "react";
 import { ActionForm } from "@/components/action-form";
-import { setPin } from "@/app/actions/auth";
+import { changePassword, setPin } from "@/app/actions/auth";
+import { PasswordInput } from "@/components/password-input";
+import { PASSWORD_MIN } from "@/lib/password-rules";
 import { updateMyName, updatePreferences } from "@/app/actions/team";
 import { UI_LANGUAGES } from "@/lib/i18n";
 import { ErrorText, Field, Input, Select } from "@/components/ui";
@@ -72,6 +74,26 @@ export function PreferencesForm({ lang, mode }: { lang: string; mode: string }) 
         <ErrorText>{state.error}</ErrorText>
         {state.info && <p className="text-sm text-got">{state.info}</p>}
         <SubmitButton variant="secondary">Save preferences</SubmitButton>
+      </div>
+    </ActionForm>
+  );
+}
+
+export function PasswordForm({ hasPassword }: { hasPassword: boolean }) {
+  const [state, action, pending] = useActionState(changePassword, {});
+  return (
+    <ActionForm dispatch={action} pending={pending} className="grid gap-3 sm:grid-cols-3">
+      {hasPassword && (
+        <Field label="Current password"><PasswordInput name="current" autoComplete="current-password" required maxLength={128} /></Field>
+      )}
+      <Field label="New password" hint={`At least ${PASSWORD_MIN} characters.`}>
+        <PasswordInput name="password" autoComplete="new-password" required minLength={PASSWORD_MIN} maxLength={128} />
+      </Field>
+      <Field label="Repeat new password"><PasswordInput name="confirm" autoComplete="new-password" required minLength={PASSWORD_MIN} maxLength={128} /></Field>
+      <div className="space-y-2 sm:col-span-3">
+        <ErrorText>{state.error}</ErrorText>
+        {state.ok && <p role="status" className="text-sm text-got">Password saved. Other devices were signed out.</p>}
+        <SubmitButton>{hasPassword ? "Change password" : "Set password"}</SubmitButton>
       </div>
     </ActionForm>
   );

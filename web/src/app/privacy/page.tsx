@@ -23,7 +23,7 @@ export default async function Privacy() {
       <Section title="2. What we collect">
         <p><b>When you sign up and sign in</b></p>
         <ul>
-          <li>Mobile number, email address, name, and a sign-in method (OTP, or Google if you choose it). If you use Google, we receive your name, email and a Google account identifier, and nothing else from your Google account.</li>
+          <li>Name, email address, mobile number, and a password (stored only as a one-way scrambled hash, never readable by us), or Google if you choose it. If you use Google, we receive your name, email and a Google account identifier, and nothing else from your Google account.</li>
           <li>An app-lock PIN, stored only as a one-way scrambled value, never as the PIN itself.</li>
           <li>Device and browser details, the time of sign-in and a rough network identifier, so we can show your signed-in devices and protect against misuse.</li>
         </ul>
@@ -62,7 +62,7 @@ export default async function Privacy() {
         <p>Only as needed to run the Service, and always under confidentiality and security terms:</p>
         <ul>
           <li><b>Hosting and database providers</b> that store and process data for us.</li>
-          <li><b>Message providers</b> for SMS, email and OTP delivery, when you use those features. WhatsApp reminders are opened on your own phone and sent through your own WhatsApp account; WhatsApp’s own privacy policy applies to that.</li>
+          <li><b>Message providers</b> for SMS, email and verification-code delivery, when you use those features. WhatsApp reminders are opened on your own phone and sent through your own WhatsApp account; WhatsApp’s own privacy policy applies to that.</li>
           <li><b>An AI reading service</b>, only when you use “Paper notes”: the photo you upload is sent to it so it can be read, and is not used by us for anything else. Please do not photograph pages that have other people’s personal details if you do not want that.</li>
           <li><b>Google</b>, if you choose to sign in with it.</li>
           <li><b>Payment partners</b>, if you use online payment links, so that payments can be taken and matched.</li>
@@ -78,13 +78,13 @@ export default async function Privacy() {
           <li>While your shop is active, we keep your records so the app can work.</li>
           <li>If you ask us in writing to delete your shop, we close it and permanently erase its data within {site.deleteDaysNum} days of confirming the request is yours, unless the law requires us to keep something longer. Backups that contain it are removed as they expire.</li>
           <li>Some records may have to be kept for the period tax and company laws require (for example, GST records for several years). We keep only what is needed and only for that purpose.</li>
-          <li>Sign-in codes expire within minutes. Security and error logs are kept for a limited time.</li>
+          <li>Verification codes expire within 10 minutes. Security and error logs are kept for a limited time.</li>
         </ul>
       </Section>
 
       <Section title="7. How we protect it">
         <ul>
-          <li>Connections to the Service are encrypted. Passwords are not used; sign-in uses one-time codes or Google, and PINs are stored scrambled.</li>
+          <li>Connections to the Service are encrypted. Passwords and PINs are stored only as salted one-way hashes; repeated wrong attempts are slowed down and blocked for a while.</li>
           <li>Each shop’s data is kept separate, and staff roles limit what each person can see.</li>
           <li>The record of changes is chained so that edits to history can be detected. Backups can be encrypted.</li>
           <li>Our own access to customer data is limited to what is needed for support and safety, and is logged.</li>

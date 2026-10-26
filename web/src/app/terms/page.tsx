@@ -29,10 +29,10 @@ export default async function Terms() {
 
       <Section title="3. Your account">
         <ul>
-          <li>You sign in with a mobile number, an email address or Google. Keep your phone, email and any app-lock PIN safe. Everything done from your account is treated as done by you.</li>
+          <li>You sign in with your email address and password, or with Google. Keep your password, email account and any app-lock PIN safe, and do not share them. Everything done from your account is treated as done by you.</li>
           <li>Give correct details. Tell us at once if you think someone else is using your account.</li>
           <li>The first person to create a shop is its <b>owner</b>. The owner can add staff and choose what each person can see and do, and is responsible for what those people do.</li>
-          <li>We may send you one-time codes (OTP) by SMS, email or WhatsApp to sign you in. Standard message charges from your operator may apply.</li>
+          <li>We email you one-time codes to confirm your email address and to reset a forgotten password.</li>
         </ul>
       </Section>
 

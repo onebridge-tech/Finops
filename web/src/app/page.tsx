@@ -61,7 +61,7 @@ export default async function Home() {
             <a href="#how" className="hidden rounded-lg px-3 py-2 text-sm font-medium text-muted hover:text-ink sm:block">How it works</a>
             <a href="#faq" className="hidden rounded-lg px-3 py-2 text-sm font-medium text-muted hover:text-ink sm:block">Questions</a>
             <Link href="/login" className="rounded-lg px-3 py-2 text-sm font-medium hover:bg-card">Sign in</Link>
-            <Link href="/login" className="rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-brand-ink transition hover:opacity-90">Start free</Link>
+            <Link href="/register" className="rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-brand-ink transition hover:opacity-90">Start free</Link>
           </nav>
         </div>
       </header>
@@ -188,7 +188,7 @@ export default async function Home() {
             <div className="rounded-3xl bg-ink px-6 py-12 text-center text-bg sm:px-12 sm:py-16">
               <h2 id="go" className="mx-auto max-w-2xl text-3xl font-semibold tracking-tight sm:text-4xl">Start with one customer today.</h2>
               <p className="mx-auto mt-3 max-w-md opacity-80">Add your first customer, write what they owe, and send your first reminder before your tea gets cold.</p>
-              <Link href="/login" className="lp-cta mt-8 inline-flex min-h-12 items-center gap-2 rounded-xl bg-brand px-7 text-base font-semibold text-brand-ink transition hover:-translate-y-0.5">
+              <Link href="/register" className="lp-cta mt-8 inline-flex min-h-12 items-center gap-2 rounded-xl bg-brand px-7 text-base font-semibold text-brand-ink transition hover:-translate-y-0.5">
                 Start free<Icon name="chevron" size={18} />
               </Link>
               <p className="mt-4 text-sm opacity-70">Only your mobile number. No card. Takes two minutes.</p>

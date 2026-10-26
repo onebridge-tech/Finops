@@ -5,7 +5,7 @@ import { z } from "zod";
 import { db } from "@/lib/db";
 import { requireBusiness, requireUser, ROLES, type Role } from "@/lib/auth";
 import { audit } from "@/lib/audit";
-import { normalizeIndianMobile } from "@/lib/share";
+import { appUrl, normalizeIndianMobile } from "@/lib/share";
 import { normalizeEmail } from "@/lib/identity";
 import { invitedEmailUser } from "@/lib/signin";
 import { isValidGstin, normalizeGstin } from "@/lib/gstin";
@@ -39,34 +39,37 @@ async function parseMember(form: FormData, businessId: string) {
 }
 
 /**
- * Adds someone to the team by mobile number (SE-01). They sign in with an OTP
- * on that number and land in this business; nothing to accept.
+ * Adds someone to the team by email (SE-01). They create their password by registering with that email
+ * (or use Google on it) and land in this business; nothing to accept. A mobile number is kept for contact.
  */
 export async function inviteMember(_prev: TeamState, form: FormData): Promise<TeamState> {
   const ctx = await requireBusiness("team:manage");
-  const phone = normalizeIndianMobile(field(form, "phone"));
   const email = normalizeEmail(field(form, "email"));
-  if (field(form, "phone").trim() && !phone) return { error: "Enter a valid 10-digit mobile number" };
-  if (field(form, "email").trim() && !email) return { error: "Enter a valid email address" };
-  if (!phone && !email) return { error: "Enter their mobile number or email address" };
+  const mobile = normalizeIndianMobile(field(form, "phone"));
+  if (!email) return { error: "Enter their email address. They sign in with it." };
+  if (field(form, "phone").trim() && !mobile) return { error: "Enter a valid 10-digit mobile number" };
   const p = await parseMember(form, ctx.business.id);
   if ("error" in p) return { error: p.error };
   if (p.data.role === "OWNER" && ctx.role !== "OWNER") return { error: "Only the owner can add another owner" };
 
   const name = field(form, "name").trim().slice(0, 80) || null;
-  // The person signs in with that number or email (or Google on that email) and lands in this business.
-  const user = phone
-    ? await db.user.upsert({ where: { phone }, update: {}, create: { phone, name, ...(email && !(await db.user.findFirst({ where: { email } })) ? { email } : {}) } })
-    : await invitedEmailUser(email!, name);
-  if (!user.name && name) await db.user.update({ where: { id: user.id }, data: { name } });
+  const user = await invitedEmailUser(email, name);
+  if ((!user.name && name) || (!user.mobile && mobile)) {
+    await db.user.update({ where: { id: user.id }, data: { ...(!user.name && name ? { name } : {}), ...(!user.mobile && mobile ? { mobile } : {}) } });
+  }
   const existing = await db.membership.findUnique({ where: { userId_businessId: { userId: user.id, businessId: ctx.business.id } } });
   if (existing) return { error: "This person is already on your team" };
   await db.$transaction(async (tx) => {
     const m = await tx.membership.create({ data: { userId: user.id, businessId: ctx.business.id, invitedById: ctx.user.id, ...p.data } });
-    await audit(tx, { businessId: ctx.business.id, actorId: ctx.user.id, action: "invite", entity: "Membership", entityId: m.id, data: { phone, email, ...p.data } });
+    await audit(tx, { businessId: ctx.business.id, actorId: ctx.user.id, action: "invite", entity: "Membership", entityId: m.id, data: { email, mobile, ...p.data } });
   });
   revalidatePath("/settings/team");
-  return { ok: true, info: `Added ${phone ? `+${phone}` : email}. They can sign in with ${phone ? "that number" : "that email, or Google on it,"} now.` };
+  return {
+    ok: true,
+    info: user.emailVerifiedAt
+      ? `Added ${email}. They already have an account and will see your shop next time they sign in.`
+      : `Added ${email}. Ask them to open ${appUrl("/register")} and create their account with this email.`,
+  };
 }
 
 async function guardTarget(ctx: Awaited<ReturnType<typeof requireBusiness>>, membershipId: string) {

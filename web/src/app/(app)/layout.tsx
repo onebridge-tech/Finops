@@ -103,7 +103,15 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
               </div>
             </div>
           </header>
-          <main className="mx-auto max-w-6xl px-4 py-6 sm:px-6 sm:py-8 lg:px-8"><PageHelp />{children}</main>
+          <main className="mx-auto max-w-6xl px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
+            {!user.passwordHash && !user.googleSub && (
+              // Older accounts signed in with a phone code, which is switched off: they need a password to get back in next time.
+              <Link href="/settings/security?password=1" className="mb-4 block rounded-lg border border-warn/30 bg-warn/10 px-3 py-2.5 text-sm text-warn">
+                Set a password for your account. Sign-in with a mobile code has been switched off. <span className="font-medium underline">Set it now</span>
+              </Link>
+            )}
+            <PageHelp />{children}
+          </main>
         </div>
 
         <nav aria-label="Quick" className="no-print fixed inset-x-0 bottom-0 z-40 border-t border-line bg-card/95 backdrop-blur lg:hidden">

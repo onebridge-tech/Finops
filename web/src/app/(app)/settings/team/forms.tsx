@@ -53,8 +53,8 @@ export function InviteForm({ branches, canAddOwner }: { branches: Branch[]; canA
   }, [state]);
   return (
     <ActionForm ref={form} dispatch={action} pending={pending} className="grid gap-3 sm:grid-cols-3">
-      <Field label="Mobile number" hint="Enter a mobile number, an email, or both"><Input name="phone" inputMode="tel" placeholder="98480 12345" /></Field>
-      <Field label="Email address"><Input name="email" type="email" inputMode="email" placeholder="name@example.com" /></Field>
+      <Field label="Email address" hint="They sign in with this email"><Input name="email" type="email" inputMode="email" placeholder="name@example.com" required /></Field>
+      <Field label="Mobile number" hint="Optional, for contact"><Input name="phone" inputMode="tel" placeholder="98480 12345" /></Field>
       <Field label="Name"><Input name="name" /></Field>
       <AccessFields branches={branches} canAddOwner={canAddOwner} />
       <div className="space-y-2 sm:col-span-3">

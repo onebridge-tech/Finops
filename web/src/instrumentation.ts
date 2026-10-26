@@ -11,6 +11,14 @@ export async function register() {
     for (const sql of [
       'CREATE UNIQUE INDEX IF NOT EXISTS "User_email_key" ON "User" ("email")',
       'CREATE UNIQUE INDEX IF NOT EXISTS "User_googleSub_key" ON "User" ("googleSub")',
+      // Email + password sign-in. Safe to run every start; they match prisma/schema.prisma, so a later `prisma db push` changes nothing.
+      'ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "mobile" TEXT',
+      'ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "mobileVerifiedAt" TIMESTAMP(3)',
+      'ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "passwordHash" TEXT',
+      'ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "passwordChangedAt" TIMESTAMP(3)',
+      `ALTER TABLE "OtpCode" ADD COLUMN IF NOT EXISTS "purpose" TEXT NOT NULL DEFAULT 'LOGIN'`,
+      'CREATE TABLE IF NOT EXISTS "RateHit" ("id" TEXT NOT NULL, "key" TEXT NOT NULL, "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP, CONSTRAINT "RateHit_pkey" PRIMARY KEY ("id"))',
+      'CREATE INDEX IF NOT EXISTS "RateHit_key_createdAt_idx" ON "RateHit" ("key", "createdAt")',
     ]) {
       await db.$executeRawUnsafe(sql).catch((e) => console.error("[startup] index failed", e instanceof Error ? e.message : e));
     }

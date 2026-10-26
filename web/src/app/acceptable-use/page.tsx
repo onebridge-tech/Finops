@@ -17,7 +17,7 @@ export default async function AcceptableUse() {
           <li>Record real sales, credit and payments accurately.</li>
           <li>Message only people who have agreed to receive account messages from you, and stop when they ask.</li>
           <li>Be polite. A reminder is a request, not a threat.</li>
-          <li>Keep your sign-in, OTP codes and PIN private, and give staff only the access they need.</li>
+          <li>Keep your password, verification codes and PIN private, and give staff only the access they need.</li>
           <li>Tell us if you find a security problem.</li>
         </ul>
       </Section>

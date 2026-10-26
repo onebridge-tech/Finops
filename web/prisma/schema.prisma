@@ -12,8 +12,14 @@ datasource db {
 
 model User {
   id           String       @id @default(cuid())
-  // A person signs in with a phone code, an email code or Google. At least one of these is set.
+  // A person signs in with their email and password, or Google. `phone` is only set on older accounts
+  // that signed in with a phone code; `mobile` is the number given at registration and is not verified yet.
   phone        String?      @unique
+  mobile       String?
+  mobileVerifiedAt DateTime?
+  // scrypt hash of the password; sign-in is refused until the email is verified.
+  passwordHash String?
+  passwordChangedAt DateTime?
   email        String?
   googleSub    String?
   emailVerifiedAt DateTime?
@@ -71,6 +77,7 @@ model OtpCode {
   id         String    @id @default(cuid())
   phone      String? // a code is sent either to a phone ...
   email      String? // ... or to an email address
+  purpose    String    @default("LOGIN") // SIGNUP | RESET | LINK (LOGIN on older codes); a code only works for its purpose
   codeHash   String
   expiresAt  DateTime
   attempts   Int       @default(0)
@@ -1119,4 +1126,14 @@ model ClientOp {
   createdAt  DateTime @default(now())
 
   @@index([businessId, userId])
+}
+
+// One row per attempt at something we limit (signing in, asking for a code), keyed by what is limited:
+// "login:ip:1.2.3.4", "code:email:a@b.in" … Old rows are deleted as new ones are written.
+model RateHit {
+  id        String   @id @default(cuid())
+  key       String
+  createdAt DateTime @default(now())
+
+  @@index([key, createdAt])
 }

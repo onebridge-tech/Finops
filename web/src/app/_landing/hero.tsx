@@ -44,7 +44,7 @@ export function Hero() {
         <h1 key={lang} lang={lang} className="lp-swap text-4xl font-semibold leading-[1.15] tracking-tight sm:text-5xl">{t.title}</h1>
         <p key={`${lang}-s`} lang={lang} className="lp-swap mt-5 max-w-lg text-base leading-relaxed text-muted sm:text-lg">{t.sub}</p>
         <div className="mt-8 flex flex-wrap items-center gap-x-5 gap-y-3">
-          <Link href="/login" className="lp-cta inline-flex min-h-12 items-center gap-2 rounded-xl bg-brand px-6 text-base font-semibold text-brand-ink shadow-[var(--shadow-lg)] transition hover:-translate-y-0.5">
+          <Link href="/register" className="lp-cta inline-flex min-h-12 items-center gap-2 rounded-xl bg-brand px-6 text-base font-semibold text-brand-ink shadow-[var(--shadow-lg)] transition hover:-translate-y-0.5">
             <span lang={lang}>{t.cta}</span><Icon name="chevron" size={18} />
           </Link>
           <span className="text-sm text-muted">Only your mobile number. Takes two minutes.</span>
