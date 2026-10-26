@@ -13,6 +13,7 @@ import { signInUser } from "@/lib/signin";
 import { hashPassword, passwordProblem, verifyPassword } from "@/lib/password";
 import { clearHits, clientIp, hit, HOUR, limited, MIN } from "@/lib/rate-limit";
 import { timingSafeEqual } from "node:crypto";
+import { serverAdminEmail } from "@/lib/platform-auth";
 
 // People sign in with their email and password (or Google). A new account proves its email with a
 // 6-digit code before it can be used; a forgotten password is reset the same way.
@@ -186,7 +187,7 @@ export async function resetPassword(prev: ResetState, form: FormData): Promise<R
   await hit(`code:email:${email}`, `code:ip:${ip}`);
   const user = await db.user.findFirst({ where: { email, emailVerifiedAt: { not: null } } });
   let devCode: string | undefined;
-  if (user) {
+  if (user && email !== serverAdminEmail()) { // the server admin's password lives in the server settings
     const sent = await sendCode(email, "RESET");
     if (!sent.ok) return { step: "email", email, error: sent.error };
     devCode = sent.devCode;
@@ -202,6 +203,7 @@ export type PasswordState = { error?: string; ok?: boolean };
 export async function changePassword(_prev: PasswordState, form: FormData): Promise<PasswordState> {
   const { user, session } = await requireUser();
   if (!user.email || !user.emailVerifiedAt) return { error: "Add and verify your email first. You sign in with your email and password." };
+  if (user.email === serverAdminEmail()) return { error: "This admin's password is set on the server (PLATFORM_ADMIN_PASSWORD). Change it there and restart." };
   const ip = await clientIp();
   const key = `pwchange:user:${user.id}`;
   if (await limited({ key, max: 5, windowMs: 15 * MIN }, { key: `pwchange:ip:${ip}`, max: 20, windowMs: 15 * MIN })) return { error: TOO_MANY };

@@ -13,6 +13,7 @@ vi.mock("next/navigation", () => ({ redirect: (to: string) => { throw new Error(
 
 import { db } from "../src/lib/db";
 import { register, resetPassword, signIn } from "../src/app/actions/auth";
+import { ensureAdminAccount } from "../src/lib/admin-account";
 
 const fd = (o: Record<string, string>) => { const f = new FormData(); for (const [k, v] of Object.entries(o)) f.append(k, v); return f; };
 const email = `owner${Date.now()}@shop.test`;
@@ -91,5 +92,25 @@ describe("email + password accounts", () => {
     req.ip = "10.0.1.7";
     expect((await signIn({}, fd({ email, password: good.password }))).error).toMatch(/don't match/);
     expect(await redirectOf(signIn({}, fd({ email, password: "new counter password 7" })))).toBe("REDIRECT /onboarding");
+  });
+
+  it("sets up the platform admin from the server settings and sends them to the admin area", async () => {
+    req.ip = "10.0.1.8";
+    const adminEmail = `admin${Date.now()}@onebridge.test`;
+    const env = { PLATFORM_ADMIN_EMAIL: adminEmail, PLATFORM_ADMIN_PASSWORD: "counter admin password 2026" };
+    expect(await ensureAdminAccount({ ...env, PLATFORM_ADMIN_PASSWORD: "short" })).toBe("weak");
+    expect(await ensureAdminAccount(env)).toBe("created");
+    expect(await ensureAdminAccount(env)).toBe("same"); // a restart changes nothing
+    Object.assign(process.env, env);
+    try {
+      expect(await redirectOf(signIn({}, fd({ email: adminEmail, password: env.PLATFORM_ADMIN_PASSWORD })))).toBe("REDIRECT /platform");
+      // Its password can't be reset from the sign-in page: no code goes out.
+      expect((await resetPassword({ step: "email" }, fd({ email: adminEmail }))).devCode).toBeUndefined();
+      // A new password on the server takes over at the next start.
+      expect(await ensureAdminAccount({ ...env, PLATFORM_ADMIN_PASSWORD: "a brand new admin pass 1" })).toBe("updated");
+      expect((await signIn({}, fd({ email: adminEmail, password: env.PLATFORM_ADMIN_PASSWORD }))).error).toMatch(/don't match/);
+    } finally {
+      delete process.env.PLATFORM_ADMIN_EMAIL; delete process.env.PLATFORM_ADMIN_PASSWORD;
+    }
   });
 });

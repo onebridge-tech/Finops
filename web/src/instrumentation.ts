@@ -22,6 +22,11 @@ export async function register() {
     ]) {
       await db.$executeRawUnsafe(sql).catch((e) => console.error("[startup] index failed", e instanceof Error ? e.message : e));
     }
+    // The platform admin's email + password from the server settings (see lib/admin-account.ts).
+    const { ensureAdminAccount } = await import("./lib/admin-account");
+    await ensureAdminAccount()
+      .then((r) => r !== "off" && console.log(`[admin] admin account: ${r}`))
+      .catch((e) => console.error("[admin] could not set up the admin account", e instanceof Error ? e.message : e));
   }
   // Connections set by a platform admin (keys for AI, SMS, email, payments…) are put in place at start and refreshed every minute,
   // so a change made on one server instance reaches the others too.
