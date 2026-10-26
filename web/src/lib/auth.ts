@@ -5,6 +5,7 @@ import type { Prisma } from "@prisma/client";
 import { db } from "./db";
 import { readSession } from "./session";
 import { can, type Permission, type Role } from "./roles";
+import { isPlatformAdmin } from "./platform-auth";
 
 export { can, ROLES, ROLE_LABEL, type Permission, type Role } from "./roles";
 
@@ -40,7 +41,7 @@ export async function requireBusiness(permission?: Permission) {
       await db.session.update({ where: { id: session.sid }, data: { businessId: other.businessId, branchId: null } });
       redirect("/dashboard");
     }
-    redirect("/onboarding");
+    redirect(isPlatformAdmin(user) ? "/platform" : "/onboarding");
   }
   if (membership.business.suspendedAt) redirect("/suspended");
   const role = membership.role as Role;

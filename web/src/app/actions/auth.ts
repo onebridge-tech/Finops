@@ -26,6 +26,12 @@ type Purpose = "SIGNUP" | "RESET" | "LINK";
 const TOO_MANY = "Too many tries. Please wait a few minutes and try again.";
 const devCodes = () => process.env.OTP_DEV_MODE === "1";
 
+/** "You & your security" is shown at two addresses (inside the shop app, and stand-alone for people with no shop). */
+function revalidateSecurity() {
+  revalidatePath("/settings/security");
+  revalidatePath("/account/security");
+}
+
 /** Sends an email (or prints it in local test mode). */
 async function sendEmail(to: string, subject: string, body: string): Promise<{ ok: true } | { ok: false; error: string }> {
   if (devCodes()) {
@@ -219,7 +225,7 @@ export async function changePassword(_prev: PasswordState, form: FormData): Prom
   // A changed password signs out every other device.
   await db.session.updateMany({ where: { userId: user.id, id: { not: session.sid }, revokedAt: null }, data: { revokedAt: new Date() } });
   await passwordChangedNotice(user.email);
-  revalidatePath("/settings/security");
+  revalidateSecurity();
   return { ok: true };
 }
 
@@ -237,7 +243,7 @@ export async function linkEmail(prev: LinkState, form: FormData): Promise<LinkSt
     const taken = await db.user.findFirst({ where: { email } });
     if (taken && taken.id !== user.id) return { step: "start", error: "That email already belongs to another account." };
     await db.user.update({ where: { id: user.id }, data: { email, emailVerifiedAt: new Date() } });
-    revalidatePath("/settings/security");
+    revalidateSecurity();
     return { step: "start", ok: true };
   }
   const email = normalizeEmail(String(form.get("to") ?? ""));
@@ -257,7 +263,7 @@ export async function unlinkMethod(form: FormData): Promise<void> {
   // Keep a way back in: Google can go only while a verified email with a password remains.
   if (!(user.emailVerifiedAt && user.passwordHash)) return;
   if (which === "google") await db.user.update({ where: { id: user.id }, data: { googleSub: null } });
-  revalidatePath("/settings/security");
+  revalidateSecurity();
 }
 
 export async function logout() {
@@ -304,7 +310,7 @@ export async function setPin(_prev: { error?: string; ok?: boolean }, form: Form
   const lockAfter = Number(form.get("lockAfterMin") ?? 5);
   if (form.get("remove") === "1") {
     await db.user.update({ where: { id: user.id }, data: { pinHash: null } });
-    revalidatePath("/settings/security");
+    revalidateSecurity();
     return { ok: true };
   }
   if (!/^\d{4,6}$/.test(pin)) return { error: "PIN must be 4 to 6 digits" };
@@ -312,7 +318,7 @@ export async function setPin(_prev: { error?: string; ok?: boolean }, form: Form
   if (/^(\d)\1+$/.test(pin) || "0123456789".includes(pin) || "9876543210".includes(pin)) return { error: "Choose a less obvious PIN" };
   if (![1, 5, 15, 60].includes(lockAfter)) return { error: "Choose when to lock" };
   await db.user.update({ where: { id: user.id }, data: { pinHash: hashPin(pin), lockAfterMin: lockAfter } });
-  revalidatePath("/settings/security");
+  revalidateSecurity();
   return { ok: true };
 }
 
@@ -322,7 +328,7 @@ export async function revokeSession(form: FormData): Promise<void> {
   const id = String(form.get("sessionId") ?? "");
   const where = id === "others" ? { userId: user.id, id: { not: session.sid }, revokedAt: null } : { userId: user.id, id, revokedAt: null };
   await db.session.updateMany({ where, data: { revokedAt: new Date() } });
-  revalidatePath("/settings/security");
+  revalidateSecurity();
 }
 
 // ── Switching business / branch (LG-12) ──────────────────────────────────────
