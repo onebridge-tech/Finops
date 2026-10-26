@@ -34,15 +34,17 @@ export async function GET(request: Request) {
   if (flow.link) {
     const s = await readSession();
     if (!s) return fail("google_failed");
+    // Without a shop the security page lives outside the shop app.
+    const security = s.bid ? "/settings/security" : "/account/security";
     const other = await db.user.findFirst({ where: { googleSub: profile.sub } });
-    if (other && other.id !== s.uid) return fail("google_taken", "/settings/security");
+    if (other && other.id !== s.uid) return fail("google_taken", security);
     const me = await db.user.findUnique({ where: { id: s.uid } });
     const emailTaken = !me?.email ? await db.user.findFirst({ where: { email: profile.email } }) : null;
     await db.user.update({
       where: { id: s.uid },
       data: { googleSub: profile.sub, ...(me && !me.email && !emailTaken ? { email: profile.email, emailVerifiedAt: new Date() } : {}) },
     });
-    return Response.redirect(abs("/settings/security?linked=google"));
+    return Response.redirect(abs(`${security}?linked=google`));
   }
 
   // Signing in: the Google account first, then a person who already uses this (verified) email, else a new account.

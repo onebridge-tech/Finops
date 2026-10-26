@@ -27,7 +27,7 @@ export function isPlatformAdmin(u: { phone?: string | null; email?: string | nul
 export async function requirePlatformAdmin() {
   const { user } = await requireUser();
   if (!isPlatformAdmin(user)) notFound();
-  if (!user.pinHash) redirect("/settings/security?admin=1");
+  if (!user.pinHash) redirect("/account/security?admin=1");
   return user;
 }
 
