@@ -11,12 +11,14 @@ import { isPlatformAdmin } from "./platform-admins";
  * exported from there can be called from a browser, and this must only run after a real check.
  */
 export async function signInUser(userId: string): Promise<never> {
-  const first = await db.membership.findFirst({ where: { userId }, orderBy: { createdAt: "asc" } });
+  const [first, user] = await Promise.all([
+    db.membership.findFirst({ where: { userId }, orderBy: { createdAt: "asc" } }),
+    db.user.findUnique({ where: { id: userId } }),
+  ]);
   await startSession(userId, first?.businessId);
-  if (first) redirect("/dashboard");
-  // A platform admin with no shop of their own goes straight to the admin area.
-  const user = await db.user.findUnique({ where: { id: userId } });
-  redirect(user && isPlatformAdmin(user) ? "/platform" : "/onboarding");
+  // Platform admins land in the admin area, even when they also have a shop ("Back to app" there opens it).
+  if (user && isPlatformAdmin(user)) redirect("/platform");
+  redirect(first ? "/dashboard" : "/onboarding");
 }
 
 /** Someone invited by email who has not signed in yet. They create their password (and verify the address) by registering with it. */
