@@ -10,6 +10,7 @@ import { buysFewerCategories } from "./rules";
 import { stockLevels } from "./reports2";
 import type { Channel } from "./reminder-rule";
 import { autoAcceptShared } from "./shared-ledger";
+import { eraseDueAccounts } from "./erase";
 import type { Ctx } from "./auth";
 
 // Scheduled work, run hourly (see instrumentation.ts and /api/cron/reminders).
@@ -26,7 +27,7 @@ export async function runDigests(now = new Date(), opts: { force?: boolean; busi
   if (!opts.force && hourIST(now) < 8) return sent;
   const today = istDay(now);
   const startOfToday = new Date(`${today}T00:00:00+05:30`);
-  const businesses = await db.business.findMany({ where: { suspendedAt: null, digestFrequency: { in: opts.force ? ["DAILY", "WEEKLY", "OFF"] : ["DAILY", "WEEKLY"] }, ...(opts.businessId ? { id: opts.businessId } : {}) } });
+  const businesses = await db.business.findMany({ where: { suspendedAt: null, closingAt: null, digestFrequency: { in: opts.force ? ["DAILY", "WEEKLY", "OFF"] : ["DAILY", "WEEKLY"] }, ...(opts.businessId ? { id: opts.businessId } : {}) } });
   for (const b of businesses) {
     if (!opts.force && b.digestFrequency === "WEEKLY" && weekdayIST(now) !== 1) continue;
     const already = await db.message.count({ where: { businessId: b.id, kind: "DIGEST", createdAt: { gte: startOfToday } } });
@@ -63,7 +64,7 @@ export async function runDigests(now = new Date(), opts: { force?: boolean; busi
  */
 export async function runInactiveScan(now = new Date(), businessId?: string) {
   const result = { inactive: 0, upsell: 0 };
-  const businesses = await db.business.findMany({ where: { suspendedAt: null, ...(businessId ? { id: businessId } : {}) } });
+  const businesses = await db.business.findMany({ where: { suspendedAt: null, closingAt: null, ...(businessId ? { id: businessId } : {}) } });
   for (const b of businesses) {
     const owner = await db.membership.findFirst({ where: { businessId: b.id, role: "OWNER" }, orderBy: { createdAt: "asc" } });
     if (!owner) continue;
@@ -113,7 +114,8 @@ export async function runHourly(now = new Date()) {
   const digests = await runDigests(now);
   const tasks = hourIST(now) >= 9 ? await runInactiveScan(now) : { inactive: 0, upsell: 0 };
   const shared = await autoAcceptShared(now);
-  return { reminders, digests, tasks, shared };
+  const erased = await eraseDueAccounts(now);
+  return { reminders, digests, tasks, shared, erased };
 }
 
 export { balanceOf };

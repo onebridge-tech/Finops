@@ -6,7 +6,7 @@ import { db } from "@/lib/db";
 import { findParty, requireBusiness } from "@/lib/auth";
 import { audit } from "@/lib/audit";
 import { MAX_IMPORT_ROWS, readTable } from "@/lib/spreadsheet";
-import { buildTxns, counterparty, FIELDS, findHeaderRow, guessMapping, txnHash, type Mapping, type Txn } from "@/lib/bank-import";
+import { buildTxns, checkBalances, counterparty, FIELDS, findHeaderRow, guessMapping, txnHash, type Mapping, type Txn } from "@/lib/bank-import";
 import { categorize, categoryInfo, kindOf } from "@/lib/categorize";
 import { monthBounds } from "@/lib/finance";
 import { istDay } from "@/lib/ledger";
@@ -15,6 +15,7 @@ import { issueReceipt } from "@/lib/receipts";
 import { issueInvoice } from "@/lib/doc-core";
 import { GST_RATES_BP } from "@/lib/gst";
 import type { Prisma } from "@prisma/client";
+import type { BalanceCheck } from "@/lib/bank-import";
 
 export type StatementPreview = {
   error?: string;
@@ -24,6 +25,10 @@ export type StatementPreview = {
   mapping?: Mapping;
   sample?: { date: string; description: string; direction: string; amountPaise: number; category: string }[];
   totals?: { count: number; inPaise: number; outPaise: number; from: string; to: string; duplicates: number; errors: { row: number; reason: string }[] };
+  /** Running-balance check; null when the statement has no balance column. */
+  balance?: BalanceCheck | null;
+  /** The statement was a PDF, read on the person's device. */
+  fromPdf?: boolean;
 };
 export type StatementResult = { error?: string };
 
@@ -44,6 +49,7 @@ async function analyse(businessId: string, table: string[][], headerRow: number,
   const dates = txns.map((t) => t.date).sort();
   return {
     txns, errors,
+    balance: checkBalances(txns),
     sample: txns.slice(0, 8).map((t) => ({ date: t.date, description: t.description, direction: t.direction, amountPaise: t.amountPaise, category: categorize(t.description, t.direction, rules) })),
     totals: {
       count: txns.length, inPaise: txns.filter((t) => t.direction === "IN").reduce((s, t) => s + t.amountPaise, 0), outPaise: txns.filter((t) => t.direction === "OUT").reduce((s, t) => s + t.amountPaise, 0),
@@ -55,15 +61,29 @@ async function analyse(businessId: string, table: string[][], headerRow: number,
 /** Step 1: read the file, find the table, guess the columns. */
 export async function previewStatement(_prev: StatementPreview, form: FormData): Promise<StatementPreview> {
   const ctx = await requireBusiness("cash:manage");
-  const file = form.get("file");
-  if (!(file instanceof File) || file.size === 0) return { error: "Choose your statement file" };
-  if (file.size > 8_000_000) return { error: "That file is too large (8 MB at most)" };
-  if (/\.pdf$/i.test(file.name)) return { error: "PDF statements can’t be read yet. In your bank’s website or app, download the statement as Excel or CSV and add that file." };
   let table: string[][];
-  try {
-    table = await readTable(file);
-  } catch (e) {
-    return { error: e instanceof Error ? e.message : "Could not read the file" };
+  let fileName: string;
+  const fromPdf = form.has("pdfTable");
+  if (fromPdf) {
+    // A PDF is opened on the person's device (components/pdf-statement.ts); only the rows read from it come here.
+    try {
+      table = JSON.parse(String(form.get("pdfTable")));
+      if (!Array.isArray(table) || !table.every((r) => Array.isArray(r) && r.every((c) => typeof c === "string"))) throw new Error();
+    } catch {
+      return { error: "Something went wrong reading the PDF. Please add it again." };
+    }
+    fileName = String(form.get("fileName") ?? "Statement.pdf").slice(0, 120);
+  } else {
+    const file = form.get("file");
+    if (!(file instanceof File) || file.size === 0) return { error: "Choose your statement file" };
+    if (file.size > 8_000_000) return { error: "That file is too large (8 MB at most)" };
+    if (/\.pdf$/i.test(file.name)) return { error: "Please add the PDF again; it is opened on your device, not uploaded." };
+    try {
+      table = await readTable(file);
+    } catch (e) {
+      return { error: e instanceof Error ? e.message : "Could not read the file" };
+    }
+    fileName = file.name;
   }
   if (table.length < 2) return { error: "The file has no rows" };
   const headerRow = findHeaderRow(table);
@@ -72,7 +92,7 @@ export async function previewStatement(_prev: StatementPreview, form: FormData):
   const rows = table.slice(headerRow + 1);
   if (rows.length > MAX_IMPORT_ROWS) return { error: `At most ${MAX_IMPORT_ROWS} rows at a time. Split the file by month.` };
   const a = await analyse(ctx.business.id, table, headerRow, mapping);
-  return { fileName: file.name, header, rows, mapping, sample: a.sample, totals: a.totals };
+  return { fileName, header, rows, mapping, sample: a.sample, totals: a.totals, balance: a.balance, fromPdf };
 }
 
 /** Same preview again after the person fixed a column. The rows come back from the page, so the file is not read twice. */
@@ -87,7 +107,7 @@ export async function repreviewStatement(_prev: StatementPreview, form: FormData
     return { error: "Something went wrong. Please add the file again." };
   }
   const a = await analyse(ctx.business.id, [header, ...rows], 0, mapping);
-  return { fileName: String(form.get("fileName") ?? ""), header, rows, mapping, sample: a.sample, totals: a.totals };
+  return { fileName: String(form.get("fileName") ?? ""), header, rows, mapping, sample: a.sample, totals: a.totals, balance: a.balance, fromPdf: form.get("fromPdf") === "1" };
 }
 
 function readMapping(form: FormData): Mapping {
@@ -116,6 +136,8 @@ export async function commitStatement(_prev: StatementResult, form: FormData): P
 
   const { txns } = buildTxns(rows, mapping);
   if (txns.length === 0) return { error: "No transactions could be read with these columns" };
+  const check = checkBalances(txns);
+  if (check && check.mismatches.length > 0 && form.get("balanceChecked") !== "1") return { error: "Some balances don’t add up. Check those rows against your statement, then tick the box to add it anyway." };
   const rules = await rulesFor(ctx.business.id);
   const name = String(form.get("name") ?? "").trim().slice(0, 80) || String(form.get("fileName") ?? "Statement").slice(0, 80);
   const dates = txns.map((t) => t.date).sort();

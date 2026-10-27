@@ -17,7 +17,8 @@ export default async function ImportStatement() {
       <Card className="mb-5 text-sm">
         <p className="font-medium">How to get the file</p>
         <ul className="mt-2 list-disc space-y-1 pl-5 text-muted">
-          <li>In your bank’s website or app, open Account statement, choose the month, and download it as <b className="text-ink">Excel or CSV</b>.</li>
+          <li>In your bank’s website or app, open Account statement, choose the month, and download it. <b className="text-ink">Excel or CSV</b> is best; a <b className="text-ink">PDF</b> works too, even one locked with a password.</li>
+          <li>A PDF is opened here on your device. It is not uploaded, and its password is never sent or saved.</li>
           <li>PhonePe, Google Pay and Paytm let you export a statement too. Choose the CSV or Excel option if you see one.</li>
           <li>You can add a month at a time. If two statements overlap, nothing is counted twice.</li>
           <li>Want to see what the file should look like? <a className="font-medium text-brand underline" href="/sample-statement.csv" download>Download a sample</a>.</li>

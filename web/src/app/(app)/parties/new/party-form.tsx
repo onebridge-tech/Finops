@@ -5,6 +5,7 @@ import { useActionState } from "react";
 import { createParty, updateParty } from "@/app/actions/ledger";
 import { GstinLookupButton } from "@/components/gstin-lookup";
 import { ErrorText, Field, Input, Select } from "@/components/ui";
+import { DataNotice } from "@/components/data-notice";
 import { SubmitButton } from "@/components/submit-button";
 import { STATES } from "@/lib/gstin";
 import { LANGUAGE_NAMES } from "@/lib/messaging/templates";
@@ -112,6 +113,11 @@ export function PartyForm({ defaultState, party, owners, branches, defaultBranch
         </>
       )}
       <div className="space-y-3 sm:col-span-2">
+        <DataNotice
+          why="To keep this person’s account with your shop: what they owe or paid, their bills, and (only if they agreed) reminders and receipts on WhatsApp, SMS or email."
+          keep="Until you delete them or your shop. You decide; they are your records, and FinOps only stores them for you."
+          shared="You and the team members you allow. The person can see their own account through the link you send them. Ask them before adding their phone or email, and tell them why if they ask."
+        />
         <ErrorText>{state.error}</ErrorText>
         <SubmitButton>{v ? "Save changes" : "Save"}</SubmitButton>
       </div>

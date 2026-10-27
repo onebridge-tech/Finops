@@ -4,6 +4,7 @@ import { ActionForm } from "./action-form";
 import { useActionState } from "react";
 import type { FormState } from "@/app/actions/business";
 import { ErrorText, Field, Input, Select } from "./ui";
+import { DataNotice } from "./data-notice";
 import { SubmitButton } from "./submit-button";
 import { STATES } from "@/lib/gstin";
 import { GstinLookupButton } from "./gstin-lookup";
@@ -47,6 +48,11 @@ export function BusinessForm({ action, values = {}, submitLabel }: { action: (s:
       </Field>
       <Field label="Bill number starts with" hint="Letters put before every bill number, for example INV- gives INV-0001, INV-0002."><Input name="invoicePrefix" defaultValue={values.invoicePrefix ?? "INV-"} maxLength={10} /></Field>
       <div className="space-y-3 sm:col-span-2">
+        <DataNotice
+          why="These details are printed on your bills, receipts and reminders, so your customers know who they deal with and can pay you. GSTIN and state decide how GST is worked out."
+          keep="As long as the shop is on FinOps. You can change them here any time; they are erased when the shop is deleted."
+          shared="Your customers see them on the bills and messages you send. Your team members can see them."
+        />
         <ErrorText>{state.error}</ErrorText>
         {state.ok && <p className="text-sm text-got">Saved.</p>}
         <SubmitButton>{submitLabel}</SubmitButton>

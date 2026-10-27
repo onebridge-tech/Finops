@@ -10,7 +10,7 @@ export const metadata = { title: "Item list to share", robots: { index: false } 
 
 export default async function Catalogue({ params }: PageProps<"/c/[token]">) {
   const { token } = await params;
-  const b = await db.business.findFirst({ where: { catalogToken: token, catalogEnabled: true, suspendedAt: null } });
+  const b = await db.business.findFirst({ where: { catalogToken: token, catalogEnabled: true, suspendedAt: null, closingAt: null } });
   if (!b) notFound();
   const all = await db.item.findMany({ where: { businessId: b.id, isPublic: true, archivedAt: null }, orderBy: [{ category: "asc" }, { name: "asc" }, { variantName: "asc" }] });
   const logo = fileUrl(b.logoFileId);

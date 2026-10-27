@@ -17,6 +17,10 @@ export async function register() {
       'ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "passwordHash" TEXT',
       'ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "passwordChangedAt" TIMESTAMP(3)',
       `ALTER TABLE "OtpCode" ADD COLUMN IF NOT EXISTS "purpose" TEXT NOT NULL DEFAULT 'LOGIN'`,
+      // Deleting an account (lib/erase.ts).
+      'ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "deletionRequestedAt" TIMESTAMP(3)',
+      'ALTER TABLE "Business" ADD COLUMN IF NOT EXISTS "closingAt" TIMESTAMP(3)',
+      'ALTER TABLE "Business" ADD COLUMN IF NOT EXISTS "closingById" TEXT',
       'CREATE TABLE IF NOT EXISTS "RateHit" ("id" TEXT NOT NULL, "key" TEXT NOT NULL, "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP, CONSTRAINT "RateHit_pkey" PRIMARY KEY ("id"))',
       'CREATE INDEX IF NOT EXISTS "RateHit_key_createdAt_idx" ON "RateHit" ("key", "createdAt")',
     ]) {
@@ -44,6 +48,11 @@ export async function register() {
     setInterval(job, ms);
     setTimeout(job, 30_000);
   };
+  // Deleted accounts are erased on time whether or not the other schedulers are on (lib/erase.ts); it also runs in runHourly.
+  every(60 * 60 * 1000, async () => {
+    const { eraseDueAccounts } = await import("./lib/erase");
+    await eraseDueAccounts().then((r) => r.erased && console.log("[erase]", JSON.stringify(r))).catch((e) => console.error("[erase] run failed", e));
+  });
   if (process.env.REMINDER_SCHEDULER === "1") {
     const { runHourly } = await import("./lib/jobs");
     const { recordJob } = await import("./lib/job-runs");

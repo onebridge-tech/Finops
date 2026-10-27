@@ -4,6 +4,7 @@ import path from "node:path";
 import { zipSync } from "fflate";
 import { db } from "./db";
 import { encryptBackup } from "./backup-crypto";
+import { BACKUP_KEEP } from "./backup-keep";
 
 // Automatic backups (SE-04). Each run writes one ZIP holding a consistent copy of
 // the SQLite database (VACUUM INTO) and the uploads folder, encrypted with
@@ -12,7 +13,7 @@ import { encryptBackup } from "./backup-crypto";
 // this job then backs up uploaded files only.
 
 const DIR = process.env.BACKUP_DIR ?? path.join(process.cwd(), "backups");
-const KEEP = Number(process.env.BACKUP_KEEP ?? 14);
+const KEEP = BACKUP_KEEP;
 const UPLOADS = process.env.UPLOAD_DIR ?? path.join(process.cwd(), "uploads");
 
 async function walk(dir: string, prefix = ""): Promise<Record<string, Uint8Array>> {

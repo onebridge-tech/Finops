@@ -4,6 +4,7 @@ import { useActionState, useEffect, useRef, useState } from "react";
 import { ActionForm } from "@/components/action-form";
 import { inviteMember, updateMember } from "@/app/actions/team";
 import { ErrorText, Field, Input, Select } from "@/components/ui";
+import { DataNotice } from "@/components/data-notice";
 import { SubmitButton } from "@/components/submit-button";
 import { ROLES, ROLE_LABEL } from "@/lib/roles";
 
@@ -41,6 +42,13 @@ function AccessFields({ branches, canAddOwner, member }: { branches: Branch[]; c
       <Field label="Max discount %" hint="The biggest discount this person may give on a bill. Leave empty for no limit.">
         <Input name="maxDiscount" inputMode="decimal" defaultValue={member?.maxDiscount ?? ""} />
       </Field>
+      {!member && (
+        <DataNotice
+          className="sm:col-span-2"
+          why="Their email lets them sign in to your shop with the access you choose here. We record what each person adds or changes, so you can see who did what."
+          keep="While they are in your team. Remove them any time; their own account stays theirs to delete."
+        />
+      )}
     </>
   );
 }

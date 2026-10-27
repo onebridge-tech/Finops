@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { DataNotice } from "@/components/data-notice";
 import { useRouter } from "next/navigation";
 import type { FieldDay } from "@/lib/field";
 import type { FieldOp } from "@/lib/field-ops";
@@ -176,6 +177,11 @@ export function FieldApp({ data, businessId, userId }: { data: FieldDay; busines
 
       {!openVisit && (
         <>
+          <DataNotice
+            why="When you start your day, or check in or out at a customer, the app records where you are (if you allow location), so your shop can see the visits happened. It only asks at those moments, never in the background."
+            keep="With your visits in the shop’s records, until the shop deletes them. Turn location off in your phone settings any time; check-ins still work without it."
+            shared="The shop’s owner and managers."
+          />
           <section>
             <h2 className="mb-2 text-base font-semibold tracking-tight">Today’s route</h2>
             {plan.length === 0 ? <Card className="text-sm text-muted">No route is planned for today. You can still check in at any customer below.</Card> : (

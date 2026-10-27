@@ -5,7 +5,8 @@ import { googleEnabled } from "@/lib/google";
 import { isPlatformAdmin, serverAdminEmail } from "@/lib/platform-auth";
 import { Badge } from "@/components/ui";
 import { EmailLink } from "./email-link";
-import { Card, PageHeader, fmtDate } from "@/components/ui";
+import { Card, PageHeader, buttonClass, fmtDate } from "@/components/ui";
+import { BRAND } from "@/lib/brand";
 import { NameForm, PasswordForm, PinForm, PreferencesForm } from "./forms";
 
 /** Rough device label from a user-agent string. */
@@ -129,6 +130,16 @@ export async function SecurityView({ sp, user, sid }: { sp: SecurityParams; user
           <button className="text-sm text-muted underline hover:text-gave">Sign out all other devices</button>
         </form>
       )}
+
+      <h2 className="mb-2 mt-8 text-base font-semibold tracking-tight">Your data</h2>
+      <Card className="space-y-2 text-sm">
+        <p className="text-muted">
+          You can download your records any time from <a className="text-brand underline" href="/data">Excel &amp; backup</a>, and read what we keep and why in
+          our <a className="text-brand underline" href="/privacy">Privacy Policy</a>.
+        </p>
+        <p className="text-muted">Don’t want to use {BRAND.NAME} any more? You can delete your account and the data only you own. We explain exactly what happens before anything is done.</p>
+        <a href="/account/delete" className={buttonClass("danger")}>Delete my account…</a>
+      </Card>
     </>
   );
 }

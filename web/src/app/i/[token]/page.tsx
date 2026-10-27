@@ -17,7 +17,7 @@ export default async function PublicInvoice({ params }: PageProps<"/i/[token]">)
   const invoice = await db.invoice.findUnique({ where: { shareToken: token }, include: { lines: true, party: true, business: true } });
   if (!invoice) notFound();
   await trackView("invoice", invoice.id, invoice.businessId);
-  const open = gatewayMode() && !invoice.business.suspendedAt ? ((await invoicePayments(invoice.businessId, [invoice])).get(invoice.id)?.open ?? 0) : 0;
+  const open = gatewayMode() && !invoice.business.suspendedAt && !invoice.business.closingAt ? ((await invoicePayments(invoice.businessId, [invoice])).get(invoice.id)?.open ?? 0) : 0;
   return (
     <main className="mx-auto max-w-3xl px-4 py-8">
       <DocumentView doc={{ ...invoice, kind: "INVOICE" }} business={invoice.business} party={invoice.party} />

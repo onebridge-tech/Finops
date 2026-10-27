@@ -3,6 +3,7 @@
 import { useActionState, useRef, useState } from "react";
 import { readNote, type NoteState } from "@/app/actions/paper-notes";
 import { ErrorText } from "@/components/ui";
+import { DataNotice } from "@/components/data-notice";
 import { SubmitButton } from "@/components/submit-button";
 import { Icon } from "@/components/icon";
 
@@ -75,6 +76,11 @@ export function NoteUploader({ disabled }: { disabled: boolean }) {
         <ErrorText>{state.error}</ErrorText>
       </div>
       {(pending || busy) && <p role="status" className="text-sm text-muted">Reading can take up to a minute. Please keep this page open.</p>}
+      <DataNotice
+        why="To turn your handwritten page into entries without typing. The photo is sent to an AI reading service (chosen by FinOps) for this one reading, then you check every line before anything is saved."
+        keep="The photo is kept with your shop’s files, so you can look back at it, until you delete it or the shop. We don’t ask the AI service to keep it; what it does with photos is set by its own terms, named in our Privacy Policy."
+        shared="The AI reading service, for the reading only. Avoid photographing pages with details you don’t need in the app (like card numbers)."
+      />
     </form>
   );
 }

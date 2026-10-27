@@ -30,6 +30,9 @@ model User {
   uiLanguage   String       @default("en") // LO-01 app language
   uiMode       String       @default("SIMPLE") // LO-02 SIMPLE | ACCOUNTANT
   createdAt    DateTime     @default(now())
+  // The person asked for their account to be deleted (DPDP Act s. 12). Until it is erased (lib/erase.ts, after the
+  // "delete within" days in Company info) they can sign in only to keep the account; nothing else opens.
+  deletionRequestedAt DateTime?
   memberships  Membership[]
   sessions     Session[]
 }
@@ -211,6 +214,9 @@ model Business {
   suspendedAt            DateTime?
   suspendedReason        String?
   suspendedById          String?
+  // Being closed because its only owner asked for their account to be deleted; erased with that account.
+  closingAt              DateTime?
+  closingById            String?
   gstin                  String?
   stateCode              String // 2-digit GST state code
   address                String?

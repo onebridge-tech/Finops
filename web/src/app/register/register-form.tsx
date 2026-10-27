@@ -5,6 +5,7 @@ import { useActionState } from "react";
 import { ActionForm } from "@/components/action-form";
 import { register, type RegisterState } from "@/app/actions/auth";
 import { ErrorText, Field, Input } from "@/components/ui";
+import { DataNotice } from "@/components/data-notice";
 import { SubmitButton } from "@/components/submit-button";
 import { PasswordInput } from "@/components/password-input";
 import { GoogleButton } from "@/components/google-button";
@@ -58,6 +59,11 @@ export function RegisterForm({ google }: { google: boolean }) {
         <Field label="Type the password again">
           <PasswordInput name="confirm" autoComplete="new-password" required minLength={PASSWORD_MIN} maxLength={128} />
         </Field>
+        <DataNotice
+          why="Your name and email make your account: you sign in with the email, and we send codes and important account notices to it. Your mobile number lets us or your shop’s team reach you about your account. Your password is stored only as a scrambled code that nobody can read, not even us."
+          keep="Until you delete your account (Security & sign-in → Delete my account). Then it is erased within the days stated in our Privacy Policy."
+          shared="Nobody outside FinOps, except the email and SMS services that deliver your codes. We never sell it or use it for advertising."
+        />
         <label className="flex items-start gap-2.5 text-sm">
           <input type="checkbox" name="terms" required className="mt-0.5 size-4 accent-[var(--brand)]" />
           <span>I agree to the <Link href="/terms" className="font-medium text-brand underline" target="_blank">Terms of Use</Link> and <Link href="/privacy" className="font-medium text-brand underline" target="_blank">Privacy Policy</Link>.</span>

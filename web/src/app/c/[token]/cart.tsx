@@ -64,6 +64,7 @@ export function CatalogueCart({ token, products, business }: { token: string; pr
         <ErrorText>{state.error}</ErrorText>
         <SubmitButton>Send order request</SubmitButton>
         <p className="text-xs text-muted">This is a request, not a confirmed order or payment. {business} will get back to you.</p>
+        <p className="text-xs text-muted">Your name and mobile number go only to {business}, so they can confirm your order and call you back. They are kept in {business}’s records on FinOps and used for nothing else. <a className="underline" href="/privacy">Privacy Policy</a></p>
       </section>
     </ActionForm>
   );
