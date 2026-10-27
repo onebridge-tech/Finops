@@ -3,6 +3,8 @@ import type { Prisma } from "@prisma/client";
 import { db } from "./db";
 import { removeBusinessFiles } from "./files";
 import { readSite } from "./site-settings";
+import { deliver, isTestMode } from "./messaging/providers";
+import { BRAND } from "./brand";
 
 // Deleting an account, as the Digital Personal Data Protection Act, 2023 (s. 12) asks: the person can have their
 // data erased. They ask on /account/delete; their account is closed at once and erased for good once the
@@ -102,6 +104,27 @@ export async function requestDeletion(userId: string, keepSessionId: string | nu
     db.session.updateMany({ where: { userId, revokedAt: null, ...(keepSessionId ? { id: { not: keepSessionId } } : {}) }, data: { revokedAt: now } }),
     db.platformAudit.create({ data: { actorId: userId, action: "account_delete_requested", data: JSON.stringify({ shops: closing.length }) } }),
   ]);
+  if (closing.length) await tellTeamShopIsClosing(closing, userId, await erasesOn(now)).catch((e) => console.error("[erase] could not email the team", e instanceof Error ? e.message : e));
+}
+
+/** Emails everyone else in the closing shops, so staff are not surprised: when it will be erased, and what they can do. */
+async function tellTeamShopIsClosing(businessIds: string[], ownerId: string, eraseDate: Date) {
+  if (isTestMode("EMAIL")) return;
+  const when = eraseDate.toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric", timeZone: "Asia/Kolkata" });
+  const members = await db.membership.findMany({
+    where: { businessId: { in: businessIds }, userId: { not: ownerId }, user: { email: { not: null }, emailVerifiedAt: { not: null } } },
+    include: { user: { select: { email: true } }, business: { select: { name: true } } },
+  });
+  for (const m of members) {
+    const shop = m.business.name;
+    await deliver({
+      channel: "EMAIL", to: m.user.email!, kind: "ALERT", lang: "en", params: [],
+      subject: `${shop} is closing on ${BRAND.NAME}`,
+      body: `The owner of ${shop} has deleted their ${BRAND.NAME} account, so the shop is closed and you can no longer open it.\n\n`
+        + `Everything in it will be erased for good on ${when}. Until then the owner can still change their mind by signing in and choosing to keep their account.\n\n`
+        + `If you need any of the shop's records, ask the owner before that date.`,
+    }).catch(() => undefined);
+  }
 }
 
 /** Changes their mind before the erase date: the account and its shops open again. */

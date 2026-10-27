@@ -32,6 +32,9 @@ export type StatementPreview = {
 };
 export type StatementResult = { error?: string };
 
+// Limits for rows read from a PDF on the person's device.
+const PDF_MAX_ROWS = 5000, PDF_MAX_COLS = 30, PDF_MAX_CELL = 500;
+
 const noon = (ymd: string) => new Date(`${ymd}T12:00:00+05:30`);
 
 async function rulesFor(businessId: string) {
@@ -69,6 +72,9 @@ export async function previewStatement(_prev: StatementPreview, form: FormData):
     try {
       table = JSON.parse(String(form.get("pdfTable")));
       if (!Array.isArray(table) || !table.every((r) => Array.isArray(r) && r.every((c) => typeof c === "string"))) throw new Error();
+      // The rows come from the person's browser, so keep them to what a real statement can hold.
+      if (table.length > PDF_MAX_ROWS) return { error: `That statement has more than ${PDF_MAX_ROWS.toLocaleString("en-IN")} lines. Add it a few months at a time.` };
+      if (table.some((r) => r.length > PDF_MAX_COLS || r.some((c) => c.length > PDF_MAX_CELL))) throw new Error();
     } catch {
       return { error: "Something went wrong reading the PDF. Please add it again." };
     }

@@ -5,7 +5,7 @@ import type { Prisma } from "@prisma/client";
 import { db } from "./db";
 import { readSession } from "./session";
 import { can, type Permission, type Role } from "./roles";
-import { isPlatformAdmin } from "./platform-auth";
+import { isPlatformAdmin } from "./platform-admins";
 
 export { can, ROLES, ROLE_LABEL, type Permission, type Role } from "./roles";
 

@@ -14,6 +14,7 @@ export async function readPdfStatement(file: File, password?: string): Promise<P
   if (!pdfjs.GlobalWorkerOptions.workerSrc) pdfjs.GlobalWorkerOptions.workerSrc = new URL("pdfjs-dist/legacy/build/pdf.worker.min.mjs", import.meta.url).toString();
   let doc;
   try {
+    // pdf.js 5 never evaluates code from a PDF (the old isEvalSupported switch is gone), so text is all we read from it.
     doc = await pdfjs.getDocument({ data: new Uint8Array(await file.arrayBuffer()), password: password || undefined }).promise;
   } catch (e) {
     if (e && typeof e === "object" && (e as { name?: string }).name === "PasswordException") {

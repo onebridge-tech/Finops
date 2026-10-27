@@ -13,7 +13,7 @@ const istStart = (ymd: string) => new Date(`${ymd}T00:00:00+05:30`);
 const istEnd = (ymd: string) => new Date(`${ymd}T23:59:59.999+05:30`);
 const addDays = (ymd: string, n: number) => istDay(new Date(new Date(`${ymd}T12:00:00+05:30`).getTime() + n * 86400_000));
 
-const who = (users: { id: string; name: string | null; phone: string | null; email: string | null }[], id: string) => { const u = users.find((x) => x.id === id); return u ? (userLabel(u)) : "—"; };
+const who = (users: { id: string; name: string | null; phone: string | null; email: string | null }[], id: string) => { const u = users.find((x) => x.id === id); return u ? userLabel(u) : "Former member"; };
 
 export type Progress = { userId: string; name: string; metric: string; actual: number; target: number | null; expected: number | null };
 

@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import type { User } from "@prisma/client";
 import { db } from "./db";
 import { startSession } from "./session";
-import { isPlatformAdmin } from "./platform-auth";
+import { isPlatformAdmin } from "./platform-admins";
 
 /**
  * Starts a session for someone who has just proved who they are (their password, an email code, or Google), then
