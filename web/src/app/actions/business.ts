@@ -131,6 +131,19 @@ export async function updateBusiness(_prev: FormState, form: FormData): Promise<
   return { ok: true };
 }
 
+/** Saves just the UPI ID, from the Counter QR page, so the QR can be made straight away. */
+export async function updateUpiId(_prev: FormState, form: FormData): Promise<FormState> {
+  const { user, business } = await requireBusiness("settings:write");
+  const upiId = String(form.get("upiId") ?? "").trim();
+  if (!isValidUpiId(upiId)) return { error: "That UPI ID looks wrong. It looks like yourshop@okicici or 9848012345@ybl." };
+  await db.$transaction(async (tx) => {
+    await tx.business.update({ where: { id: business.id }, data: { upiId } });
+    await audit(tx, { businessId: business.id, actorId: user.id, action: "update", entity: "Business", entityId: business.id, data: { upiId } });
+  });
+  revalidatePath("/", "layout");
+  return { ok: true };
+}
+
 const ControlsInput = z.object({
   creditControl: z.enum(["OFF", "WARN", "BLOCK"]),
   digestFrequency: z.enum(["OFF", "DAILY", "WEEKLY"]),

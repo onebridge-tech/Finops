@@ -1,15 +1,30 @@
-import { notFound } from "next/navigation";
+import Link from "next/link";
 import QRCode from "qrcode";
-import { requireBusiness } from "@/lib/auth";
+import { can, requireBusiness } from "@/lib/auth";
 import { upiLink } from "@/lib/share";
 import { PrintButton } from "@/components/print-button";
+import { Card, PageHeader } from "@/components/ui";
+import { UpiForm } from "./upi-form";
 
-export const metadata = { title: "Counter standee" };
+export const metadata = { title: "Counter QR" };
 
 // Printable A5 counter standee with the static UPI QR (CP-04).
 export default async function Standee() {
-  const { business } = await requireBusiness();
-  if (!business.upiId) notFound();
+  const { business, role } = await requireBusiness();
+  if (!business.upiId) {
+    // No UPI ID yet: say so and let the owner add it here, instead of a "page not found".
+    return (
+      <>
+        <PageHeader title="Counter QR" sub="A stand for your counter: customers scan it and pay you with any UPI app." />
+        <Card className="mx-auto max-w-md space-y-4">
+          <p className="text-sm">To make your QR, we need the UPI ID the money should go to.</p>
+          {can(role, "settings:write")
+            ? <UpiForm />
+            : <p className="text-sm text-muted">Ask the shop owner to add the UPI ID in <Link href="/settings" className="text-brand underline">Settings</Link>.</p>}
+        </Card>
+      </>
+    );
+  }
   const qr = await QRCode.toDataURL(upiLink({ vpa: business.upiId, payee: business.name }), { margin: 1, width: 520 });
 
   return (
